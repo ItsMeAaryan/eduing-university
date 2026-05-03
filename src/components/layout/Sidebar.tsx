@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
@@ -38,7 +39,16 @@ export default function Sidebar() {
     <aside className="w-72 h-screen fixed left-0 top-0 bg-sidebar border-r border-[#242424] flex flex-col z-50 transition-colors duration-300">
       {/* Logo Section */}
       <div className="flex flex-col items-center py-10 border-b border-[#242424]/50">
-        <Link href="/university/dashboard" className="group">
+        <Link href="/university/dashboard" className="group flex items-center gap-3">
+          {/* Logo Image */}
+          <Image
+            src="/bandwlogo.PNG"
+            alt="EDUING Logo"
+            width={36}
+            height={36}
+            style={{ objectFit: 'contain', filter: 'invert(1)' }}
+          />
+          {/* Text */}
           <div className="text-3xl font-black tracking-tighter flex items-baseline">
             <span className="text-white">EDU</span>
             <span className="text-brand-indigo">ING</span>
@@ -111,4 +121,3 @@ export default function Sidebar() {
     </aside>
   )
 }
-
