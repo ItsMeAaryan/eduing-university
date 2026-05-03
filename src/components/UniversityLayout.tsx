@@ -56,7 +56,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
 
   const handleLogout = async () => {
     await signOut(auth)
-    router.push('/auth/login')
+    window.location.href = 'https://www.eduing.in'
   }
 
   const name = uniData?.name || uniData?.shortName || 'University'
@@ -89,25 +89,16 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
         {/* Logo */}
         <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '8px',
-              background: 'linear-gradient(135deg, #5B5FEF, #7C3AED)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', fontWeight: '900', color: 'white',
-              boxShadow: '0 0 20px rgba(91,95,239,0.4)',
-              position: 'relative'
-            }}>
-              E
-              <div style={{
-                position: 'absolute', top: '-3px', right: '-3px',
-                width: '8px', height: '8px', borderRadius: '50%',
-                background: '#F59E0B', border: '1.5px solid var(--bg-elevated)'
-              }} />
-            </div>
+            {/* ✅ Logo image */}
+            <img
+              src="/bandwlogo.PNG"
+              alt="EDUING Logo"
+              style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'invert(1)' }}
+            />
             <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.03em' }}>
               <span style={{ color: '#F0F0FF' }}>EDU</span>
               <span style={{ color: '#818CF8' }}>ING</span>
-              <span style={{ color: '#F59E0B', fontSize: '12px', fontWeight: '700' }}>.in</span>
+              <span style={{ color: '#818CF8', fontSize: '12px', fontWeight: '700' }}>.in</span>
             </span>
           </Link>
           <div style={{ marginTop: '6px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
