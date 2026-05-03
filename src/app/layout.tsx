@@ -10,8 +10,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "EDUING University | Admin Portal",
+  title: "EDUING - University",
   description: "Manage your institution on EDUING.in",
+  icons: {
+    icon: '/bandwlogo.PNG',
+    apple: '/bandwlogo.PNG',
+  },
 };
 
 export default function RootLayout({
