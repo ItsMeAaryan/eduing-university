@@ -42,7 +42,7 @@ export default function Sidebar() {
           <div className="text-3xl font-black tracking-tighter flex items-baseline">
             <span className="text-white">EDU</span>
             <span className="text-brand-indigo">ING</span>
-            <span className="text-brand-gold text-sm ml-0.5">.in</span>
+            <span className="text-brand-indigo text-sm ml-0.5">.in</span>
           </div>
         </Link>
         <div className="mt-4 text-center">
