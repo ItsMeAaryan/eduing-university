@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Zap, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -94,10 +95,19 @@ export default function LoginPage() {
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-8">
           {/* Logo */}
           <div className="text-center mb-10">
-            <div className="text-3xl font-bold tracking-tight inline-block">
-              <span className="text-white">EDU</span>
-              <span className="text-brand-primary">ING</span>
-              <span className="text-brand-gold">.in</span>
+            <div className="flex items-center justify-center gap-3">
+              <Image
+                src="/bandwlogo.PNG"
+                alt="EDUING Logo"
+                width={40}
+                height={40}
+                style={{ objectFit: 'contain', filter: 'invert(1)' }}
+              />
+              <div className="text-3xl font-bold tracking-tight">
+                <span className="text-white">EDU</span>
+                <span className="text-brand-primary">ING</span>
+                <span className="text-brand-primary">.in</span>
+              </div>
             </div>
             <h1 className="text-xl font-bold text-white mt-6">University Portal</h1>
             <p className="text-text-secondary text-sm mt-2">Sign in to manage your institution</p>
