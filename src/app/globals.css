@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #08080A;
+  --color-brand-surface: #111114;
+  --color-brand-border: rgba(255, 255, 255, 0.08);
+  --color-brand-border-hover: rgba(255, 255, 255, 0.15);
+  --color-brand-primary: #4F46E5;
+  --color-brand-gold: #F59E0B;
+  --color-brand-success: #22C55E;
+  --color-brand-warning: #F59E0B;
+  --color-brand-error: #EF4444;
+  
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: rgba(255, 255, 255, 0.5);
+  --color-text-muted: rgba(255, 255, 255, 0.25);
+
+  --radius-card: 16px;
+  --radius-button: 8px;
+}
+
+:root {
+  --background: #08080A;
+  --foreground: #FAFAFA;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Utilities */
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+.flat-card {
+  background-color: var(--color-brand-surface);
+  border: 1px solid var(--color-brand-border);
+  border-radius: var(--radius-card);
+}
+
+.flat-card:hover {
+  border-color: var(--color-brand-border-hover);
+}
+
+.input-dark {
+  background-color: #111114;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #FAFAFA;
+  padding: 10px 14px;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.input-dark:focus {
+  outline: none;
+  border-color: #4F46E5;
+}
+
+.input-dark::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Scrollbar styling for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #08080A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
