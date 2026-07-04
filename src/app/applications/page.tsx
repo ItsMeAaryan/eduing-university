@@ -116,10 +116,11 @@ export default function ApplicationsPage() {
             placeholder="Search students..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="focus:ring-2 focus:ring-brand-primary"
             style={{
               width: '100%', padding: '9px 12px 9px 36px',
               background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px', outline: 'none',
+              borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px',
             }} 
           />
         </div>
@@ -131,8 +132,9 @@ export default function ApplicationsPage() {
           style={{
             padding: '9px 14px', background: 'rgba(255,255,255,0.05)',
             border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', outline: 'none',
+            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer',
           }}
+          className="focus:ring-2 focus:ring-brand-primary"
         >
           <option value="all">All Status</option>
           <option value="submitted">Submitted</option>
@@ -149,8 +151,9 @@ export default function ApplicationsPage() {
           style={{
             padding: '9px 14px', background: 'rgba(255,255,255,0.05)',
             border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', outline: 'none',
+            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer',
           }}
+          className="focus:ring-2 focus:ring-brand-primary"
         >
           <option value="all">All Programs</option>
           {programs.map(p => (
@@ -246,7 +249,7 @@ export default function ApplicationsPage() {
                   onClick={() => setViewingApp(app)}
                 >
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => toggleSelect(app.id)} className="text-text-muted">
+                    <button onClick={() => toggleSelect(app.id)} className="text-text-muted" aria-label={selectedApps.includes(app.id) ? 'Deselect application' : 'Select application'}>
                       {selectedApps.includes(app.id) ? (
                         <CheckSquare size={18} className="text-brand-primary" />
                       ) : (

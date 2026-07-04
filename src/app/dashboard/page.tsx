@@ -263,21 +263,38 @@ function ActionDropdown({ app, onUpdate }: { app: FirestoreRecord, onUpdate: (st
     { label: 'Reject', value: 'rejected' },
   ]
 
+  // Keyboard users need an equivalent to "click outside to close" —
+  // Escape is the standard convention for dismissing an open menu.
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen])
+
   return (
     <div style={{ position: 'relative' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <MoreHorizontal size={18} />
       </button>
 
       <AnimatePresence>
+
         {isOpen && (
           <>
+            {/* Decorative click-outside dismiss layer — not focusable content.
+                Escape (handled above) is the keyboard equivalent for closing this menu. */}
             <div 
               style={{ position: 'fixed', inset: 0, zIndex: 10 }} 
               onClick={() => setIsOpen(false)} 
+              aria-hidden="true"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: -10 }}

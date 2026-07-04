@@ -121,7 +121,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             }}>
               {uniData?.logoURL ? (
                 // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
-                <img src={uniData.logoURL as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={uniData.logoURL as string} alt="University logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : initial}
             </div>
             <div style={{ overflow: 'hidden' }}>
@@ -196,23 +196,34 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button style={{
-              width: '36px', height: '36px', borderRadius: '50%',
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-secondary)',
-            }}>
+            {/* TODO: no onClick handler exists for this notification bell —
+                it's currently a static, non-functional element. Left as-is
+                per audit guardrails (not inventing behavior without a spec);
+                flagging for implementation (likely intended to open a
+                notifications panel, similar to NotificationBell.tsx). */}
+            <button
+              aria-label="Notifications"
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--text-secondary)',
+              }}>
               <Bell size={16} />
             </button>
+            {/* TODO: this avatar had `cursor: pointer` styling implying it's
+                clickable (e.g. to open account/profile menu) but had no
+                onClick handler — removed the misleading affordance rather
+                than inventing navigation behavior without a spec. */}
             <div style={{
               width: '36px', height: '36px', borderRadius: '50%',
               background: 'linear-gradient(135deg, #5B5FEF, #7C3AED)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '14px', fontWeight: '800', color: 'white', cursor: 'pointer', overflow: 'hidden'
+              fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden'
             }}>
               {uniData?.logoURL ? (
                 // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
-                <img src={uniData.logoURL as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={uniData.logoURL as string} alt="University logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : initial}
             </div>
           </div>

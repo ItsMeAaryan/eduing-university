@@ -64,7 +64,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
           {/* Header */}
           <div className="p-6 border-b border-brand-border flex items-center justify-between bg-brand-bg/50">
             <h2 className="text-xl font-bold text-white">Application Detail</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-text-muted hover:text-white transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-text-muted hover:text-white transition-colors" aria-label="Close application detail">
               <X size={20} />
             </button>
           </div>
