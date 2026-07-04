@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Enrollment Analytics</h2>
+        <h1 className="text-xl font-bold text-white">Enrollment Analytics</h1>
         <div className="flex items-center gap-3">
           <button onClick={showToastFeature} className="h-10 px-4 rounded-lg bg-white/5 border border-brand-border text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10">
             <FileText size={16} /> Report PDF

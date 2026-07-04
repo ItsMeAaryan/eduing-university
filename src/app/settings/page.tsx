@@ -64,6 +64,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
+      <h1 className="text-xl font-bold text-white sr-only">Settings</h1>
       {/* Account Section */}
       <section className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-brand-border flex items-center gap-3">

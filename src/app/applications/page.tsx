@@ -102,6 +102,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="text-xl font-bold text-white sr-only">Applications</h1>
       {/* Filters row - compact inline */}
       <div style={{
         display: 'flex', gap: '12px', marginBottom: '20px',
