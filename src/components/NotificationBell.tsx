@@ -5,11 +5,12 @@ import { Bell, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { auth } from '@/lib/firebase/config'
 import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/firebase/notifications'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState<any[]>([])
+  const [notifications, setNotifications] = useState<FirestoreRecord[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {

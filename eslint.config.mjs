@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // One-off Node.js admin/migration scripts run outside the Next.js
+    // app bundle via CommonJS (`node scripts/foo.js`), so require() here
+    // is intentional rather than a lint violation.
+    files: ["scripts/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

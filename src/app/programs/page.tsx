@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase/config'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToPrograms, deleteProgram } from '@/lib/firebase/programs'
 import { Plus, Edit2, Trash2, Calendar, IndianRupee, AlertCircle, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,8 +11,8 @@ import ProgramPanel from '@/components/ProgramPanel'
 
 export default function ProgramsPage() {
   const { toast } = useToast()
-  const [programs, setPrograms] = useState<any[]>([])
-  const [editingProgram, setEditingProgram] = useState<any | null>(null)
+  const [programs, setPrograms] = useState<FirestoreRecord[]>([])
+  const [editingProgram, setEditingProgram] = useState<FirestoreRecord | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,6 +36,7 @@ export default function ProgramsPage() {
       toast.success('Program deleted successfully')
       setDeleteConfirm(null)
     } catch (error) {
+      console.error(error)
       toast.error('Failed to delete program')
     }
   }

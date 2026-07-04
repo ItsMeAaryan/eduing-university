@@ -17,7 +17,7 @@ interface ToastContextValue {
     error: (msg: string) => void
     info: (msg: string) => void
     warning: (msg: string) => void
-    promise: (promise: Promise<any>, msgs: { loading: string; success: string; error: string }) => Promise<any>
+    promise: <T>(promise: Promise<T>, msgs: { loading: string; success: string; error: string }) => Promise<T>
   }
 }
 
@@ -45,7 +45,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     error: (msg: string) => addToast(msg, 'error'),
     info: (msg: string) => addToast(msg, 'info'),
     warning: (msg: string) => addToast(msg, 'warning'),
-    promise: async (promise: Promise<any>, msgs: { loading: string; success: string; error: string }) => {
+    promise: async <T,>(promise: Promise<T>, msgs: { loading: string; success: string; error: string }): Promise<T> => {
       addToast(msgs.loading, 'info')
       try {
         const result = await promise

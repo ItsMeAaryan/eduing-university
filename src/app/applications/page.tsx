@@ -2,22 +2,23 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { auth } from '@/lib/firebase/config'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToApplications, updateApplicationStatus } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
-import { Search, Download, MoreVertical, CheckSquare, Square } from 'lucide-react'
+import { MoreVertical, CheckSquare, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import ApplicationPanel from '@/components/ApplicationPanel'
 
 export default function ApplicationsPage() {
   const { toast } = useToast()
-  const [apps, setApps] = useState<any[]>([])
-  const [programs, setPrograms] = useState<any[]>([])
+  const [apps, setApps] = useState<FirestoreRecord[]>([])
+  const [programs, setPrograms] = useState<FirestoreRecord[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [programFilter, setProgramFilter] = useState('all')
   const [selectedApps, setSelectedApps] = useState<string[]>([])
-  const [viewingApp, setViewingApp] = useState<any | null>(null)
+  const [viewingApp, setViewingApp] = useState<FirestoreRecord | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -310,7 +311,7 @@ export default function ApplicationsPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: any = {
+  const styles: Record<string, string> = {
     submitted: 'bg-brand-primary/10 text-brand-primary',
     under_review: 'bg-brand-warning/10 text-brand-warning',
     selected: 'bg-brand-success/10 text-brand-success',

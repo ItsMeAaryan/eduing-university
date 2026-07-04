@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { auth } from '@/lib/firebase/config'
 import { subscribeToApplications } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
@@ -14,10 +15,50 @@ import { useToast } from '@/components/Toast'
 
 const COLORS = ['#4F46E5', '#F59E0B', '#22C55E', '#EA580C', '#EF4444', '#7C3AED']
 
+interface AppliedTimestamp {
+  seconds: number
+}
+
+interface ApplicationRecord extends FirestoreRecord {
+  appliedAt?: AppliedTimestamp
+  programName?: string
+  status?: string
+  studentProfile?: { state?: string }
+}
+
+interface ProgramRecord extends FirestoreRecord {
+  name: string
+}
+
+interface TooltipPayloadEntry {
+  name?: string
+  value: number
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: TooltipPayloadEntry[]
+  label?: string
+}) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#1C1C1E] border border-white/10 p-3 rounded-lg shadow-2xl">
+        <p className="text-xs font-bold text-white mb-1">{label || payload[0].name}</p>
+        <p className="text-sm font-bold text-brand-primary">{payload[0].value} {payload[0].value === 1 ? 'Application' : 'Applications'}</p>
+      </div>
+    )
+  }
+  return null
+}
+
 export default function AnalyticsPage() {
   const { toast } = useToast()
-  const [apps, setApps] = useState<any[]>([])
-  const [programs, setPrograms] = useState<any[]>([])
+  const [apps, setApps] = useState<ApplicationRecord[]>([])
+  const [programs, setPrograms] = useState<ProgramRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,7 +66,7 @@ export default function AnalyticsPage() {
       if (user) {
         const unsubApps = subscribeToApplications(user.uid, setApps)
         const unsubProgs = subscribeToPrograms(user.uid, (data) => {
-          setPrograms(data)
+          setPrograms(data as ProgramRecord[])
           setLoading(false)
         })
         return () => {
@@ -45,7 +86,7 @@ export default function AnalyticsPage() {
       return d.toISOString().split('T')[0]
     }).reverse()
 
-    const counts: any = {}
+    const counts: Record<string, number> = {}
     last30Days.forEach(date => counts[date] = 0)
 
     apps.forEach(app => {
@@ -63,10 +104,11 @@ export default function AnalyticsPage() {
 
   // 2. Applications by Program
   const programData = useMemo(() => {
-    const counts: any = {}
+    const counts: Record<string, number> = {}
     programs.forEach(p => counts[p.name] = 0)
     apps.forEach(app => {
-      if (counts[app.programName] !== undefined) counts[app.programName]++
+      const key = app.programName ?? ''
+      if (counts[key] !== undefined) counts[key]++
     })
     return programs.map(p => ({
       name: p.name,
@@ -76,7 +118,7 @@ export default function AnalyticsPage() {
 
   // 3. Status Distribution
   const statusData = useMemo(() => {
-    const counts: any = {
+    const counts: Record<string, number> = {
       submitted: 0,
       under_review: 0,
       selected: 0,
@@ -84,7 +126,8 @@ export default function AnalyticsPage() {
       rejected: 0
     }
     apps.forEach(app => {
-      if (counts[app.status] !== undefined) counts[app.status]++
+      const key = app.status ?? ''
+      if (counts[key] !== undefined) counts[key]++
     })
     return Object.keys(counts).map(status => ({
       name: status.replace('_', ' ').toUpperCase(),
@@ -94,7 +137,7 @@ export default function AnalyticsPage() {
 
   // 4. Geographic Distribution (States)
   const geographicData = useMemo(() => {
-    const counts: any = {}
+    const counts: Record<string, number> = {}
     apps.forEach(app => {
       const state = app.studentProfile?.state || 'Unknown'
       counts[state] = (counts[state] || 0) + 1
@@ -104,18 +147,6 @@ export default function AnalyticsPage() {
       count: counts[state]
     })).sort((a, b) => b.count - a.count).slice(0, 5)
   }, [apps])
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#1C1C1E] border border-white/10 p-3 rounded-lg shadow-2xl">
-          <p className="text-xs font-bold text-white mb-1">{label || payload[0].name}</p>
-          <p className="text-sm font-bold text-brand-primary">{payload[0].value} {payload[0].value === 1 ? 'Application' : 'Applications'}</p>
-        </div>
-      )
-    }
-    return null
-  }
 
   const showToastFeature = () => {
     toast.info('Feature coming in full version')
@@ -190,7 +221,7 @@ export default function AnalyticsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-muted)', fontSize: '14px' }}>
                 No program data available
               </div>
-            ) : [...programData].sort((a, b) => b.value - a.value).slice(0, 5).map((p: any, i: number) => (
+            ) : [...programData].sort((a, b) => b.value - a.value).slice(0, 5).map((p, i) => (
               <div key={p.name}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600' }}>{p.name}</span>

@@ -28,7 +28,7 @@ export default function SettingsPage() {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
         const unsub = subscribeToUniversity(user.uid, (data) => {
-          if (data.settings) setSettings(data.settings)
+          if (data.settings) setSettings(data.settings as typeof settings)
           setLoading(false)
         })
         return () => unsub()
@@ -42,16 +42,20 @@ export default function SettingsPage() {
       await sendPasswordResetEmail(auth, auth.currentUser!.email!)
       toast.success('Password reset email sent!')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to send reset email')
     }
   }
 
   const toggleSetting = async (key: keyof typeof settings) => {
+    const previous = settings
     const updated = { ...settings, [key]: !settings[key] }
     setSettings(updated)
     try {
       await updateUniversityProfile(auth.currentUser!.uid, { settings: updated })
     } catch (error) {
+      console.error(error)
+      setSettings(previous)
       toast.error('Failed to update settings')
     }
   }
@@ -169,7 +173,12 @@ export default function SettingsPage() {
   )
 }
 
-function ToggleItem({ label, description, isActive, onToggle }: any) {
+function ToggleItem({ label, description, isActive, onToggle }: {
+  label: string
+  description: string
+  isActive: boolean
+  onToggle: () => void
+}) {
   return (
     <div className="flex items-center justify-between">
       <div>

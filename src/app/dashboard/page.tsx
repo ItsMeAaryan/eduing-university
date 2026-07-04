@@ -1,9 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, query, where, onSnapshot, doc, orderBy, or } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, or } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase/config'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Users, Clock, CheckCircle, BookOpen, ArrowUpRight, Calendar, MoreHorizontal } from 'lucide-react'
@@ -13,14 +14,14 @@ import { useToast } from '@/components/Toast'
 const fadeUp = (i: number) => ({
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] as any }
+  transition: { duration: 0.4, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
 })
 
 export default function UniversityDashboard() {
   const router = useRouter()
   const { toast } = useToast()
-  const [apps, setApps] = useState<any[]>([])
-  const [programs, setPrograms] = useState<any[]>([])
+  const [apps, setApps] = useState<FirestoreRecord[]>([])
+  const [programs, setPrograms] = useState<FirestoreRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function UniversityDashboard() {
       await updateApplicationStatus(appId, studentId, status)
       toast.success(`Application updated to ${status.replace('_', ' ')}`)
     } catch (error) {
+      console.error(error)
       toast.error('Failed to update status')
     }
   }
@@ -61,17 +63,34 @@ export default function UniversityDashboard() {
   const total = apps.length
   const underReview = apps.filter(a => a.status === 'under_review').length
   const selected = apps.filter(a => a.status === 'selected').length
-  const recent = [...apps].sort((a, b) => (b.appliedAt?.seconds || 0) - (a.appliedAt?.seconds || 0)).slice(0, 5)
+  const recent = useMemo(
+    () =>
+      [...apps]
+        .sort((a, b) => {
+          const aSeconds = (a.appliedAt as { seconds?: number } | undefined)?.seconds ?? 0
+          const bSeconds = (b.appliedAt as { seconds?: number } | undefined)?.seconds ?? 0
+          return bSeconds - aSeconds
+        })
+        .slice(0, 5),
+    [apps]
+  )
 
-  const deadlines = programs
-    .filter(p => p.deadline)
-    .map(p => {
-      const d = new Date(p.deadline)
-      const days = Math.ceil((d.getTime() - Date.now()) / 86400000)
-      return { ...p, days, date: d }
-    })
-    .filter(p => p.days > -30) // Show recently closed too, but filter in UI
-    .sort((a, b) => a.days - b.days)
+  // Date.now() must not be called directly during render (React's purity
+  // rule) — capture it once via lazy useState initializer instead, since
+  // that runs only on mount, not on every re-render.
+  const [now] = useState(() => Date.now())
+
+  const deadlines = useMemo(() => {
+    return programs
+      .filter(p => p.deadline)
+      .map((p): FirestoreRecord & { days: number; date: Date } => {
+        const d = new Date(p.deadline as string)
+        const days = Math.ceil((d.getTime() - now) / 86400000)
+        return { ...p, days, date: d }
+      })
+      .filter(p => p.days > -30) // Show recently closed too, but filter in UI
+      .sort((a, b) => a.days - b.days)
+  }, [programs, now])
 
   const upcomingDeadlines = deadlines.filter(p => p.days > 0).slice(0, 3)
 
@@ -82,7 +101,7 @@ export default function UniversityDashboard() {
     { label: 'Programs Listed', value: programs.length, icon: BookOpen, color: '#818CF8', bg: 'rgba(129,140,248,0.1)', sub: 'Active courses' },
   ]
 
-  const STATUS_STYLES: any = {
+  const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
     submitted: { bg: 'rgba(91,95,239,0.15)', color: '#818CF8', label: 'Submitted' },
     under_review: { bg: 'rgba(245,158,11,0.15)', color: '#FCD34D', label: 'Under Review' },
     selected: { bg: 'rgba(16,185,129,0.15)', color: '#34D399', label: 'Selected' },
@@ -234,7 +253,7 @@ export default function UniversityDashboard() {
   )
 }
 
-function ActionDropdown({ app, onUpdate }: { app: any, onUpdate: (status: string) => void }) {
+function ActionDropdown({ app, onUpdate }: { app: FirestoreRecord, onUpdate: (status: string) => void }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const options = [

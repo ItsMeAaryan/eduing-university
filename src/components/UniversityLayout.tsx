@@ -1,14 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, FileText, BookOpen,
-  ClipboardList, Users, BarChart3,
-  Building2, Settings, LogOut, Bell, ChevronRight,
+  LayoutDashboard,
+  ClipboardList,
+  Settings, LogOut, Bell, ChevronRight,
   GraduationCap, Calendar, Armchair, TrendingUp, UserCircle
 } from 'lucide-react'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, onSnapshot, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase/config'
@@ -27,7 +29,7 @@ const NAV = [
 export default function UniversityLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [uniData, setUniData] = useState<any>(null)
+  const [uniData, setUniData] = useState<FirestoreRecord | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -90,10 +92,12 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
         <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             {/* ✅ Logo image */}
-            <img
+            <Image
               src="/bandwlogo.PNG"
               alt="EDUING Logo"
-              style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'invert(1)' }}
+              width={32}
+              height={32}
+              style={{ objectFit: 'contain', filter: 'invert(1)' }}
             />
             <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.03em' }}>
               <span style={{ color: '#F0F0FF' }}>EDU</span>
@@ -116,7 +120,8 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
               fontSize: '15px', fontWeight: '800', color: 'white', overflow: 'hidden'
             }}>
               {uniData?.logoURL ? (
-                <img src={uniData.logoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
+                <img src={uniData.logoURL as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : initial}
             </div>
             <div style={{ overflow: 'hidden' }}>
@@ -206,7 +211,8 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
               fontSize: '14px', fontWeight: '800', color: 'white', cursor: 'pointer', overflow: 'hidden'
             }}>
               {uniData?.logoURL ? (
-                <img src={uniData.logoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
+                <img src={uniData.logoURL as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : initial}
             </div>
           </div>

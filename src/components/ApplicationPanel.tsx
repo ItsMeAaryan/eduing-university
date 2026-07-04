@@ -4,10 +4,22 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ExternalLink, Mail, Phone, FileText, AlertCircle } from 'lucide-react'
 import { updateApplicationStatus } from '@/lib/firebase/applications'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { useToast } from '@/components/Toast'
 
+interface DocumentEntry {
+  name: string
+  url: string
+}
+
+interface StatusHistoryEntry {
+  status: string
+  date?: string
+  note?: string
+}
+
 interface ApplicationPanelProps {
-  app: any | null
+  app: (FirestoreRecord & { documents?: DocumentEntry[]; statusHistory?: StatusHistoryEntry[] }) | null
   onClose: () => void
 }
 
@@ -23,6 +35,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
       await updateApplicationStatus(app.id, app.studentId, status)
       toast.success(`Status updated to ${status}`)
     } catch (error) {
+      console.error(error)
       toast.error('Failed to update status')
     } finally {
       setLoading(false)
@@ -115,7 +128,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
             <section className="space-y-4">
               <h4 className="section-label">Documents</h4>
               <div className="space-y-2">
-                {app.documents?.map((doc: any, i: number) => (
+                {app.documents?.map((doc: DocumentEntry, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-white/2 rounded-xl border border-white/5 hover:border-brand-primary/30 transition-colors group">
                     <div className="flex items-center gap-3">
                       <FileText size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
@@ -139,12 +152,12 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
             <section className="space-y-4">
               <h4 className="section-label">Application Timeline</h4>
               <div className="space-y-6 pl-4 relative before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-brand-border">
-                {app.statusHistory?.map((event: any, i: number) => (
+                {app.statusHistory?.map((event: StatusHistoryEntry, i: number) => (
                   <div key={i} className="relative pl-6">
                     <div className="absolute left-[-4.5px] top-1.5 w-2 h-2 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
                     <p className="text-sm font-semibold text-white capitalize">{event.status.replace('_', ' ')}</p>
                     <p className="text-[10px] text-text-muted mt-0.5">
-                      {new Date(event.date).toLocaleString()}
+                      {event.date ? new Date(event.date).toLocaleString() : '—'}
                     </p>
                     {event.note && (
                       <p className="text-xs text-text-secondary mt-1 bg-white/5 p-2 rounded-lg">
