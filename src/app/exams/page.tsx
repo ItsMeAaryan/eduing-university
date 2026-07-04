@@ -62,6 +62,7 @@ export default function ExamManagementPage() {
 
   return (
     <div className="space-y-8">
+      <h1 className="text-xl font-bold text-white sr-only">Exam Management</h1>
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-brand-surface p-1 rounded-xl border border-brand-border">
         {tabs.map((tab) => (

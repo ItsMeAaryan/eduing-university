@@ -107,6 +107,7 @@ export default function SeatAllocationPage() {
 
   return (
     <div className="space-y-8">
+      <h1 className="text-xl font-bold text-white sr-only">Seat Allocation</h1>
       {/* Seat Matrix */}
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">

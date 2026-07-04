@@ -100,6 +100,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
+      <h1 className="text-xl font-bold text-white sr-only">University Profile</h1>
       {/* Banner & Logo Section */}
       <div className="relative">
         <div className="h-[240px] w-full rounded-2xl overflow-hidden bg-linear-to-br from-brand-primary/20 to-purple-600/20 border border-brand-border group relative">
