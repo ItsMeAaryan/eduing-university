@@ -17,7 +17,7 @@ import {
   Moon,
   Laptop
 } from 'lucide-react'
-import { auth } from '@/lib/firebase'
+import { auth } from '@/lib/firebase/config'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
 

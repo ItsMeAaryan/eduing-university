@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { X, Save, BookOpen, Clock, Layers, DollarSign, Users, Briefcase } from 'lucide-react'
 import { addProgram, updateProgram } from '@/lib/firebase/programs'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { auth } from '@/lib/firebase/config'
 import { useToast } from '@/components/Toast'
 
 interface ProgramPanelProps {
-  program: any | null
+  program: FirestoreRecord | null
   onClose: () => void
 }
 
@@ -30,24 +31,30 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
     careerProspects: ''
   })
 
-  useEffect(() => {
+  // "Adjust state when a prop changes" pattern (React docs), computed
+  // during render rather than via a useEffect+setState round-trip — this
+  // avoids the extra render pass and the cascading-render lint warning
+  // that calling setState synchronously inside an effect body produces.
+  const [prevProgram, setPrevProgram] = useState(program)
+  if (program !== prevProgram) {
+    setPrevProgram(program)
     if (program) {
       setFormData({
-        name: program.name || '',
-        level: program.level || 'UG',
-        duration: program.duration || '4 Years',
-        totalSeats: program.totalSeats || 60,
-        filledSeats: program.filledSeats || 0,
-        annualFee: program.annualFee || 0,
-        deadline: program.deadline || '',
-        eligibility: program.eligibility || '',
-        description: program.description || '',
-        hasEntranceExam: program.hasEntranceExam || false,
-        entranceExam: program.entranceExam || '',
-        careerProspects: program.careerProspects || ''
+        name: (program.name as string) || '',
+        level: (program.level as string) || 'UG',
+        duration: (program.duration as string) || '4 Years',
+        totalSeats: (program.totalSeats as number) || 60,
+        filledSeats: (program.filledSeats as number) || 0,
+        annualFee: (program.annualFee as number) || 0,
+        deadline: (program.deadline as string) || '',
+        eligibility: (program.eligibility as string) || '',
+        description: (program.description as string) || '',
+        hasEntranceExam: (program.hasEntranceExam as boolean) || false,
+        entranceExam: (program.entranceExam as string) || '',
+        careerProspects: (program.careerProspects as string) || ''
       })
     }
-  }, [program])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,8 +102,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
         toast.success('Program added successfully')
       }
       onClose()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save program')
+    } catch (error) {
+      console.error(error)
+      toast.error(error instanceof Error ? error.message : 'Failed to save program')
     } finally {
       setLoading(false)
     }

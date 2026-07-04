@@ -1,4 +1,5 @@
 import { db } from './config'
+import type { FirestoreRecord } from './types'
 import { 
   collection, 
   query, 
@@ -10,12 +11,16 @@ import {
   getDocs
 } from 'firebase/firestore'
 
-export const subscribeToNotifications = (userId: string, callback: (notifications: any[]) => void) => {
+export const subscribeToNotifications = (userId: string, callback: (notifications: FirestoreRecord[]) => void) => {
   const q = query(collection(db, 'notifications'), where('userId', '==', userId))
   return onSnapshot(q, (snapshot) => {
     const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     // Sort by createdAt desc
-    notifications.sort((a: any, b: any) => b.createdAt?.seconds - a.createdAt?.seconds)
+    notifications.sort((a: FirestoreRecord, b: FirestoreRecord) => {
+      const aSeconds = (a.createdAt as { seconds?: number } | undefined)?.seconds ?? 0
+      const bSeconds = (b.createdAt as { seconds?: number } | undefined)?.seconds ?? 0
+      return bSeconds - aSeconds
+    })
     callback(notifications)
   })
 }

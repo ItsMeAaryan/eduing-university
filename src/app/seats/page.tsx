@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { auth, db } from '@/lib/firebase/config'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
 import { subscribeToApplications } from '@/lib/firebase/applications'
 import { 
@@ -17,8 +18,8 @@ import { useToast } from '@/components/Toast'
 
 export default function SeatAllocationPage() {
   const { toast } = useToast()
-  const [programs, setPrograms] = useState<any[]>([])
-  const [apps, setApps] = useState<any[]>([])
+  const [programs, setPrograms] = useState<FirestoreRecord[]>([])
+  const [apps, setApps] = useState<FirestoreRecord[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -39,12 +40,17 @@ export default function SeatAllocationPage() {
     return () => unsubscribeAuth()
   }, [])
 
-  const handleAllotSeat = async (app: any, programId: string) => {
+  const handleAllotSeat = async (app: FirestoreRecord, programId: string) => {
     try {
       const universityId = auth.currentUser?.uid
       const program = programs.find(p => p.id === programId)
       
-      if (program.filledSeats >= program.totalSeats) {
+      if (!program) {
+        toast.error('Program not found')
+        return
+      }
+
+      if (Number(program.filledSeats ?? 0) >= Number(program.totalSeats ?? 0)) {
         toast.error('No seats available in this program')
         return
       }
@@ -84,6 +90,7 @@ export default function SeatAllocationPage() {
 
       toast.success('Seat allotted successfully!')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to allot seat')
     }
   }

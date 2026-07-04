@@ -1,4 +1,5 @@
 import { db } from './config'
+import type { FirestoreRecord, FirestoreWriteData } from './types'
 import { 
   collection, 
   query, 
@@ -11,7 +12,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore'
 
-export const subscribeToPrograms = (universityId: string, callback: (programs: any[]) => void) => {
+export const subscribeToPrograms = (universityId: string, callback: (programs: FirestoreRecord[]) => void) => {
   const q = query(collection(db, 'programs'), where('universityId', '==', universityId))
   return onSnapshot(q, (snapshot) => {
     const programs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -19,7 +20,7 @@ export const subscribeToPrograms = (universityId: string, callback: (programs: a
   })
 }
 
-export const addProgram = async (universityId: string, programData: any) => {
+export const addProgram = async (universityId: string, programData: FirestoreWriteData) => {
   await addDoc(collection(db, 'programs'), {
     ...programData,
     universityId,
@@ -28,7 +29,7 @@ export const addProgram = async (universityId: string, programData: any) => {
   })
 }
 
-export const updateProgram = async (programId: string, programData: any) => {
+export const updateProgram = async (programId: string, programData: FirestoreWriteData) => {
   const programRef = doc(db, 'programs', programId)
   await updateDoc(programRef, {
     ...programData,

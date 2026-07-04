@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { auth, storage } from '@/lib/firebase/config'
+import type { FirestoreRecord, FirestoreWriteData } from '@/lib/firebase/types'
 import { subscribeToUniversity, updateUniversityProfile } from '@/lib/firebase/university'
 import { 
   Camera, 
@@ -17,7 +18,6 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useToast } from '@/components/Toast'
 
@@ -32,8 +32,8 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [university, setUniversity] = useState<any>(null)
-  const [formData, setFormData] = useState<any>({})
+  const [university, setUniversity] = useState<FirestoreRecord | null>(null)
+  const [formData, setFormData] = useState<FirestoreWriteData>({})
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
@@ -64,11 +64,12 @@ export default function ProfilePage() {
       } else if (type === 'banner') {
         await updateUniversityProfile(uid, { bannerURL: url })
       } else if (type === 'gallery') {
-        const currentGallery = university.gallery || []
+        const currentGallery = university?.gallery || []
         await updateUniversityProfile(uid, { gallery: [...currentGallery, url].slice(0, 10) })
       }
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated!`)
     } catch (error) {
+      console.error(error)
       toast.error('Upload failed')
     }
   }
@@ -80,6 +81,7 @@ export default function ProfilePage() {
       setIsEditing(false)
       toast.success('Profile updated successfully')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to save profile')
     } finally {
       setSaving(false)
@@ -102,7 +104,8 @@ export default function ProfilePage() {
       <div className="relative">
         <div className="h-[240px] w-full rounded-2xl overflow-hidden bg-linear-to-br from-brand-primary/20 to-purple-600/20 border border-brand-border group relative">
           {university?.bannerURL ? (
-            <img src={university.bannerURL} alt="" className="w-full h-full object-cover" />
+            // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
+            <img src={university.bannerURL as string} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-muted">
               <Layout size={48} className="opacity-20" />
@@ -126,7 +129,8 @@ export default function ProfilePage() {
         <div className="absolute -bottom-10 left-10">
           <div className="w-32 h-32 rounded-3xl bg-brand-surface border-4 border-brand-bg shadow-2xl overflow-hidden group relative">
             {university?.logoURL ? (
-              <img src={university.logoURL} alt="" className="w-full h-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
+              <img src={university.logoURL as string} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-brand-primary to-purple-600 text-white font-bold text-4xl">
                 {university?.name?.charAt(0) || 'U'}
@@ -277,6 +281,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-3 gap-4">
               {university?.gallery?.map((url: string, i: number) => (
                 <div key={i} className="aspect-square rounded-xl overflow-hidden border border-white/5 relative group">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image */}
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   <button 
                     onClick={async () => {

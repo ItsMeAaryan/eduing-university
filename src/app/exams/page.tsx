@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { auth, db } from '@/lib/firebase/config'
+import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
 import { subscribeToApplications } from '@/lib/firebase/applications'
 import { 
@@ -12,20 +13,17 @@ import {
   Users, 
   Download, 
   Printer, 
-  Save, 
-  FileText,
-  AlertCircle
+  FileText
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/components/Toast'
 import Link from 'next/link'
 
 export default function ExamManagementPage() {
-  const { toast } = useToast()
-  const [programs, setPrograms] = useState<any[]>([])
-  const [apps, setApps] = useState<any[]>([])
-  const [schedules, setSchedules] = useState<any[]>([])
+  const [programs, setPrograms] = useState<FirestoreRecord[]>([])
+  const [apps, setApps] = useState<FirestoreRecord[]>([])
+  const [schedules, setSchedules] = useState<FirestoreRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
 
@@ -92,11 +90,11 @@ export default function ExamManagementPage() {
   )
 }
 
-function ExamScheduleView({ programs, schedules, apps }: { programs: any[], schedules: any[], apps: any[] }) {
+function ExamScheduleView({ programs, schedules, apps }: { programs: FirestoreRecord[], schedules: FirestoreRecord[], apps: FirestoreRecord[] }) {
   const { toast } = useToast()
   const [isFormOpen, setIsFormOpen] = useState<string | null>(null)
 
-  const handlePublish = async (programId: string, formData: any) => {
+  const handlePublish = async (programId: string, formData: Record<string, unknown>) => {
     try {
       const uid = auth.currentUser?.uid
       await addDoc(collection(db, 'exam_schedules'), {
@@ -108,8 +106,12 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: any[], sche
       })
       
       // Notify applicants
-      const programApps = apps.filter((a: any) => a.programId === programId)
-      const program = programs.find((p: any) => p.id === programId)
+      const programApps = apps.filter((a: FirestoreRecord) => a.programId === programId)
+      const program = programs.find((p: FirestoreRecord) => p.id === programId)
+      if (!program) {
+        toast.error('Program not found')
+        return
+      }
       
       for (const app of programApps) {
         await addDoc(collection(db, 'notifications'), {
@@ -125,14 +127,15 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: any[], sche
       toast.success('Exam schedule published!')
       setIsFormOpen(null)
     } catch (error) {
+      console.error(error)
       toast.error('Failed to publish schedule')
     }
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {programs.map((p: any) => {
-        const schedule = schedules.find((s: any) => s.programId === p.id)
+      {programs.map((p: FirestoreRecord) => {
+        const schedule = schedules.find((s: FirestoreRecord) => s.programId === p.id)
         return (
           <div key={p.id} className="bg-brand-surface border border-brand-border rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
@@ -176,7 +179,7 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: any[], sche
               <ExamScheduleForm 
                 program={p} 
                 onClose={() => setIsFormOpen(null)} 
-                onSave={(data: any) => handlePublish(p.id, data)}
+                onSave={(data: Record<string, unknown>) => handlePublish(p.id, data)}
                 initialData={schedule}
               />
             )}
@@ -211,7 +214,12 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: any[], sche
   )
 }
 
-function ExamScheduleForm({ program, onClose, onSave, initialData }: any) {
+function ExamScheduleForm({ program, onClose, onSave, initialData }: {
+  program: FirestoreRecord
+  onClose: () => void
+  onSave: (data: Record<string, unknown>) => void
+  initialData?: FirestoreRecord
+}) {
   const [formData, setFormData] = useState({
     date: initialData?.date || '',
     time: initialData?.time || '',
@@ -282,11 +290,11 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: any) {
   )
 }
 
-function AdmitCardsView({ programs, schedules, apps }: any) {
+function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreRecord[], schedules: FirestoreRecord[], apps: FirestoreRecord[] }) {
   const [selectedProgram, setSelectedProgram] = useState(programs[0]?.id || '')
   
-  const programApps = apps.filter((a: any) => a.programId === selectedProgram)
-  const schedule = schedules.find((s: any) => s.programId === selectedProgram)
+  const programApps = apps.filter((a: FirestoreRecord) => a.programId === selectedProgram)
+  const schedule = schedules.find((s: FirestoreRecord) => s.programId === selectedProgram)
 
   if (!selectedProgram) return <div className="text-center py-20 text-text-muted italic">No exam programs found</div>
 
@@ -301,7 +309,7 @@ function AdmitCardsView({ programs, schedules, apps }: any) {
               value={selectedProgram}
               onChange={(e) => setSelectedProgram(e.target.value)}
             >
-              {programs.map((p: any) => (
+              {programs.map((p: FirestoreRecord) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
@@ -323,7 +331,7 @@ function AdmitCardsView({ programs, schedules, apps }: any) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/4">
-              {programApps.map((app: any, i: number) => (
+              {programApps.map((app: FirestoreRecord, i: number) => (
                 <tr key={app.id} className="hover:bg-white/2 transition-colors">
                   <td className="px-6 py-4 text-sm font-mono text-brand-primary">
                     EXAM2026{String(i + 1).padStart(3, '0')}
@@ -353,17 +361,17 @@ function AdmitCardsView({ programs, schedules, apps }: any) {
   )
 }
 
-function ResultsView({ programs, schedules, apps }: any) {
+function ResultsView({ programs, apps }: { programs: FirestoreRecord[], apps: FirestoreRecord[], schedules?: FirestoreRecord[] }) {
   const { toast } = useToast()
   const [selectedProgram, setSelectedProgram] = useState(programs[0]?.id || '')
-  const [scores, setScores] = useState<any>({})
+  const [scores, setScores] = useState<Record<string, string>>({})
 
-  const programApps = apps.filter((a: any) => a.programId === selectedProgram)
+  const programApps = apps.filter((a: FirestoreRecord) => a.programId === selectedProgram)
 
   const handlePublishResults = async () => {
     try {
       const promise = Promise.all(
-        programApps.map(async (app: any) => {
+        programApps.map(async (app: FirestoreRecord) => {
           const score = scores[app.id]
           if (score === undefined) return
           
@@ -390,6 +398,7 @@ function ResultsView({ programs, schedules, apps }: any) {
         error: 'Failed to publish results'
       })
     } catch (error) {
+      console.error(error)
       toast.error('Failed to publish results')
     }
   }
@@ -404,7 +413,7 @@ function ResultsView({ programs, schedules, apps }: any) {
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
           >
-            {programs.map((p: any) => (
+            {programs.map((p: FirestoreRecord) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
@@ -428,7 +437,7 @@ function ResultsView({ programs, schedules, apps }: any) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/4">
-            {programApps.map((app: any, i: number) => (
+            {programApps.map((app: FirestoreRecord, i: number) => (
               <tr key={app.id} className="hover:bg-white/2 transition-colors">
                 <td className="px-6 py-4 text-sm font-medium text-white">{app.studentName}</td>
                 <td className="px-6 py-4 text-sm font-mono text-text-muted">EXAM2026{String(i+1).padStart(3, '0')}</td>
@@ -450,13 +459,13 @@ function ResultsView({ programs, schedules, apps }: any) {
   )
 }
 
-function RankListView({ programs, apps }: any) {
+function RankListView({ programs, apps }: { programs: FirestoreRecord[], apps: FirestoreRecord[], schedules?: FirestoreRecord[] }) {
   const [selectedProgram, setSelectedProgram] = useState(programs[0]?.id || '')
   
   const rankList = useMemo(() => {
     return apps
-      .filter((a: any) => a.programId === selectedProgram && a.entranceScore !== undefined)
-      .sort((a: any, b: any) => b.entranceScore - a.entranceScore)
+      .filter((a: FirestoreRecord) => a.programId === selectedProgram && a.entranceScore !== undefined)
+      .sort((a: FirestoreRecord, b: FirestoreRecord) => Number(b.entranceScore) - Number(a.entranceScore))
   }, [apps, selectedProgram])
 
   return (
@@ -468,7 +477,7 @@ function RankListView({ programs, apps }: any) {
           value={selectedProgram}
           onChange={(e) => setSelectedProgram(e.target.value)}
         >
-          {programs.map((p: any) => (
+          {programs.map((p: FirestoreRecord) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
@@ -485,7 +494,7 @@ function RankListView({ programs, apps }: any) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/4">
-            {rankList.map((app: any, i: number) => (
+            {rankList.map((app: FirestoreRecord, i: number) => (
               <tr key={app.id} className="hover:bg-white/2 transition-colors">
                 <td className="px-6 py-4">
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
