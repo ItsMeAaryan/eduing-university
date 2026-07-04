@@ -31,6 +31,9 @@ export default function NotificationBell() {
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-white/5 transition-colors"
+        aria-label="Notifications"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <Bell size={20} className="text-text-secondary hover:text-white" />
         {unreadCount > 0 && (
@@ -46,6 +49,7 @@ export default function NotificationBell() {
             <div 
               className="fixed inset-0 z-40" 
               onClick={() => setIsOpen(false)} 
+              aria-hidden="true"
             />
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -70,10 +74,10 @@ export default function NotificationBell() {
                   </div>
                 ) : (
                   notifications.map((n) => (
-                    <div 
+                    <button 
                       key={n.id}
                       onClick={() => markNotificationRead(n.id)}
-                      className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/2 transition-colors flex gap-3 ${!n.isRead ? 'bg-brand-primary/5' : ''}`}
+                      className={`w-full text-left p-4 border-b border-white/5 cursor-pointer hover:bg-white/2 transition-colors flex gap-3 ${!n.isRead ? 'bg-brand-primary/5' : ''}`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         n.type === 'selected' ? 'bg-brand-success/10 text-brand-success' :
@@ -98,7 +102,7 @@ export default function NotificationBell() {
                       {!n.isRead && (
                         <div className="w-1.5 h-1.5 bg-brand-primary rounded-full mt-2" />
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

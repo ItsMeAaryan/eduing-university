@@ -147,10 +147,11 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
           {/* Section: Basic Info */}
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Program Identity</label>
+              <label htmlFor="program-name" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Program Identity</label>
               <div className="relative group">
                 <Layers size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
                 <input 
+                  id="program-name"
                   type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. B.Tech Computer Science"
@@ -161,8 +162,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Level</label>
+                <label htmlFor="program-level" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Level</label>
                 <select 
+                  id="program-level"
                   value={formData.level}
                   onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                   className="w-full px-4 py-3.5 bg-white/3 border border-brand-border rounded-xl text-white text-sm focus:border-brand-primary focus:bg-white/5 outline-none transition-all cursor-pointer appearance-none"
@@ -177,8 +179,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Duration</label>
+                <label htmlFor="program-duration" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Duration</label>
                 <input 
+                  id="program-duration"
                   type="text" required value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                   placeholder="e.g. 4 Years"
@@ -189,10 +192,11 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Annual Fee (₹)</label>
+                <label htmlFor="program-annualFee" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Annual Fee (₹)</label>
                 <div className="relative group">
                   <DollarSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
                   <input 
+                    id="program-annualFee"
                     type="number" required value={formData.annualFee}
                     onChange={(e) => setFormData({ ...formData, annualFee: parseInt(e.target.value) || 0 })}
                     className="w-full pl-12 pr-4 py-3.5 bg-white/3 border border-brand-border rounded-xl text-white text-sm focus:border-brand-primary focus:bg-white/5 outline-none transition-all"
@@ -200,10 +204,11 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Intake Capacity</label>
+                <label htmlFor="program-totalSeats" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Intake Capacity</label>
                 <div className="relative group">
                   <Users size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
                   <input 
+                    id="program-totalSeats"
                     type="number" required value={formData.totalSeats}
                     onChange={(e) => setFormData({ ...formData, totalSeats: parseInt(e.target.value) || 0 })}
                     className="w-full pl-12 pr-4 py-3.5 bg-white/3 border border-brand-border rounded-xl text-white text-sm focus:border-brand-primary focus:bg-white/5 outline-none transition-all"
@@ -213,10 +218,11 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Admission Deadline</label>
+              <label htmlFor="program-deadline" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Admission Deadline</label>
               <div className="relative group">
                 <Clock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
                 <input 
+                  id="program-deadline"
                   type="date" required value={formData.deadline}
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   className="w-full pl-12 pr-4 py-3.5 bg-white/3 border border-brand-border rounded-xl text-white text-sm focus:border-brand-primary focus:bg-white/5 outline-none transition-all color-scheme-dark"
@@ -225,8 +231,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Eligibility Criteria</label>
+              <label htmlFor="program-eligibility" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Eligibility Criteria</label>
               <textarea 
+                id="program-eligibility"
                 value={formData.eligibility}
                 onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
                 placeholder="e.g. 60% in 12th with Physics, Chemistry, and Mathematics"
@@ -269,10 +276,11 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Career Prospects</label>
+              <label htmlFor="program-careerProspects" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Career Prospects</label>
               <div className="relative group">
                 <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
                 <input 
+                  id="program-careerProspects"
                   type="text" value={formData.careerProspects}
                   onChange={(e) => setFormData({ ...formData, careerProspects: e.target.value })}
                   placeholder="e.g. Software Engineer, Systems Architect"

@@ -238,8 +238,9 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Date</label>
+              <label htmlFor="exam-date" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Date</label>
               <input 
+                id="exam-date"
                 type="date"
                 className="input-dark scheme-dark"
                 value={formData.date}
@@ -247,8 +248,9 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Time</label>
+              <label htmlFor="exam-time" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Time</label>
               <input 
+                id="exam-time"
                 type="time"
                 className="input-dark scheme-dark"
                 value={formData.time}
@@ -257,8 +259,9 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Centers (Comma separated)</label>
+            <label htmlFor="exam-centers" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Exam Centers (Comma separated)</label>
             <input 
+              id="exam-centers"
               type="text"
               className="input-dark"
               placeholder="e.g. Bangalore Campus, Mumbai Center"
@@ -267,8 +270,9 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Instructions</label>
+            <label htmlFor="exam-instructions" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Instructions</label>
             <textarea 
+              id="exam-instructions"
               className="input-dark min-h-[100px] resize-none"
               placeholder="Bring your ID card, No electronic devices..."
               value={formData.instructions}
@@ -344,7 +348,8 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                     {schedule?.centers?.[i % schedule.centers.length] || 'TBD'}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="p-2 rounded-lg hover:bg-white/5 text-brand-primary">
+                    {/* TODO: no admit-card generation/download handler exists yet — this button is currently non-functional. Left as-is per audit guardrails (not inventing business logic without a spec); flagging for implementation. */}
+                    <button className="p-2 rounded-lg hover:bg-white/5 text-brand-primary" aria-label="Download admit card" disabled>
                       <Download size={16} />
                     </button>
                   </td>

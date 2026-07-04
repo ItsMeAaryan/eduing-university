@@ -90,7 +90,7 @@ export default function SettingsPage() {
             <span className="text-[10px] font-bold uppercase text-brand-success bg-brand-success/10 px-2 py-1 rounded">Verified</span>
           </div>
 
-          <div className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/1 transition-colors" onClick={handlePasswordReset}>
+          <div className="p-6 flex items-center justify-between group hover:bg-white/1 transition-colors">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-white/3 flex items-center justify-center text-text-muted">
                 <Key size={18} />
@@ -100,7 +100,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-white font-medium">••••••••••••</p>
               </div>
             </div>
-            <button className="text-sm text-brand-primary font-bold hover:underline flex items-center gap-1">
+            <button onClick={handlePasswordReset} className="text-sm text-brand-primary font-bold hover:underline flex items-center gap-1">
               Change <ChevronRight size={14} />
             </button>
           </div>

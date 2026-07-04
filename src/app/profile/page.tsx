@@ -105,7 +105,7 @@ export default function ProfilePage() {
         <div className="h-[240px] w-full rounded-2xl overflow-hidden bg-linear-to-br from-brand-primary/20 to-purple-600/20 border border-brand-border group relative">
           {university?.bannerURL ? (
             // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
-            <img src={university.bannerURL as string} alt="" className="w-full h-full object-cover" />
+            <img src={university.bannerURL as string} alt="University banner" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-muted">
               <Layout size={48} className="opacity-20" />
@@ -130,7 +130,7 @@ export default function ProfilePage() {
           <div className="w-32 h-32 rounded-3xl bg-brand-surface border-4 border-brand-bg shadow-2xl overflow-hidden group relative">
             {university?.logoURL ? (
               // eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image
-              <img src={university.logoURL as string} alt="" className="w-full h-full object-cover" />
+              <img src={university.logoURL as string} alt="University logo" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-brand-primary to-purple-600 text-white font-bold text-4xl">
                 {university?.name?.charAt(0) || 'U'}
@@ -171,9 +171,10 @@ export default function ProfilePage() {
             <h3 className="section-label">General Information</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-text-muted mb-2">University Name</label>
+                <label htmlFor="profile-name" className="block text-xs font-semibold uppercase text-text-muted mb-2">University Name</label>
                 {isEditing ? (
                   <input 
+                    id="profile-name"
                     className="input-dark text-lg font-bold" 
                     value={formData.name || ''} 
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -184,9 +185,10 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-text-muted mb-2">Tagline / Motto</label>
+                <label htmlFor="profile-tagline" className="block text-xs font-semibold uppercase text-text-muted mb-2">Tagline / Motto</label>
                 {isEditing ? (
                   <input 
+                    id="profile-tagline"
                     className="input-dark" 
                     placeholder="Empowering future leaders..."
                     value={formData.tagline || ''} 
@@ -198,9 +200,10 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-text-muted mb-2">About Institution</label>
+                <label htmlFor="profile-about" className="block text-xs font-semibold uppercase text-text-muted mb-2">About Institution</label>
                 {isEditing ? (
                   <textarea 
+                    id="profile-about"
                     className="input-dark min-h-[120px] resize-none" 
                     value={formData.about || ''} 
                     onChange={(e) => setFormData({...formData, about: e.target.value})}
@@ -212,17 +215,17 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-text-muted mb-2">Founded Year</label>
+                  <label htmlFor="profile-foundedYear" className="block text-xs font-semibold uppercase text-text-muted mb-2">Founded Year</label>
                   {isEditing ? (
-                    <input className="input-dark" value={formData.foundedYear || ''} onChange={(e) => setFormData({...formData, foundedYear: e.target.value})} />
+                    <input id="profile-foundedYear" className="input-dark" value={formData.foundedYear || ''} onChange={(e) => setFormData({...formData, foundedYear: e.target.value})} />
                   ) : (
                     <p className="text-sm text-white font-medium">{university?.foundedYear || 'N/A'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-text-muted mb-2">Institution Type</label>
+                  <label htmlFor="profile-type" className="block text-xs font-semibold uppercase text-text-muted mb-2">Institution Type</label>
                   {isEditing ? (
-                    <select className="input-dark" value={formData.type || ''} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                    <select id="profile-type" className="input-dark" value={formData.type || ''} onChange={(e) => setFormData({...formData, type: e.target.value})}>
                       <option value="Private">Private</option>
                       <option value="Public">Public / Government</option>
                       <option value="Deemed">Deemed</option>
@@ -282,7 +285,7 @@ export default function ProfilePage() {
               {university?.gallery?.map((url: string, i: number) => (
                 <div key={i} className="aspect-square rounded-xl overflow-hidden border border-white/5 relative group">
                   {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Firebase Storage URL; see next.config.ts remotePatterns note before switching to next/image */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="University gallery" className="w-full h-full object-cover" />
                   <button 
                     onClick={async () => {
                       const updated = university.gallery.filter((u: string) => u !== url)
@@ -310,9 +313,10 @@ export default function ProfilePage() {
             <h3 className="section-label">Placement & Stats</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Avg Salary (LPA)</label>
+                <label htmlFor="profile-avgSalary" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Avg Salary (LPA)</label>
                 <div className="relative">
                   <input 
+                    id="profile-avgSalary"
                     type="number"
                     disabled={!isEditing}
                     className="input-dark pl-8"
@@ -323,9 +327,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Highest Package (LPA)</label>
+                <label htmlFor="profile-highestPackage" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Highest Package (LPA)</label>
                 <div className="relative">
                   <input 
+                    id="profile-highestPackage"
                     type="number"
                     disabled={!isEditing}
                     className="input-dark pl-8"
@@ -336,9 +341,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Total Students</label>
+                <label htmlFor="profile-totalStudents" className="block text-[10px] font-bold uppercase text-text-muted mb-1.5">Total Students</label>
                 <div className="relative">
                   <input 
+                    id="profile-totalStudents"
                     type="number"
                     disabled={!isEditing}
                     className="input-dark pl-8"
