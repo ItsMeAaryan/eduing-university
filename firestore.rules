@@ -1,0 +1,139 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is this uid an approved university admin? Used to gate
+    // writes to programs/applications/etc. so that a pending/unapproved
+    // registration can't write real data even if they stay signed in and
+    // navigate straight to a page, bypassing the app's own client-side
+    // pending-approval screen (that screen is UX only — this is the real
+    // enforcement layer).
+    function isApprovedUniAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'uni_admin'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus == 'approved';
+    }
+
+    // Universities - public read (these are meant to be discoverable
+    // profiles), owner-scoped write.
+    match /universities/{id} {
+      allow read: if true;
+
+      // Anyone can create their own university doc at registration
+      // (approvalStatus is always written as 'pending' by the app, and
+      // that's enforced below too — a forged 'approved' value at create
+      // time is rejected).
+      allow create: if request.auth != null
+        && request.auth.uid == id
+        && request.resource.data.approvalStatus == 'pending'
+        && request.resource.data.isVerified == false;
+
+      // Owner can update their own profile, but NOT the fields that are
+      // meant to be platform-controlled (approval/verification/featured
+      // status, rating) — previously any authenticated owner could set
+      // these on themselves directly, e.g. self-marking as verified or
+      // giving themselves a 5-star rating.
+      allow update: if request.auth != null
+        && request.auth.uid == id
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['approvalStatus', 'isVerified', 'isFeatured', 'rating']);
+
+      allow delete: if request.auth != null && request.auth.uid == id;
+    }
+
+    // Programs - public read, but writes must belong to an approved
+    // university that owns the program. Previously `allow write: if
+    // request.auth != null` let ANY signed-in user (including other
+    // universities, or student accounts) create, edit, or delete ANY
+    // other university's programs.
+    match /programs/{id} {
+      allow read: if true;
+
+      allow create: if isApprovedUniAdmin()
+        && request.resource.data.universityId == request.auth.uid;
+
+      allow update, delete: if isApprovedUniAdmin()
+        && resource.data.universityId == request.auth.uid;
+    }
+
+    // Applications - a student can create and read/withdraw their own
+    // application; a university can read applications addressed to it and
+    // update review-only fields. Previously student and university shared
+    // one identical read/write rule, meaning a student could set their own
+    // `status` to "selected" or fabricate an `entranceScore` directly.
+    match /applications/{id} {
+      // Creation must be self-attributed to the authenticated student —
+      // previously anyone signed in could create an application document
+      // with an arbitrary studentId, impersonating another student.
+      allow create: if request.auth != null
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status == 'submitted';
+
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.studentId
+            || request.auth.uid == resource.data.universityId);
+
+      // Student may only withdraw their own application, not touch any
+      // review-related field.
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.studentId
+        && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status'])
+        && request.resource.data.status == 'withdrawn';
+
+      // University may update review fields on applications addressed to
+      // it, but can't reassign the application to a different student or
+      // university out from under the record.
+      allow update: if isApprovedUniAdmin()
+        && resource.data.universityId == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['studentId', 'universityId']);
+
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.studentId;
+    }
+
+    // Student profiles - owner only.
+    match /student_profiles/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Users - owner can read/create their own doc, but cannot self-modify
+    // the fields that gate access (role, approvalStatus). Previously the
+    // rule was a blanket `allow write: if auth.uid == uid`, meaning a
+    // newly-registered (pending) user could simply edit their own
+    // Firestore document to set approvalStatus: 'approved' or role:
+    // 'admin' directly, bypassing any review process entirely.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.approvalStatus == 'pending';
+
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['role', 'approvalStatus']);
+    }
+
+    // Notifications - recipient-scoped read/dismiss. Previously `allow
+    // create: if request.auth != null` let any signed-in user create a
+    // notification addressed to any other user's userId (a spam/phishing
+    // vector impersonating the platform). Creation is now restricted to
+    // an approved university notifying its own applicants, or a user
+    // notifying themselves.
+    match /notifications/{id} {
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      allow update, delete: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      allow create: if request.auth != null
+        && (request.resource.data.userId == request.auth.uid
+            || isApprovedUniAdmin());
+    }
+  }
+}

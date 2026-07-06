@@ -57,6 +57,12 @@ export default function RegisterPage() {
         email: formData.email,
         universityName: formData.universityName,
         role: 'uni_admin',
+        // login/page.tsx reads this exact field from this exact
+        // collection to decide whether to show the pending-approval
+        // screen — it was previously only ever written to the
+        // `universities/{uid}` doc, so the check there could never
+        // actually see a 'pending' value.
+        approvalStatus: 'pending',
         createdAt: serverTimestamp(),
       })
 
@@ -84,7 +90,12 @@ export default function RegisterPage() {
           topRecruiters: formData.topRecruiters.split(',').map(r => r.trim()).filter(r => r !== ''),
         },
         programs: [],
-        approvalStatus: 'approved',
+        // Registrations now require manual approval before dashboard
+        // access is granted (see login/page.tsx's pendingApproval check,
+        // and scripts/approve_university.js for how an EDUING team member
+        // grants approval). Previously this was hardcoded to 'approved',
+        // meaning every signup got instant full access with no review step.
+        approvalStatus: 'pending',
         isVerified: false,
         isFeatured: false,
         rating: 4.0,
@@ -92,8 +103,14 @@ export default function RegisterPage() {
         updatedAt: serverTimestamp(),
       })
 
-      toast.success('University account created successfully!')
-      router.push('/dashboard')
+      toast.success('University account created! Your account is pending approval — you\'ll be notified once verified.')
+      // createUserWithEmailAndPassword auto-signs the user in. Without
+      // explicitly signing out here, a pending/unapproved user would stay
+      // authenticated and could simply navigate straight to /dashboard —
+      // that page only checks "is someone signed in", not approval status,
+      // so this sign-out is what actually closes that bypass.
+      await auth.signOut()
+      router.push('/auth/login')
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
