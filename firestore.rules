@@ -2,12 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: is this uid an approved university admin? Used to gate
-    // writes to programs/applications/etc. so that a pending/unapproved
-    // registration can't write real data even if they stay signed in and
-    // navigate straight to a page, bypassing the app's own client-side
-    // pending-approval screen (that screen is UX only — this is the real
-    // enforcement layer).
+    // Helper: is this uid an approved university admin?
     function isApprovedUniAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -15,10 +10,21 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus == 'approved';
     }
 
+    // Helper: is this uid an EDUING platform admin?
+    // This role is manually assigned by the EDUING team — never self-assignable.
+    // To create the first platform admin, use scripts/create_admin.js.
+    function isEduingAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'eduing_admin';
+    }
+
     // Universities - public read (these are meant to be discoverable
     // profiles), owner-scoped write.
     match /universities/{id} {
       allow read: if true;
+      // eduing_admin can read all universities (including pending/rejected)
+      allow read: if isEduingAdmin();
 
       // Anyone can create their own university doc at registration
       // (approvalStatus is always written as 'pending' by the app, and
@@ -38,6 +44,11 @@ service cloud.firestore {
         && request.auth.uid == id
         && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['approvalStatus', 'isVerified', 'isFeatured', 'rating']);
+
+      // EDUING platform admins can update platform-controlled fields
+      // (approvalStatus, isVerified, isFeatured, rating) — this is the
+      // only way these fields can be legitimately changed.
+      allow update: if isEduingAdmin();
 
       allow delete: if request.auth != null && request.auth.uid == id;
     }
@@ -116,6 +127,10 @@ service cloud.firestore {
         && request.auth.uid == uid
         && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['role', 'approvalStatus']);
+
+      // EDUING platform admins can update approvalStatus on any user doc
+      // (this is how the admin panel approves/rejects registrations)
+      allow read, update: if isEduingAdmin();
     }
 
     // Notifications - recipient-scoped read/dismiss. Previously `allow
