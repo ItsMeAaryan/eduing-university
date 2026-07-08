@@ -48,7 +48,7 @@ function CustomTooltip({
     return (
       <div className="bg-[#1C1C1E] border border-white/10 p-3 rounded-lg shadow-2xl">
         <p className="text-xs font-bold text-white mb-1">{label || payload[0].name}</p>
-        <p className="text-sm font-bold text-brand-primary">{payload[0].value} {payload[0].value === 1 ? 'Application' : 'Applications'}</p>
+        <p className="text-sm font-bold text-brand-primary-text">{payload[0].value} {payload[0].value === 1 ? 'Application' : 'Applications'}</p>
       </div>
     )
   }

@@ -68,7 +68,7 @@ export default function SettingsPage() {
       {/* Account Section */}
       <section className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-brand-border flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary-text flex items-center justify-center">
             <User size={20} />
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-white font-medium">••••••••••••</p>
               </div>
             </div>
-            <button onClick={handlePasswordReset} className="text-sm text-brand-primary font-bold hover:underline flex items-center gap-1">
+            <button onClick={handlePasswordReset} className="text-sm text-brand-primary-text font-bold hover:underline flex items-center gap-1">
               Change <ChevronRight size={14} />
             </button>
           </div>

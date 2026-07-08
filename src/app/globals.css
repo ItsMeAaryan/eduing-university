@@ -6,6 +6,12 @@
   --color-brand-border: rgba(255, 255, 255, 0.08);
   --color-brand-border-hover: rgba(255, 255, 255, 0.15);
   --color-brand-primary: #4F46E5;
+  /* brand-primary-text is a lighter tint of brand-primary for use as
+     foreground text on dark backgrounds. #4F46E5 only achieves 3.18:1
+     on bg and 3.00:1 on surface — both fail WCAG AA (4.5:1) for normal
+     text. #7169EA passes at 4.68:1. Keep brand-primary for backgrounds,
+     borders, and UI elements where text contrast rules don't apply. */
+  --color-brand-primary-text: #7169EA;
   --color-brand-gold: #F59E0B;
   --color-brand-success: #22C55E;
   --color-brand-warning: #F59E0B;
@@ -13,7 +19,10 @@
   
   --color-text-primary: #FAFAFA;
   --color-text-secondary: rgba(255, 255, 255, 0.5);
-  --color-text-muted: rgba(255, 255, 255, 0.25);
+  /* text-muted was rgba(255,255,255,0.25) = 2.1:1 contrast — fails
+     WCAG AA badly. Raised to 46% opacity which achieves 4.67:1 on
+     the darkest bg (#08080A) and 4.52:1 on surface (#111114). */
+  --color-text-muted: rgba(255, 255, 255, 0.46);
 
   --radius-card: 16px;
   --radius-button: 8px;

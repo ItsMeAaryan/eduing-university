@@ -61,7 +61,7 @@ export default function NotificationBell() {
                 <h3 className="text-sm font-semibold text-white">Notifications</h3>
                 <button 
                   onClick={() => markAllNotificationsRead(auth.currentUser?.uid || '')}
-                  className="text-[11px] text-brand-primary hover:underline"
+                  className="text-[11px] text-brand-primary-text hover:underline"
                 >
                   Mark all read
                 </button>
@@ -82,7 +82,7 @@ export default function NotificationBell() {
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         n.type === 'selected' ? 'bg-brand-success/10 text-brand-success' :
                         n.type === 'rejected' ? 'bg-brand-error/10 text-brand-error' :
-                        'bg-brand-primary/10 text-brand-primary'
+                        'bg-brand-primary/10 text-brand-primary-text'
                       }`}>
                         {n.isRead ? <Check size={14} /> : <Bell size={14} />}
                       </div>
