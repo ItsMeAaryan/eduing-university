@@ -105,7 +105,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-        <RefreshCw className="animate-spin text-brand-primary" size={24} />
+        <RefreshCw className="animate-spin text-brand-primary-text" size={24} />
       </div>
     )
   }

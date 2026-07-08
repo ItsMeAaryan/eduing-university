@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 import { X, ExternalLink, Mail, Phone, FileText, AlertCircle } from 'lucide-react'
 import { updateApplicationStatus } from '@/lib/firebase/applications'
 import type { FirestoreRecord } from '@/lib/firebase/types'
@@ -24,6 +25,7 @@ interface ApplicationPanelProps {
 }
 
 export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps) {
+  const panelRef = useFocusTrap(!!app, onClose)
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [internalNote, setInternalNote] = useState(app?.notes || '')
@@ -60,6 +62,10 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="w-full max-w-lg bg-brand-surface border-l border-brand-border h-full flex flex-col shadow-2xl"
           onClick={(e) => e.stopPropagation()}
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Application Detail"
         >
           {/* Header */}
           <div className="p-6 border-b border-brand-border flex items-center justify-between bg-brand-bg/50">
@@ -78,7 +84,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-white">{app.studentName}</h3>
-                  <p className="text-brand-primary font-medium">{app.programName}</p>
+                  <p className="text-brand-primary-text font-medium">{app.programName}</p>
                 </div>
               </div>
 
@@ -131,12 +137,12 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                 {app.documents?.map((doc: DocumentEntry, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-white/2 rounded-xl border border-white/5 hover:border-brand-primary/30 transition-colors group">
                     <div className="flex items-center gap-3">
-                      <FileText size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
+                      <FileText size={18} className="text-text-muted group-hover:text-brand-primary-text transition-colors" />
                       <span className="text-sm text-white">{doc.name}</span>
                     </div>
                     <button 
                       onClick={() => window.open(doc.url, '_blank')}
-                      className="text-xs text-brand-primary hover:underline flex items-center gap-1"
+                      className="text-xs text-brand-primary-text hover:underline flex items-center gap-1"
                     >
                       View <ExternalLink size={12} />
                     </button>

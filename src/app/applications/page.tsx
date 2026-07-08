@@ -185,14 +185,14 @@ export default function ApplicationsPage() {
             className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4 flex items-center justify-between"
           >
             <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-brand-primary">
+              <span className="text-sm font-semibold text-brand-primary-text">
                 {selectedApps.length} selected
               </span>
               <div className="h-4 w-px bg-brand-primary/20" />
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleBulkUpdate('under_review')}
-                  className="px-3 py-1.5 rounded-lg bg-brand-primary/10 text-brand-primary text-xs font-bold hover:bg-brand-primary/20 transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-brand-primary/10 text-brand-primary-text text-xs font-bold hover:bg-brand-primary/20 transition-colors"
                 >
                   Set Under Review
                 </button>
@@ -227,9 +227,9 @@ export default function ApplicationsPage() {
             <thead>
               <tr className="bg-white/2">
                 <th className="px-6 py-4 w-10">
-                  <button onClick={handleSelectAll} className="text-text-muted hover:text-brand-primary">
+                  <button onClick={handleSelectAll} className="text-text-muted hover:text-brand-primary-text">
                     {selectedApps.length === filteredApps.length && filteredApps.length > 0 ? (
-                      <CheckSquare size={18} className="text-brand-primary" />
+                      <CheckSquare size={18} className="text-brand-primary-text" />
                     ) : (
                       <Square size={18} />
                     )}
@@ -252,7 +252,7 @@ export default function ApplicationsPage() {
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => toggleSelect(app.id)} className="text-text-muted" aria-label={selectedApps.includes(app.id) ? 'Deselect application' : 'Select application'}>
                       {selectedApps.includes(app.id) ? (
-                        <CheckSquare size={18} className="text-brand-primary" />
+                        <CheckSquare size={18} className="text-brand-primary-text" />
                       ) : (
                         <Square size={18} />
                       )}
@@ -260,7 +260,7 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary-text flex items-center justify-center font-bold text-xs shrink-0">
                         {app.studentName?.charAt(0) || 'S'}
                       </div>
                       <div>
@@ -316,7 +316,7 @@ export default function ApplicationsPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    submitted: 'bg-brand-primary/10 text-brand-primary',
+    submitted: 'bg-brand-primary/10 text-brand-primary-text',
     under_review: 'bg-brand-warning/10 text-brand-warning',
     selected: 'bg-brand-success/10 text-brand-success',
     waitlisted: 'bg-orange-500/10 text-orange-500',

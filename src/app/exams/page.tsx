@@ -5,6 +5,7 @@ import { auth, db } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
 import { subscribeToApplications } from '@/lib/firebase/applications'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 import { 
   Calendar, 
   MapPin, 
@@ -151,15 +152,15 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: FirestoreRe
             {schedule ? (
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 text-sm text-text-secondary">
-                  <Calendar size={16} className="text-brand-primary" />
+                  <Calendar size={16} className="text-brand-primary-text" />
                   <span>{schedule.date}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-text-secondary">
-                  <Clock size={16} className="text-brand-primary" />
+                  <Clock size={16} className="text-brand-primary-text" />
                   <span>{schedule.time}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-text-secondary">
-                  <MapPin size={16} className="text-brand-primary" />
+                  <MapPin size={16} className="text-brand-primary-text" />
                   <span>{schedule.centers?.length || 0} Exam Centers</span>
                 </div>
               </div>
@@ -221,6 +222,7 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
   onSave: (data: Record<string, unknown>) => void
   initialData?: FirestoreRecord
 }) {
+  const dialogRef = useFocusTrap(true, onClose)
   const [formData, setFormData] = useState({
     date: initialData?.date || '',
     time: initialData?.time || '',
@@ -229,11 +231,20 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
   })
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-200 flex items-center justify-center p-6">
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-200 flex items-center justify-center p-6"
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-brand-surface border border-brand-border rounded-2xl p-8 max-w-lg w-full"
+        onClick={e => e.stopPropagation()}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Configure Exam: ${program.name as string}`}
       >
         <h3 className="text-xl font-bold text-white mb-6">Configure Exam: {program.name}</h3>
         <div className="space-y-4">
@@ -338,7 +349,7 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
             <tbody className="divide-y divide-white/4">
               {programApps.map((app: FirestoreRecord, i: number) => (
                 <tr key={app.id} className="hover:bg-white/2 transition-colors">
-                  <td className="px-6 py-4 text-sm font-mono text-brand-primary">
+                  <td className="px-6 py-4 text-sm font-mono text-brand-primary-text">
                     EXAM2026{String(i + 1).padStart(3, '0')}
                   </td>
                   <td className="px-6 py-4">
@@ -350,7 +361,7 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                   </td>
                   <td className="px-6 py-4 text-right">
                     {/* TODO: no admit-card generation/download handler exists yet — this button is currently non-functional. Left as-is per audit guardrails (not inventing business logic without a spec); flagging for implementation. */}
-                    <button className="p-2 rounded-lg hover:bg-white/5 text-brand-primary" aria-label="Download admit card" disabled>
+                    <button className="p-2 rounded-lg hover:bg-white/5 text-brand-primary-text" aria-label="Download admit card" disabled>
                       <Download size={16} />
                     </button>
                   </td>
@@ -512,10 +523,10 @@ function RankListView({ programs, apps }: { programs: FirestoreRecord[], apps: F
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-white">{app.studentName}</td>
-                <td className="px-6 py-4 text-sm font-bold text-brand-primary">{app.entranceScore}</td>
+                <td className="px-6 py-4 text-sm font-bold text-brand-primary-text">{app.entranceScore}</td>
                 <td className="px-6 py-4 text-right">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                    app.status === 'selected' ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary'
+                    app.status === 'selected' ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary-text'
                   }`}>
                     {app.status}
                   </span>

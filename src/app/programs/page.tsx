@@ -83,11 +83,11 @@ export default function ProgramsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase tracking-wider">
+                      <span className="px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary-text text-[10px] font-bold uppercase tracking-wider">
                         {p.level}
                       </span>
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-brand-primary transition-colors truncate">
+                    <h3 className="text-lg font-bold text-white group-hover:text-brand-primary-text transition-colors truncate">
                       {p.name}
                     </h3>
                   </div>
@@ -131,7 +131,7 @@ export default function ProgramsPage() {
                   <div>
                     <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest mb-1.5">
                       <span className="text-text-muted">Seats Utilization</span>
-                      <span className="text-brand-primary">{p.filledSeats || 0} / {p.totalSeats || 0}</span>
+                      <span className="text-brand-primary-text">{p.filledSeats || 0} / {p.totalSeats || 0}</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                       <motion.div 
@@ -169,7 +169,7 @@ export default function ProgramsPage() {
             className="flex flex-col items-center justify-center py-24 px-6 bg-brand-surface/30 border border-dashed border-brand-border rounded-3xl text-center"
           >
             <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
-              <BookOpen className="text-brand-primary" size={40} />
+              <BookOpen className="text-brand-primary-text" size={40} />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">No programs created yet</h3>
             <p className="text-text-secondary text-sm max-w-sm mb-8">

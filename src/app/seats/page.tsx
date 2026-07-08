@@ -111,7 +111,7 @@ export default function SeatAllocationPage() {
       {/* Seat Matrix */}
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-          <BarChart3 className="text-brand-primary" size={20} />
+          <BarChart3 className="text-brand-primary-text" size={20} />
           Seat Matrix
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -172,7 +172,7 @@ export default function SeatAllocationPage() {
                     {round === 1 ? 'Rank 1-500' : round === 2 ? 'Rank 501-1500' : 'Open Round'}
                   </p>
                   <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                    round === 1 ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary'
+                    round === 1 ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary-text'
                   }`}>
                     {round === 1 ? 'Active' : 'Upcoming'}
                   </span>
@@ -215,7 +215,7 @@ export default function SeatAllocationPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-sm font-bold text-white">{app.studentName}</h4>
-                    <p className="text-[10px] text-brand-primary font-bold uppercase mt-0.5">
+                    <p className="text-[10px] text-brand-primary-text font-bold uppercase mt-0.5">
                       Applied for: {app.programName}
                     </p>
                   </div>

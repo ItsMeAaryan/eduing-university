@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 import { X, Save, BookOpen, Clock, Layers, DollarSign, Users, Briefcase } from 'lucide-react'
 import { addProgram, updateProgram } from '@/lib/firebase/programs'
 import type { FirestoreRecord } from '@/lib/firebase/types'
@@ -14,6 +15,7 @@ interface ProgramPanelProps {
 }
 
 export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
+  const panelRef = useFocusTrap(true, onClose)
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -125,6 +127,10 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="w-full max-w-xl bg-brand-surface border-l border-brand-border h-full flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={program ? `Edit ${program.name as string}` : 'Add Program'}
       >
         {/* Header */}
         <div className="px-8 py-6 border-b border-brand-border flex items-center justify-between bg-brand-surface/50 backdrop-blur-sm sticky top-0 z-10">
@@ -147,9 +153,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
           {/* Section: Basic Info */}
           <div className="space-y-6">
             <div>
-              <label htmlFor="program-name" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Program Identity</label>
+              <label htmlFor="program-name" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Program Identity</label>
               <div className="relative group">
-                <Layers size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
+                <Layers size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary-text transition-colors" />
                 <input 
                   id="program-name"
                   type="text" required value={formData.name}
@@ -162,7 +168,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="program-level" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Level</label>
+                <label htmlFor="program-level" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Level</label>
                 <select 
                   id="program-level"
                   value={formData.level}
@@ -179,7 +185,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 </select>
               </div>
               <div>
-                <label htmlFor="program-duration" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Duration</label>
+                <label htmlFor="program-duration" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Duration</label>
                 <input 
                   id="program-duration"
                   type="text" required value={formData.duration}
@@ -192,9 +198,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="program-annualFee" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Annual Fee (₹)</label>
+                <label htmlFor="program-annualFee" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Annual Fee (₹)</label>
                 <div className="relative group">
-                  <DollarSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
+                  <DollarSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary-text transition-colors" />
                   <input 
                     id="program-annualFee"
                     type="number" required value={formData.annualFee}
@@ -204,9 +210,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 </div>
               </div>
               <div>
-                <label htmlFor="program-totalSeats" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Intake Capacity</label>
+                <label htmlFor="program-totalSeats" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Intake Capacity</label>
                 <div className="relative group">
-                  <Users size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
+                  <Users size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary-text transition-colors" />
                   <input 
                     id="program-totalSeats"
                     type="number" required value={formData.totalSeats}
@@ -218,9 +224,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label htmlFor="program-deadline" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Admission Deadline</label>
+              <label htmlFor="program-deadline" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Admission Deadline</label>
               <div className="relative group">
-                <Clock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
+                <Clock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary-text transition-colors" />
                 <input 
                   id="program-deadline"
                   type="date" required value={formData.deadline}
@@ -231,7 +237,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label htmlFor="program-eligibility" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Eligibility Criteria</label>
+              <label htmlFor="program-eligibility" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Eligibility Criteria</label>
               <textarea 
                 id="program-eligibility"
                 value={formData.eligibility}
@@ -245,7 +251,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             <div className="p-5 bg-brand-primary/5 border border-brand-primary/20 rounded-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary">
+                  <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary-text">
                     <BookOpen size={20} />
                   </div>
                   <div>
@@ -276,9 +282,9 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             </div>
 
             <div>
-              <label htmlFor="program-careerProspects" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary mb-2.5">Career Prospects</label>
+              <label htmlFor="program-careerProspects" className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary-text mb-2.5">Career Prospects</label>
               <div className="relative group">
-                <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary transition-colors" />
+                <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-primary-text transition-colors" />
                 <input 
                   id="program-careerProspects"
                   type="text" value={formData.careerProspects}

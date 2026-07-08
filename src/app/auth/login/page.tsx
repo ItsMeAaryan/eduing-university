@@ -105,8 +105,8 @@ export default function LoginPage() {
               />
               <div className="text-3xl font-bold tracking-tight">
                 <span className="text-white">EDU</span>
-                <span className="text-brand-primary">ING</span>
-                <span className="text-brand-primary">.in</span>
+                <span className="text-brand-primary-text">ING</span>
+                <span className="text-brand-primary-text">.in</span>
               </div>
             </div>
             <h1 className="text-xl font-bold text-white mt-6">University Portal</h1>

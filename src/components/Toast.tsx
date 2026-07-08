@@ -76,7 +76,7 @@ function ToastItemComponent({ toast }: { toast: ToastItem }) {
   const colors = {
     success: 'border-brand-success text-brand-success',
     error: 'border-brand-error text-brand-error',
-    info: 'border-brand-primary text-brand-primary',
+    info: 'border-brand-primary text-brand-primary-text',
     warning: 'border-brand-warning text-brand-warning'
   }
 

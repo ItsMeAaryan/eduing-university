@@ -241,7 +241,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
           --bg: #0A0A0F; --bg-elevated: #111118; --bg-card: #16161F;
           --bg-card-hover: #1C1C28; --border: rgba(99,102,241,0.15);
           --border-hover: rgba(99,102,241,0.4); --text-primary: #F0F0FF;
-          --text-secondary: #8B8BA8; --text-muted: #4A4A6A;
+          --text-secondary: #8B8BA8; --text-muted: #8484A9;
           --indigo: #5B5FEF; --indigo-light: #818CF8; --gold: #F59E0B;
           --green: #10B981; --red: #EF4444; --orange: #F97316;
           --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;

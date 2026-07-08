@@ -252,7 +252,7 @@ export default function ProfilePage() {
                     onClick={() => toggleFacility(f)}
                     className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all text-left ${
                       isSelected 
-                        ? 'bg-brand-primary/10 border-brand-primary text-brand-primary' 
+                        ? 'bg-brand-primary/10 border-brand-primary text-brand-primary-text' 
                         : 'bg-white/2 border-white/5 text-text-secondary hover:border-white/10'
                     } ${!isEditing && 'cursor-default opacity-80'}`}
                   >
@@ -352,7 +352,7 @@ export default function ProfilePage() {
                     value={formData.totalStudents || ''}
                     onChange={(e) => setFormData({...formData, totalStudents: e.target.value})}
                   />
-                  <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary" />
+                  <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary-text" />
                 </div>
               </div>
             </div>
