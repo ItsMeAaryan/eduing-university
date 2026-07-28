@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { Users, Clock, CheckCircle, BookOpen, ArrowUpRight, Calendar, MoreHorizontal } from 'lucide-react'
 import { updateApplicationStatus } from '@/lib/firebase/applications'
 import { useToast } from '@/components/Toast'
+import RecentActivityWidget from '@/components/RecentActivityWidget'
 
 const fadeUp = (i: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -52,7 +53,15 @@ export default function UniversityDashboard() {
 
   const handleStatusUpdate = async (appId: string, studentId: string, status: string) => {
     try {
-      await updateApplicationStatus(appId, studentId, status)
+      const user = auth.currentUser
+      if (!user) return
+      await updateApplicationStatus(
+        user.uid,
+        appId, 
+        studentId, 
+        status,
+        { uid: user.uid, name: user.displayName || user.email || 'Admin', role: 'admin' }
+      )
       toast.success(`Application updated to ${status.replace('_', ' ')}`)
     } catch (error) {
       console.error(error)
@@ -213,6 +222,8 @@ export default function UniversityDashboard() {
           )}
         </motion.div>
 
+        {/* Right Column: Deadlines & Activity */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Upcoming Deadlines */}
         <motion.div {...fadeUp(6)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -248,6 +259,12 @@ export default function UniversityDashboard() {
             </motion.div>
           ))}
         </motion.div>
+        
+        {/* Recent Activity */}
+        <div style={{ height: '400px' }}>
+          <RecentActivityWidget />
+        </div>
+        </div>
       </div>
     </div>
   )
