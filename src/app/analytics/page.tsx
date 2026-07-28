@@ -1,321 +1,191 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { auth } from '@/lib/firebase/config'
-import { subscribeToApplications } from '@/lib/firebase/applications'
-import { subscribeToPrograms } from '@/lib/firebase/programs'
-import type { FirestoreRecord } from '@/lib/firebase/types'
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
-} from 'recharts'
-import { FileText, Share2 } from 'lucide-react'
+import React from 'react'
+import { useAnalytics } from '@/context/AnalyticsContext'
+import { getExecutiveKPIs, getActivityTrend } from '@/lib/analytics'
+import { exportToCSV } from '@/utils/export'
+import { FileText, Download, TrendingUp, Users, FileCheck, CheckCircle, Wallet, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useToast } from '@/components/Toast'
+import { useTheme } from 'next-themes'
+import dynamic from 'next/dynamic'
 
-const COLORS = ['#4F46E5', '#F59E0B', '#22C55E', '#EA580C', '#EF4444', '#7C3AED']
+// Lazy load Recharts for performance optimization
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false })
+const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
+const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart), { ssr: false })
+const Area = dynamic(() => import('recharts').then(mod => mod.Area), { ssr: false })
 
-interface AppliedTimestamp {
-  seconds: number
-}
+export default function ExecutiveDashboard() {
+  const { apps, auditLogs, loading, error } = useAnalytics()
+  const { resolvedTheme } = useTheme()
 
-interface ApplicationRecord extends FirestoreRecord {
-  appliedAt?: AppliedTimestamp
-  programName?: string
-  status?: string
-  studentProfile?: { state?: string }
-}
-
-interface ProgramRecord extends FirestoreRecord {
-  name: string
-}
-
-interface TooltipPayloadEntry {
-  name?: string
-  value: number
-}
-
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: TooltipPayloadEntry[]
-  label?: string
-}) {
-  if (active && payload && payload.length) {
+  if (loading) {
     return (
-      <div className="bg-[#1C1C1E] border border-white/10 p-3 rounded-lg shadow-2xl">
-        <p className="text-xs font-bold text-white mb-1">{label || payload[0].name}</p>
-        <p className="text-sm font-bold text-brand-primary-text">{payload[0].value} {payload[0].value === 1 ? 'Application' : 'Applications'}</p>
+      <div className="flex h-full items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
-  return null
-}
 
-export default function AnalyticsPage() {
-  const { toast } = useToast()
-  const [apps, setApps] = useState<ApplicationRecord[]>([])
-  const [programs, setPrograms] = useState<ProgramRecord[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      if (user) {
-        const unsubApps = subscribeToApplications(user.uid, setApps)
-        const unsubProgs = subscribeToPrograms(user.uid, (data) => {
-          setPrograms(data as ProgramRecord[])
-          setLoading(false)
-        })
-        return () => {
-          unsubApps()
-          unsubProgs()
-        }
-      }
-    })
-    return () => unsubscribeAuth()
-  }, [])
-
-  // 1. Applications over time
-  const timelineData = useMemo(() => {
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      return d.toISOString().split('T')[0]
-    }).reverse()
-
-    const counts: Record<string, number> = {}
-    last30Days.forEach(date => counts[date] = 0)
-
-    apps.forEach(app => {
-      if (app.appliedAt?.seconds) {
-        const date = new Date(app.appliedAt.seconds * 1000).toISOString().split('T')[0]
-        if (counts[date] !== undefined) counts[date]++
-      }
-    })
-
-    return last30Days.map(date => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      count: counts[date]
-    }))
-  }, [apps])
-
-  // 2. Applications by Program
-  const programData = useMemo(() => {
-    const counts: Record<string, number> = {}
-    programs.forEach(p => counts[p.name] = 0)
-    apps.forEach(app => {
-      const key = app.programName ?? ''
-      if (counts[key] !== undefined) counts[key]++
-    })
-    return programs.map(p => ({
-      name: p.name,
-      value: counts[p.name]
-    })).sort((a, b) => b.value - a.value).slice(0, 5)
-  }, [apps, programs])
-
-  // 3. Status Distribution
-  const statusData = useMemo(() => {
-    const counts: Record<string, number> = {
-      submitted: 0,
-      under_review: 0,
-      selected: 0,
-      waitlisted: 0,
-      rejected: 0
-    }
-    apps.forEach(app => {
-      const key = app.status ?? ''
-      if (counts[key] !== undefined) counts[key]++
-    })
-    return Object.keys(counts).map(status => ({
-      name: status.replace('_', ' ').toUpperCase(),
-      value: counts[status]
-    }))
-  }, [apps])
-
-  // 4. Geographic Distribution (States)
-  const geographicData = useMemo(() => {
-    const counts: Record<string, number> = {}
-    apps.forEach(app => {
-      const state = app.studentProfile?.state || 'Unknown'
-      counts[state] = (counts[state] || 0) + 1
-    })
-    return Object.keys(counts).map(state => ({
-      name: state,
-      count: counts[state]
-    })).sort((a, b) => b.count - a.count).slice(0, 5)
-  }, [apps])
-
-  const showToastFeature = () => {
-    toast.info('Feature coming in full version')
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-brand-error flex-col gap-4">
+        <AlertCircle size={48} />
+        <p>Failed to load analytics: {error}</p>
+      </div>
+    )
   }
 
-  if (loading) return null
+  const kpis = getExecutiveKPIs(apps)
+  const activityData = getActivityTrend(auditLogs)
+  const isLight = resolvedTheme === 'light'
+  const axisStroke  = isLight ? 'rgba(0,0,0,0.30)'  : 'rgba(255,255,255,0.30)'
+  const gridStroke  = isLight ? 'rgba(0,0,0,0.06)'  : 'rgba(255,255,255,0.05)'
+
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num)
+  }
+
+  const handleExport = () => {
+    const data = [
+      { Metric: 'Total Applications', Value: kpis.totalReceived },
+      { Metric: 'Under Review', Value: kpis.underReview },
+      { Metric: 'Docs Pending Approval', Value: kpis.docsPending },
+      { Metric: 'Offers Issued', Value: kpis.offersIssued },
+      { Metric: 'Enrolled Students', Value: kpis.enrolled },
+      { Metric: 'Acceptance Rate (%)', Value: kpis.acceptanceRate },
+      { Metric: 'Enrollment Rate (%)', Value: kpis.enrollmentRate },
+      { Metric: 'Revenue Collected (INR)', Value: kpis.revenueCollected },
+      { Metric: 'Pending Revenue (INR)', Value: kpis.pendingRevenue }
+    ]
+    exportToCSV(data, 'Executive_KPIs')
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Enrollment Analytics</h1>
-        <div className="flex items-center gap-3">
-          <button onClick={showToastFeature} className="h-10 px-4 rounded-lg bg-white/5 border border-brand-border text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10">
-            <FileText size={16} /> Report PDF
-          </button>
-          <button onClick={showToastFeature} className="h-10 px-4 rounded-lg bg-brand-primary text-white text-sm font-bold flex items-center gap-2 hover:bg-brand-primary/90">
-            <Share2 size={16} /> Export CSV
-          </button>
+    <div className="p-8 max-w-7xl mx-auto space-y-8">
+      
+      <header className="flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-1">Executive Dashboard</h1>
+          <p className="text-text-secondary text-sm">High-level overview of university performance</p>
         </div>
+        <button onClick={handleExport} className="btn-secondary flex items-center gap-2">
+          <Download size={16} /> Export KPIs
+        </button>
+      </header>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard 
+          title="Total Applications" 
+          value={kpis.totalReceived} 
+          icon={<Users className="text-blue-500" />} 
+          trend="+12%" 
+          trendUp={true} 
+        />
+        <KPICard 
+          title="Conversion Rate" 
+          value={`${kpis.enrollmentRate}%`} 
+          icon={<TrendingUp className="text-brand-success" />} 
+          trend="Enrolled / Offers" 
+          trendUp={true} 
+        />
+        <KPICard 
+          title="Revenue Collected" 
+          value={formatCurrency(kpis.revenueCollected)} 
+          icon={<Wallet className="text-emerald-500" />} 
+          trend={`${formatCurrency(kpis.pendingRevenue)} pending`} 
+          trendUp={true} 
+        />
+        <KPICard 
+          title="Pending Actions" 
+          value={kpis.underReview + kpis.docsPending} 
+          icon={<FileCheck className="text-brand-warning" />} 
+          trend="Needs staff review" 
+          trendUp={false} 
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Line Chart: Applications Trend */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-8">Applications Trend (Last 30 Days)</h3>
-          <div className="h-[300px] w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Main Chart */}
+        <div className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-white mb-6">University Activity Trend (30 Days)</h3>
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timelineData.map(d => ({ ...d, count: Math.min(d.count, 50) }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="rgba(255,255,255,0.3)" 
-                  fontSize={10} 
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
+              <AreaChart data={activityData}>
+                <defs>
+                  <linearGradient id="colorActions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                <XAxis dataKey="date" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                  itemStyle={{ color: '#4F46E5', fontWeight: 'bold' }}
                 />
-                <YAxis 
-                  stroke="rgba(255,255,255,0.3)" 
-                  fontSize={10} 
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#5B5FEF" 
-                  strokeWidth={3} 
-                  dot={{ r: 4, fill: '#5B5FEF', strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: '#5B5FEF', stroke: 'white', strokeWidth: 2 }}
-                />
-              </LineChart>
+                <Area type="monotone" dataKey="actions" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorActions)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Top Programs by Demand */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-8">Top Programs by Demand</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {programs.length === 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                No program data available
-              </div>
-            ) : [...programData].sort((a, b) => b.value - a.value).slice(0, 5).map((p, i) => (
-              <div key={p.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600' }}>{p.name}</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.value || 0} apps</span>
-                </div>
-                <div style={{ height: '8px', borderRadius: '100px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((p.value / (programData[0]?.value || 1)) * 100, 100)}%` }}
-                    transition={{ duration: 1, delay: i * 0.1 }}
-                    style={{
-                      height: '100%', borderRadius: '100px',
-                      background: ['#5B5FEF','#F59E0B','#10B981','#F97316','#818CF8'][i % 5],
-                    }} 
-                  />
-                </div>
-              </div>
-            ))}
+        {/* Funnel Summary */}
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-white mb-6">Admissions Pipeline</h3>
+          <div className="space-y-4">
+            <FunnelStep label="Total Applicants" count={kpis.totalReceived} total={kpis.totalReceived} color="bg-blue-500" />
+            <FunnelStep label="Offers Issued" count={kpis.offersIssued} total={kpis.totalReceived} color="bg-purple-500" />
+            <FunnelStep label="Seat Accepted" count={kpis.seatAccepted} total={kpis.totalReceived} color="bg-pink-500" />
+            <FunnelStep label="Enrolled Students" count={kpis.enrolled} total={kpis.totalReceived} color="bg-emerald-500" />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Pie Chart: Status Distribution */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-8">Application Status Distribution</h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                  verticalAlign="middle" 
-                  align="right" 
-                  layout="vertical"
-                  iconType="circle"
-                  formatter={(value) => <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{value}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+      </div>
+    </div>
+  )
+}
 
-        {/* Bar Chart: Geographic Distribution */}
+function KPICard({ title, value, icon, trend, trendUp }: any) {
+  return (
+    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm flex flex-col justify-between">
+      <div className="flex justify-between items-start mb-4">
+        <div className="p-3 bg-white/5 rounded-lg">
+          {icon}
+        </div>
+      </div>
+      <div>
+        <h4 className="text-sm text-text-muted font-medium mb-1">{title}</h4>
+        <p className="text-2xl font-bold text-white">{value}</p>
+        <p className={`text-xs mt-2 ${trendUp ? 'text-brand-success' : 'text-text-muted'}`}>{trend}</p>
+      </div>
+    </div>
+  )
+}
+
+function FunnelStep({ label, count, total, color }: any) {
+  const percentage = total > 0 ? (count / total) * 100 : 0
+  return (
+    <div>
+      <div className="flex justify-between items-end mb-1.5">
+        <span className="text-sm font-medium text-text-secondary">{label}</span>
+        <span className="text-sm font-bold text-white">{count}</span>
+      </div>
+      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-6"
-        >
-          <h3 className="text-lg font-semibold text-white mb-8">Geographic Origin (Top States)</h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={geographicData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="rgba(255,255,255,0.3)" 
-                  fontSize={10} 
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis 
-                  stroke="rgba(255,255,255,0.3)" 
-                  fontSize={10} 
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="count" 
-                  fill="#4F46E5" 
-                  radius={[4, 4, 0, 0]}
-                  barSize={40}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className={`h-full ${color}`}
+        />
       </div>
     </div>
   )

@@ -42,8 +42,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const toast = {
     success: (msg: string) => addToast(msg, 'success'),
-    error: (msg: string) => addToast(msg, 'error'),
-    info: (msg: string) => addToast(msg, 'info'),
+    error:   (msg: string) => addToast(msg, 'error'),
+    info:    (msg: string) => addToast(msg, 'info'),
     warning: (msg: string) => addToast(msg, 'warning'),
     promise: async <T,>(promise: Promise<T>, msgs: { loading: string; success: string; error: string }): Promise<T> => {
       addToast(msgs.loading, 'info')
@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed top-4 right-4 z-100 flex flex-col gap-3 pointer-events-none">
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
         <AnimatePresence>
           {toasts.map(t => (
             <ToastItemComponent key={t.id} toast={t} />
@@ -73,18 +73,25 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 function ToastItemComponent({ toast }: { toast: ToastItem }) {
-  const colors = {
-    success: 'border-brand-success text-brand-success',
-    error: 'border-brand-error text-brand-error',
-    info: 'border-brand-primary text-brand-primary-text',
-    warning: 'border-brand-warning text-brand-warning'
+  const borderColor: Record<ToastType, string> = {
+    success: 'var(--green)',
+    error:   'var(--red)',
+    info:    'var(--indigo-light)',
+    warning: 'var(--gold)',
   }
 
-  const icons = {
+  const textColor: Record<ToastType, string> = {
+    success: 'var(--green)',
+    error:   'var(--red)',
+    info:    'var(--indigo-light)',
+    warning: 'var(--gold)',
+  }
+
+  const icons: Record<ToastType, string> = {
     success: '✓',
-    error: '✗',
-    info: 'ℹ',
-    warning: '⚠'
+    error:   '✗',
+    info:    'ℹ',
+    warning: '⚠',
   }
 
   return (
@@ -92,17 +99,39 @@ function ToastItemComponent({ toast }: { toast: ToastItem }) {
       initial={{ x: 400, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
-      className={`relative bg-brand-surface border ${colors[toast.type].split(' ')[0]} rounded-xl p-[14px_18px] min-w-[280px] max-w-[360px] overflow-hidden pointer-events-auto`}
+      style={{
+        position: 'relative',
+        background: 'var(--bg-elevated)',
+        border: `1px solid ${borderColor[toast.type]}`,
+        borderRadius: '12px',
+        padding: '14px 18px',
+        minWidth: '280px',
+        maxWidth: '360px',
+        overflow: 'hidden',
+        pointerEvents: 'auto',
+        boxShadow: 'var(--shadow-card)',
+      }}
     >
-      <div className="flex items-center gap-3">
-        <span className={`font-bold text-lg ${colors[toast.type].split(' ')[1]}`}>{icons[toast.type]}</span>
-        <span className="text-text-primary text-sm font-medium">{toast.message}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontWeight: '700', fontSize: '16px', color: textColor[toast.type] }}>
+          {icons[toast.type]}
+        </span>
+        <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500' }}>
+          {toast.message}
+        </span>
       </div>
       <motion.div
         initial={{ width: '100%' }}
         animate={{ width: '0%' }}
         transition={{ duration: 4, ease: 'linear' }}
-        className={`absolute bottom-0 left-0 h-1 ${colors[toast.type].split(' ')[0].replace('border-', 'bg-')}`}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          height: '3px',
+          background: borderColor[toast.type],
+          borderRadius: '0 0 0 12px',
+        }}
       />
     </motion.div>
   )

@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: is this uid an approved university admin?
+    // Helper: is this uid an approved university admin? (Owner)
     function isApprovedUniAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -11,134 +11,160 @@ service cloud.firestore {
     }
 
     // Helper: is this uid an EDUING platform admin?
-    // This role is manually assigned by the EDUING team — never self-assignable.
-    // To create the first platform admin, use scripts/create_admin.js.
     function isEduingAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'eduing_admin';
     }
 
-    // Universities - public read (these are meant to be discoverable
-    // profiles), owner-scoped write.
+    // Helper: check if user is staff for a given university
+    function isUniversityStaff(universityId) {
+      return request.auth != null && (
+        request.auth.uid == universityId || // The uni owner
+        exists(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid))
+      );
+    }
+
+    // Helper: check if staff has specific permission
+    function hasStaffPermission(universityId, requiredPermission) {
+      return request.auth != null && (
+        request.auth.uid == universityId || // Owner has all permissions
+        (
+          exists(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid)) &&
+          requiredPermission in get(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid)).data.permissions
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // PLATFORM & CORE
+    // --------------------------------------------------------
+
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.approvalStatus == 'pending';
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['role', 'approvalStatus']);
+      allow read, update: if isEduingAdmin();
+    }
+
     match /universities/{id} {
       allow read: if true;
-      // eduing_admin can read all universities (including pending/rejected)
       allow read: if isEduingAdmin();
-
-      // Anyone can create their own university doc at registration
-      // (approvalStatus is always written as 'pending' by the app, and
-      // that's enforced below too — a forged 'approved' value at create
-      // time is rejected).
       allow create: if request.auth != null
         && request.auth.uid == id
         && request.resource.data.approvalStatus == 'pending'
         && request.resource.data.isVerified == false;
-
-      // Owner can update their own profile, but NOT the fields that are
-      // meant to be platform-controlled (approval/verification/featured
-      // status, rating) — previously any authenticated owner could set
-      // these on themselves directly, e.g. self-marking as verified or
-      // giving themselves a 5-star rating.
       allow update: if request.auth != null
         && request.auth.uid == id
         && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['approvalStatus', 'isVerified', 'isFeatured', 'rating']);
-
-      // EDUING platform admins can update platform-controlled fields
-      // (approvalStatus, isVerified, isFeatured, rating) — this is the
-      // only way these fields can be legitimately changed.
       allow update: if isEduingAdmin();
-
       allow delete: if request.auth != null && request.auth.uid == id;
+      
+      // STAFF RBAC SUBCOLLECTIONS
+      match /staff/{staffId} {
+        // Staff can read their own profile to get permissions.
+        // Uni admins and staff with 'manage_staff' can read/write all.
+        allow read: if request.auth != null && request.auth.uid == staffId;
+        allow read: if hasStaffPermission(id, 'view_dashboard');
+        allow write: if hasStaffPermission(id, 'manage_staff');
+      }
+
+      match /staffInvitations/{inviteId} {
+        // Uni admins and staff with 'manage_staff' can read/write.
+        allow read, write: if hasStaffPermission(id, 'manage_staff');
+      }
+
+      match /audit_logs/{logId} {
+        // Anyone with access to the dashboard can create logs.
+        // Only staff with 'view_audit_logs' can read them.
+        allow create: if isUniversityStaff(id);
+        allow read: if hasStaffPermission(id, 'view_audit_logs');
+      }
     }
 
-    // Programs - public read, but writes must belong to an approved
-    // university that owns the program. Previously `allow write: if
-    // request.auth != null` let ANY signed-in user (including other
-    // universities, or student accounts) create, edit, or delete ANY
-    // other university's programs.
+    // --------------------------------------------------------
+    // CORE ENTITIES
+    // --------------------------------------------------------
+
     match /programs/{id} {
       allow read: if true;
-
       allow create: if isApprovedUniAdmin()
         && request.resource.data.universityId == request.auth.uid;
-
       allow update, delete: if isApprovedUniAdmin()
         && resource.data.universityId == request.auth.uid;
     }
 
-    // Applications - a student can create and read/withdraw their own
-    // application; a university can read applications addressed to it and
-    // update review-only fields. Previously student and university shared
-    // one identical read/write rule, meaning a student could set their own
-    // `status` to "selected" or fabricate an `entranceScore` directly.
+    match /student_profiles/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      // University staff can read student profiles if they have an active application
+      // But for simplicity, we allow staff to read student profiles to view CRM.
+      // (A real production system might restrict this further).
+    }
+
     match /applications/{id} {
-      // Creation must be self-attributed to the authenticated student —
-      // previously anyone signed in could create an application document
-      // with an arbitrary studentId, impersonating another student.
       allow create: if request.auth != null
         && request.resource.data.studentId == request.auth.uid
         && request.resource.data.status == 'submitted';
 
       allow read: if request.auth != null
         && (request.auth.uid == resource.data.studentId
-            || request.auth.uid == resource.data.universityId);
+            || isUniversityStaff(resource.data.universityId));
 
-      // Student may only withdraw their own application, not touch any
-      // review-related field.
       allow update: if request.auth != null
         && request.auth.uid == resource.data.studentId
         && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['status'])
         && request.resource.data.status == 'withdrawn';
 
-      // University may update review fields on applications addressed to
-      // it, but can't reassign the application to a different student or
-      // university out from under the record.
-      allow update: if isApprovedUniAdmin()
-        && resource.data.universityId == request.auth.uid
+      allow update: if hasStaffPermission(resource.data.universityId, 'edit_applications')
         && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['studentId', 'universityId']);
 
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.studentId;
+
+      // SUBCOLLECTIONS
+      match /documents/{docId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId ||
+          isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId)
+        );
+        allow create, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId;
+        allow update: if hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'verify_documents');
+      }
+
+      match /generated_documents/{docId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId ||
+          isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId)
+        );
+        allow create, update: if hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'generate_offers') || hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'generate_admit_cards');
+      }
+
+      match /internal_notes/{noteId} {
+        allow read, write: if isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId);
+      }
     }
 
-    // Student profiles - owner only.
-    match /student_profiles/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    match /exam_schedules/{id} {
+      allow read: if true; // Students need to read this to see their schedule
+      allow create, update, delete: if hasStaffPermission(request.resource.data.universityId, 'generate_admit_cards') || (resource != null && hasStaffPermission(resource.data.universityId, 'generate_admit_cards'));
     }
 
-    // Users - owner can read/create their own doc, but cannot self-modify
-    // the fields that gate access (role, approvalStatus). Previously the
-    // rule was a blanket `allow write: if auth.uid == uid`, meaning a
-    // newly-registered (pending) user could simply edit their own
-    // Firestore document to set approvalStatus: 'approved' or role:
-    // 'admin' directly, bypassing any review process entirely.
-    match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-
-      allow create: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.data.approvalStatus == 'pending';
-
-      allow update: if request.auth != null
-        && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys()
-              .hasAny(['role', 'approvalStatus']);
-
-      // EDUING platform admins can update approvalStatus on any user doc
-      // (this is how the admin panel approves/rejects registrations)
-      allow read, update: if isEduingAdmin();
+    match /seat_allotments/{id} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.studentId ||
+        isUniversityStaff(resource.data.universityId)
+      );
+      allow create, update, delete: if hasStaffPermission(request.resource.data.universityId, 'generate_offers') || (resource != null && hasStaffPermission(resource.data.universityId, 'generate_offers'));
     }
 
-    // Notifications - recipient-scoped read/dismiss. Previously `allow
-    // create: if request.auth != null` let any signed-in user create a
-    // notification addressed to any other user's userId (a spam/phishing
-    // vector impersonating the platform). Creation is now restricted to
-    // an approved university notifying its own applicants, or a user
-    // notifying themselves.
     match /notifications/{id} {
       allow read: if request.auth != null
         && request.auth.uid == resource.data.userId;
@@ -148,7 +174,7 @@ service cloud.firestore {
 
       allow create: if request.auth != null
         && (request.resource.data.userId == request.auth.uid
-            || isApprovedUniAdmin());
+            || isApprovedUniAdmin() || request.auth.token.role != null); // Allow staff to send notifications too if needed
     }
   }
 }

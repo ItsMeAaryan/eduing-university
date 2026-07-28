@@ -9,10 +9,12 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Zap, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import Image from 'next/image'
+import { useTheme } from 'next-themes'
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { resolvedTheme } = useTheme()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -61,22 +63,49 @@ export default function LoginPage() {
 
   if (pendingApproval) {
     return (
-      <div className="min-h-screen bg-brand-bg flex items-center justify-center p-6">
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-brand-surface border border-brand-border rounded-2xl p-8 text-center"
+          style={{
+            width: '100%', maxWidth: '420px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: '20px',
+            padding: '40px',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-card)',
+          }}
         >
-          <div className="w-16 h-16 bg-brand-warning/10 text-brand-warning rounded-full flex items-center justify-center mx-auto mb-6">
-            <Loader2 size={32} className="animate-spin" />
+          <div style={{
+            width: '64px', height: '64px',
+            background: 'rgba(245,158,11,0.10)',
+            borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px',
+            color: 'var(--gold)',
+          }}>
+            <Loader2 size={32} style={{ animation: 'spin 1s linear infinite' }} />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-4">Account Pending Approval</h2>
-          <p className="text-text-secondary mb-8 leading-relaxed">
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 12px' }}>
+            Account Pending Approval
+          </h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 32px' }}>
             Your account is pending approval. Our team will review your application and contact you shortly.
           </p>
           <button 
             onClick={() => setPendingApproval(false)}
-            className="w-full h-12 bg-white text-brand-bg rounded-lg font-semibold hover:bg-white/90 transition-colors"
+            style={{
+              width: '100%', height: '48px',
+              background: 'var(--indigo)',
+              border: 'none',
+              borderRadius: '12px',
+              color: 'white',
+              fontSize: '15px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              transition: 'opacity 0.15s',
+            }}
           >
             Back to Login
           </button>
@@ -86,88 +115,164 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg flex items-center justify-center p-6">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        style={{ width: '100%', maxWidth: '420px' }}
       >
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-8">
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: '20px',
+          padding: '40px',
+          boxShadow: 'var(--shadow-card)',
+        }}>
           {/* Logo */}
-          <div className="text-center mb-10">
-            <div className="flex items-center justify-center gap-3">
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
               <Image
                 src="/bandwlogo.PNG"
                 alt="EDUING Logo"
                 width={40}
                 height={40}
-                style={{ objectFit: 'contain', filter: 'invert(1)' }}
+                style={{
+                  objectFit: 'contain',
+                  filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
+                  transition: 'filter 200ms ease',
+                }}
               />
-              <div className="text-3xl font-bold tracking-tight">
-                <span className="text-white">EDU</span>
-                <span className="text-brand-primary-text">ING</span>
-                <span className="text-brand-primary-text">.in</span>
+              <div style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-0.03em', display: 'flex', alignItems: 'baseline' }}>
+                <span style={{ color: 'var(--text-primary)' }}>EDU</span>
+                <span style={{ color: 'var(--indigo-light)' }}>ING</span>
+                <span style={{ color: 'var(--indigo-light)', fontSize: '16px' }}>.in</span>
               </div>
             </div>
-            <h1 className="text-xl font-bold text-white mt-6">University Portal</h1>
-            <p className="text-text-secondary text-sm mt-2">Sign in to manage your institution</p>
+            <h1 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 6px' }}>
+              University Portal
+            </h1>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
+              Sign in to manage your institution
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Email */}
             <div>
-              <label htmlFor="login-email" className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Email Address</label>
+              <label
+                htmlFor="login-email"
+                style={{ display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}
+              >
+                Email Address
+              </label>
               <input 
                 id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@university.eduing.in"
-                className="input-dark"
                 required
+                style={{
+                  width: '100%',
+                  padding: '11px 14px',
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--input-border)',
+                  borderRadius: '10px',
+                  color: 'var(--input-text)',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--input-border-focus)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'var(--input-border)' }}
               />
             </div>
 
+            {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="login-password" className="block text-xs font-semibold uppercase tracking-wider text-text-muted">Password</label>
-              </div>
-              <div className="relative">
+              <label
+                htmlFor="login-password"
+                style={{ display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}
+              >
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
                 <input 
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-dark pr-12"
                   required
+                  style={{
+                    width: '100%',
+                    padding: '11px 44px 11px 14px',
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--input-border)',
+                    borderRadius: '10px',
+                    color: 'var(--input-text)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--input-border-focus)' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = 'var(--input-border)' }}
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center',
+                  }}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
+            {/* Submit */}
             <button 
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-white text-brand-bg rounded-lg font-bold flex items-center justify-center hover:bg-white/90 transition-colors disabled:opacity-50 mt-8"
+              style={{
+                width: '100%', height: '48px', marginTop: '8px',
+                background: 'var(--indigo)',
+                border: 'none',
+                borderRadius: '12px',
+                color: 'white',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'opacity 0.15s',
+              }}
             >
-              {loading ? <Loader2 className="animate-spin" /> : 'Sign In'}
+              {loading ? <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-brand-border text-center">
+          {/* Demo autofill */}
+          <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
             <button 
               onClick={handleAutofill}
-              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                fontSize: '13px', color: 'var(--text-muted)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
             >
-              <Zap size={12} className="text-brand-gold" />
-              <span>⚡ Autofill Demo</span>
+              <Zap size={13} style={{ color: 'var(--gold)' }} />
+              Autofill Demo Credentials
             </button>
           </div>
         </div>

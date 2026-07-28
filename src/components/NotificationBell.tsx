@@ -26,20 +26,56 @@ export default function NotificationBell() {
     return () => unsubscribe()
   }, [])
 
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isOpen])
+
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full hover:bg-white/5 transition-colors"
+        style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'var(--text-secondary)',
+          position: 'relative',
+          transition: 'all 0.15s',
+        }}
         aria-label="Notifications"
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-expanded={isOpen}
+        onMouseEnter={e => {
+          e.currentTarget.style.borderColor = 'var(--border-hover)'
+          e.currentTarget.style.color = 'var(--text-primary)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.borderColor = 'var(--border)'
+          e.currentTarget.style.color = 'var(--text-secondary)'
+        }}
       >
-        <Bell size={20} className="text-text-secondary hover:text-white" />
+        <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-brand-error text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-brand-bg">
-            {unreadCount}
-          </span>
+          <span style={{
+            position: 'absolute',
+            top: '6px',
+            right: '6px',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: 'var(--red)',
+            border: '2px solid var(--bg-elevated)',
+          }} />
         )}
       </button>
 
@@ -47,63 +83,146 @@ export default function NotificationBell() {
         {isOpen && (
           <>
             <div 
-              className="fixed inset-0 z-40" 
+              style={{ position: 'fixed', inset: 0, zIndex: 40 }}
               onClick={() => setIsOpen(false)} 
               aria-hidden="true"
             />
             <motion.div
+              role="dialog"
+              aria-label="Notifications"
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 mt-2 w-80 sm:w-96 max-h-[480px] bg-brand-surface border border-brand-border rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 'calc(100% + 10px)',
+                width: '360px',
+                maxHeight: '480px',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                borderRadius: '16px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+                zIndex: 50,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
             >
-              <div className="p-4 border-b border-brand-border flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white">Notifications</h3>
+              {/* Header */}
+              <div style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span style={{
+                      marginLeft: '8px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      background: 'var(--indigo)',
+                      color: 'white',
+                      padding: '2px 7px',
+                      borderRadius: '100px',
+                    }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </h3>
                 <button 
                   onClick={() => markAllNotificationsRead(auth.currentUser?.uid || '')}
-                  className="text-[11px] text-brand-primary-text hover:underline"
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: 'var(--indigo-light)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
                 >
                   Mark all read
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              {/* List */}
+              <div style={{ flex: 1, overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-text-muted text-sm">
+                  <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
                     No notifications yet
                   </div>
                 ) : (
-                  notifications.map((n) => (
-                    <button 
-                      key={n.id}
-                      onClick={() => markNotificationRead(n.id)}
-                      className={`w-full text-left p-4 border-b border-white/5 cursor-pointer hover:bg-white/2 transition-colors flex gap-3 ${!n.isRead ? 'bg-brand-primary/5' : ''}`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                        n.type === 'selected' ? 'bg-brand-success/10 text-brand-success' :
-                        n.type === 'rejected' ? 'bg-brand-error/10 text-brand-error' :
-                        'bg-brand-primary/10 text-brand-primary-text'
-                      }`}>
-                        {n.isRead ? <Check size={14} /> : <Bell size={14} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm truncate ${!n.isRead ? 'text-white font-semibold' : 'text-text-secondary'}`}>
-                            {n.title}
-                          </p>
-                          <span className="text-[10px] text-text-muted shrink-0">
-                            {n.createdAt?.seconds ? formatDistanceToNow(new Date(n.createdAt.seconds * 1000)) + ' ago' : ''}
-                          </span>
+                  notifications.map((n) => {
+                    const iconBg = n.type === 'selected'
+                      ? 'rgba(22,163,74,0.10)'
+                      : n.type === 'rejected'
+                      ? 'rgba(220,38,38,0.10)'
+                      : 'rgba(99,102,241,0.10)'
+                    const iconColor = n.type === 'selected'
+                      ? 'var(--green)'
+                      : n.type === 'rejected'
+                      ? 'var(--red)'
+                      : 'var(--indigo-light)'
+
+                    return (
+                      <button 
+                        key={n.id}
+                        onClick={() => markNotificationRead(n.id)}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '14px 16px',
+                          borderBottom: '1px solid var(--border)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          gap: '12px',
+                          background: !n.isRead ? 'rgba(99,102,241,0.04)' : 'transparent',
+                          border: 'none',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = !n.isRead ? 'rgba(99,102,241,0.04)' : 'transparent' }}
+                      >
+                        <div style={{
+                          width: '32px', height: '32px',
+                          borderRadius: '50%',
+                          background: iconBg,
+                          color: iconColor,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0,
+                        }}>
+                          {n.isRead ? <Check size={14} /> : <Bell size={14} />}
                         </div>
-                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">
-                          {n.message}
-                        </p>
-                      </div>
-                      {!n.isRead && (
-                        <div className="w-1.5 h-1.5 bg-brand-primary rounded-full mt-2" />
-                      )}
-                    </button>
-                  ))
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <p style={{
+                              fontSize: '13px',
+                              fontWeight: !n.isRead ? '600' : '400',
+                              color: !n.isRead ? 'var(--text-primary)' : 'var(--text-secondary)',
+                              margin: 0,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {n.title}
+                            </p>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', flexShrink: 0 }}>
+                              {n.createdAt?.seconds ? formatDistanceToNow(new Date(n.createdAt.seconds * 1000)) + ' ago' : ''}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '3px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {n.message}
+                          </p>
+                        </div>
+                        {!n.isRead && (
+                          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--indigo)', flexShrink: 0, marginTop: '4px' }} />
+                        )}
+                      </button>
+                    )
+                  })
                 )}
               </div>
             </motion.div>
