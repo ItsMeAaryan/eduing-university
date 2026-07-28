@@ -18,8 +18,12 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/components/Toast'
 import Link from 'next/link'
+import { generatePdfFromElement } from '@/components/pdf/PdfGenerator'
+import { AdmitCardTemplate } from '@/components/pdf/AdmitCardTemplate'
+import { saveGeneratedDocument, subscribeToGeneratedDocuments, type GeneratedDocument } from '@/lib/firebase/generated_documents'
 
 export default function ExamManagementPage() {
   const [programs, setPrograms] = useState<FirestoreRecord[]>([])
@@ -308,11 +312,81 @@ function ExamScheduleForm({ program, onClose, onSave, initialData }: {
 
 function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreRecord[], schedules: FirestoreRecord[], apps: FirestoreRecord[] }) {
   const [selectedProgram, setSelectedProgram] = useState(programs[0]?.id || '')
+  const [generating, setGenerating] = useState<Record<string, boolean>>({})
+  const [generatedDocs, setGeneratedDocs] = useState<Record<string, GeneratedDocument[]>>({})
+  const { toast } = useToast()
+  const { userData } = useAuth()
   
-  const programApps = apps.filter((a: FirestoreRecord) => a.programId === selectedProgram)
+  const programApps = apps.filter((a: FirestoreRecord) => a.programId === selectedProgram && a.status !== 'rejected')
   const schedule = schedules.find((s: FirestoreRecord) => s.programId === selectedProgram)
 
+  useEffect(() => {
+    // Subscribe to generated documents for all apps in this program
+    const unsubs = programApps.map(app => {
+      return subscribeToGeneratedDocuments(app.id, (docs) => {
+        setGeneratedDocs(prev => ({
+          ...prev,
+          [app.id]: docs.filter(d => d.type === 'admit_card')
+        }))
+      })
+    })
+    return () => unsubs.forEach(unsub => unsub())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgram, programApps.length])
+
   if (!selectedProgram) return <div className="text-center py-20 text-text-muted italic">No exam programs found</div>
+
+  const handleGenerate = async (app: FirestoreRecord, i: number) => {
+    if (!schedule) {
+      toast.error('Schedule must be published before generating admit cards')
+      return
+    }
+    
+    setGenerating(prev => ({ ...prev, [app.id]: true }))
+    try {
+      const user = auth.currentUser
+      const generatedBy = user?.displayName || user?.email || 'University Admin'
+      const version = (generatedDocs[app.id]?.length || 0) + 1
+      
+      const pdfBlob = await generatePdfFromElement(`admit-card-template-${app.id}`)
+      
+      const actor = {
+        uid: user?.uid || 'system',
+        name: user?.displayName || user?.email || 'University Admin',
+        role: 'admin'
+      }
+      
+      await saveGeneratedDocument({
+        appId: app.id,
+        studentId: app.studentId,
+        universityId: app.universityId || user?.uid || '',
+        type: 'admit_card',
+        pdfBlob,
+        actor,
+        version
+      })
+      toast.success(`Admit card generated for ${app.studentName}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(`Failed: ${msg}`)
+    } finally {
+      setGenerating(prev => ({ ...prev, [app.id]: false }))
+    }
+  }
+
+  const handleBulkGenerate = async () => {
+    const ungenerated = programApps.filter(app => !generatedDocs[app.id]?.length)
+    if (ungenerated.length === 0) {
+      toast.error('All students already have admit cards generated.')
+      return
+    }
+    
+    toast.success(`Starting generation for ${ungenerated.length} students...`)
+    for (let i = 0; i < ungenerated.length; i++) {
+      await handleGenerate(ungenerated[i], i)
+    }
+    toast.success('Bulk generation complete')
+  }
 
   return (
     <div className="space-y-6">
@@ -329,9 +403,12 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <button className="h-10 px-4 rounded-lg bg-white/5 border border-brand-border text-white text-sm font-semibold flex items-center gap-2">
+            <button 
+              onClick={handleBulkGenerate}
+              className="h-10 px-4 rounded-lg bg-white/5 border border-brand-border text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10 transition-colors"
+            >
               <Printer size={16} />
-              Generate All
+              Generate Missing
             </button>
           </div>
         </div>
@@ -360,10 +437,36 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                     {schedule?.centers?.[i % schedule.centers.length] || 'TBD'}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {/* TODO: no admit-card generation/download handler exists yet — this button is currently non-functional. Left as-is per audit guardrails (not inventing business logic without a spec); flagging for implementation. */}
-                    <button className="p-2 rounded-lg hover:bg-white/5 text-brand-primary-text" aria-label="Download admit card" disabled>
-                      <Download size={16} />
-                    </button>
+                    {generatedDocs[app.id]?.length > 0 ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-[10px] font-bold text-brand-success bg-brand-success/10 px-2 py-1 rounded">Generated (v{generatedDocs[app.id][0].version})</span>
+                        <a 
+                          href={generatedDocs[app.id][0].url} 
+                          download
+                          target="_blank"
+                          className="p-2 rounded-lg hover:bg-white/5 text-brand-primary-text transition-colors" 
+                          title="Download admit card"
+                        >
+                          <Download size={16} />
+                        </a>
+                        <button 
+                          onClick={() => handleGenerate(app, i)}
+                          disabled={generating[app.id]}
+                          className="p-2 rounded-lg hover:bg-white/5 text-text-muted transition-colors disabled:opacity-50"
+                          title="Regenerate"
+                        >
+                          {generating[app.id] ? <span className="animate-pulse">...</span> : <Printer size={16} />}
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleGenerate(app, i)}
+                        disabled={generating[app.id]}
+                        className="px-3 py-1.5 rounded-lg bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary-text text-xs font-bold transition-colors disabled:opacity-50"
+                      >
+                        {generating[app.id] ? 'Generating...' : 'Generate'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -372,6 +475,30 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Hidden Templates for html2canvas */}
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -1 }}>
+          {schedule && programApps.map((app: FirestoreRecord, i: number) => {
+            const program = programs.find((p: FirestoreRecord) => p.id === selectedProgram)
+            return (
+              <div key={app.id} id={`admit-card-template-${app.id}`}>
+                <AdmitCardTemplate
+                  universityName={userData?.universityName || 'University'}
+                  studentName={app.studentName || 'Student'}
+                  applicationId={app.id}
+                  rollNumber={`EXAM2026${String(i + 1).padStart(3, '0')}`}
+                  programName={program?.name || 'Program'}
+                  examName={`${program?.name || ''} Entrance Exam`}
+                  examDate={schedule.date || 'TBD'}
+                  examTime={schedule.time || 'TBD'}
+                  reportingTime="1 Hour before exam"
+                  venue={schedule.centers?.[i % (schedule.centers?.length || 1)] || 'TBD'}
+                  instructions={schedule.instructions || 'Follow all instructions provided.'}
+                />
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
