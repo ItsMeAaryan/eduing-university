@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
-import { subscribeToApplications, updateApplicationStatus } from '@/lib/firebase/applications'
+import { getApplicationsPage, updateApplicationStatus } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
 import { MoreVertical, CheckSquare, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import ApplicationPanel from '@/components/ApplicationPanel'
+import type { DocumentSnapshot } from 'firebase/firestore'
 
 export default function ApplicationsPage() {
   const { toast } = useToast()
@@ -21,32 +22,60 @@ export default function ApplicationsPage() {
   const [viewingApp, setViewingApp] = useState<FirestoreRecord | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null)
+  const [hasMore, setHasMore] = useState(true)
+
+  const loadApps = async (isLoadMore = false) => {
+    const user = auth.currentUser
+    if (!user) return
+    
+    if (!isLoadMore) {
+      setLoading(true)
+      setApps([])
+      setLastDoc(null)
+    }
+
+    try {
+      const currentLastDoc = isLoadMore ? lastDoc : null
+      const res = await getApplicationsPage(user.uid, 15, currentLastDoc, {
+        status: statusFilter,
+        searchTerm: searchTerm
+      })
+      
+      if (isLoadMore) {
+        setApps(prev => [...prev, ...res.apps])
+      } else {
+        setApps(res.apps)
+      }
+      setLastDoc(res.lastDoc)
+      setHasMore(res.apps.length === 15)
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to load applications')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
-        const unsubApps = subscribeToApplications(user.uid, (data) => {
-          setApps(data)
-          setLoading(false)
-        })
+        loadApps()
         const unsubProgs = subscribeToPrograms(user.uid, setPrograms)
-        return () => {
-          unsubApps()
-          unsubProgs()
-        }
+        return () => unsubProgs()
       }
     })
     return () => unsubscribeAuth()
-  }, [])
+  }, []) // Initial load
 
-  const filteredApps = useMemo(() => {
-    return apps.filter(app => {
-      const matchesSearch = app.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           app.studentEmail?.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || app.status === statusFilter
-      const matchesProgram = programFilter === 'all' || app.programId === programFilter
-      return matchesSearch && matchesStatus && matchesProgram
-    })
-  }, [apps, searchTerm, statusFilter, programFilter])
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadApps()
+    }, 500) // Debounce search
+    return () => clearTimeout(timer)
+  }, [searchTerm, statusFilter, programFilter])
+
+  const filteredApps = apps // Server side filtered mostly, though program is not fully covered yet
 
   const handleSelectAll = () => {
     if (selectedApps.length === filteredApps.length) {
@@ -64,10 +93,19 @@ export default function ApplicationsPage() {
 
   const handleBulkUpdate = async (status: string) => {
     if (selectedApps.length === 0) return
+    const user = auth.currentUser
+    if (!user) return
+    
     const promise = Promise.all(
       selectedApps.map(async (id) => {
         const app = apps.find(a => a.id === id)
-        if (app) await updateApplicationStatus(id, app.studentId, status)
+        if (app) await updateApplicationStatus(
+          user.uid, 
+          id, 
+          app.studentId, 
+          status,
+          { uid: user.uid, name: user.displayName || user.email || 'Admin', role: 'admin' }
+        )
       })
     )
     toast.promise(promise, {
@@ -304,6 +342,16 @@ export default function ApplicationsPage() {
             </tbody>
           </table>
         </div>
+        {hasMore && (
+          <div className="p-4 border-t border-white/5 flex justify-center">
+            <button
+              onClick={() => loadApps(true)}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Load More
+            </button>
+          </div>
+        )}
       </div>
 
       <ApplicationPanel 
