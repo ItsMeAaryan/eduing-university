@@ -1,99 +1,319 @@
 @import "tailwindcss";
 
-@theme {
-  --color-brand-bg: #08080A;
-  --color-brand-surface: #111114;
-  --color-brand-border: rgba(255, 255, 255, 0.08);
-  --color-brand-border-hover: rgba(255, 255, 255, 0.15);
-  --color-brand-primary: #4F46E5;
-  /* brand-primary-text is a lighter tint of brand-primary for use as
-     foreground text on dark backgrounds. #4F46E5 only achieves 3.18:1
-     on bg and 3.00:1 on surface — both fail WCAG AA (4.5:1) for normal
-     text. #7169EA passes at 4.68:1. Keep brand-primary for backgrounds,
-     borders, and UI elements where text contrast rules don't apply. */
-  --color-brand-primary-text: #7169EA;
-  --color-brand-gold: #F59E0B;
-  --color-brand-success: #22C55E;
-  --color-brand-warning: #F59E0B;
-  --color-brand-error: #EF4444;
-  
-  --color-text-primary: #FAFAFA;
-  --color-text-secondary: rgba(255, 255, 255, 0.5);
-  /* text-muted was rgba(255,255,255,0.25) = 2.1:1 contrast — fails
-     WCAG AA badly. Raised to 46% opacity which achieves 4.67:1 on
-     the darkest bg (#08080A) and 4.52:1 on surface (#111114). */
-  --color-text-muted: rgba(255, 255, 255, 0.46);
+/* ─────────────────────────────────────────────────────────────────────
+   SEMANTIC TOKEN SYSTEM
+   All components should use these vars — never hardcode colours.
+   next-themes injects class="dark" on <html> when dark mode is active.
+   ───────────────────────────────────────────────────────────────────── */
 
-  --radius-card: 16px;
+/* ── LIGHT THEME (default) ── */
+:root {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --bg:            #F5F6FA;
+  --bg-elevated:   #FFFFFF;
+  --bg-card:       #FFFFFF;
+  --bg-card-hover: #F0F2FA;
+  --bg-sidebar:    #FFFFFF;
+
+  /* Borders */
+  --border:        rgba(99, 102, 241, 0.14);
+  --border-hover:  rgba(99, 102, 241, 0.35);
+
+  /* Text */
+  --text-primary:   #0F0F1A;
+  --text-secondary: #4B4B6E;
+  --text-muted:     #7070A0;
+
+  /* Brand */
+  --indigo:        #4F46E5;
+  --indigo-light:  #6366F1;
+  --gold:          #D97706;
+  --green:         #16A34A;
+  --red:           #DC2626;
+  --orange:        #EA580C;
+
+  /* Shadows */
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(99,102,241,0.06);
+  --shadow-glow: 0 0 40px rgba(79,70,229,0.10);
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Chart colours */
+  --chart-axis: rgba(0, 0, 0, 0.3);
+  --chart-grid: rgba(0, 0, 0, 0.06);
+
+  /* Scrollbar */
+  --scrollbar-track: #F0F0F5;
+  --scrollbar-thumb: rgba(99, 102, 241, 0.2);
+  --scrollbar-thumb-hover: rgba(99, 102, 241, 0.4);
+
+  /* Input */
+  --input-bg: #FFFFFF;
+  --input-border: rgba(99, 102, 241, 0.2);
+  --input-border-focus: #4F46E5;
+  --input-text: #0F0F1A;
+  --input-placeholder: rgba(15, 15, 26, 0.35);
+
+  /* Selection */
+  --selection-bg: rgba(99, 102, 241, 0.2);
+}
+
+/* ── DARK THEME ── */
+:root.dark {
+  color-scheme: dark;
+
+  --bg:            #0A0A0F;
+  --bg-elevated:   #111118;
+  --bg-card:       #16161F;
+  --bg-card-hover: #1C1C28;
+  --bg-sidebar:    #111118;
+
+  --border:        rgba(99, 102, 241, 0.15);
+  --border-hover:  rgba(99, 102, 241, 0.40);
+
+  --text-primary:   #F0F0FF;
+  --text-secondary: #8B8BA8;
+  --text-muted:     #8484A9;
+
+  --indigo:        #5B5FEF;
+  --indigo-light:  #818CF8;
+  --gold:          #F59E0B;
+  --green:         #10B981;
+  --red:           #EF4444;
+  --orange:        #F97316;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.08);
+  --shadow-glow: 0 0 40px rgba(91,95,239,0.12);
+
+  --chart-axis: rgba(255, 255, 255, 0.30);
+  --chart-grid: rgba(255, 255, 255, 0.05);
+
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(99, 102, 241, 0.20);
+  --scrollbar-thumb-hover: rgba(99, 102, 241, 0.40);
+
+  --input-bg: #16161F;
+  --input-border: rgba(255, 255, 255, 0.08);
+  --input-border-focus: #5B5FEF;
+  --input-text: #F0F0FF;
+  --input-placeholder: rgba(255, 255, 255, 0.28);
+
+  --selection-bg: rgba(99, 102, 241, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   TAILWIND v4 THEME TOKENS
+   These generate Tailwind utility classes (e.g. bg-brand-primary).
+   Point to CSS vars so they respond to theme switching.
+   ───────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Brand palette — static */
+  --color-brand-primary:      #4F46E5;
+  --color-brand-primary-text: #7169EA;
+  --color-brand-gold:         #F59E0B;
+  --color-brand-success:      #22C55E;
+  --color-brand-warning:      #F59E0B;
+  --color-brand-error:        #EF4444;
+
+  /* Semantic — dynamic (point to CSS vars) */
+  --color-brand-bg:      var(--bg);
+  --color-brand-surface: var(--bg-card);
+  --color-brand-border:  var(--border);
+
+  --color-text-primary:   var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted:     var(--text-muted);
+
+  --radius-card:   var(--radius-lg);
   --radius-button: 8px;
 }
 
-:root {
-  --background: #08080A;
-  --foreground: #FAFAFA;
+/* ─────────────────────────────────────────────────────────────────────
+   BASE STYLES
+   ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Smooth theme transitions — no flashing, no layout shift */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+/* Don't animate transforms or layout properties */
+*, *::before, *::after {
+  animation-duration: inherit;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utilities */
+::selection {
+  background: var(--selection-bg);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   UTILITY CLASSES
+   ───────────────────────────────────────────────────────────────────── */
 .section-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-brand-primary);
-  font-weight: 600;
+  letter-spacing: 0.10em;
+  color: var(--indigo-light);
+  font-weight: 700;
 }
 
 .flat-card {
-  background-color: var(--color-brand-surface);
-  border: 1px solid var(--color-brand-border);
-  border-radius: var(--radius-card);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .flat-card:hover {
-  border-color: var(--color-brand-border-hover);
+  border-color: var(--border-hover);
 }
 
+/* Unified input style — replaces .input-dark, works in both themes */
+.input-field,
 .input-dark {
-  background-color: #111114;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
-  color: #FAFAFA;
+  color: var(--input-text);
   padding: 10px 14px;
   width: 100%;
+  font-size: 14px;
   transition: border-color 0.15s;
+  outline: none;
 }
 
+.input-field:focus,
 .input-dark:focus {
   outline: none;
-  border-color: #4F46E5;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
+.input-field::placeholder,
 .input-dark::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--input-placeholder);
 }
 
-/* Scrollbar styling for dark mode */
+/* Select element theming */
+select.input-field,
+select.input-dark {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366F1' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SCROLLBAR
+   ───────────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #08080A;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   FOCUS RINGS (WCAG AA)
+   ───────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--indigo-light);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SPINNER ANIMATION
+   ───────────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-top-color: var(--indigo);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PREVENT FLASH ON LOAD
+   The next-themes script runs before paint; suppressing transitions
+   for the first 0ms prevents FOUC on theme restoration.
+   ───────────────────────────────────────────────────────────────────── */
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   LIGHT MODE OVERRIDES — make white-alpha utilities visible on light bg
+   These classes were written for dark mode; in light mode we remap them
+   to neutral grey equivalents so table rows, hover states, etc. still
+   look correct without modifying every page.
+   ───────────────────────────────────────────────────────────────────── */
+:root:not(.dark) .bg-white\/1  { background-color: rgba(0, 0, 0, 0.01) !important; }
+:root:not(.dark) .bg-white\/2  { background-color: rgba(0, 0, 0, 0.02) !important; }
+:root:not(.dark) .bg-white\/3  { background-color: rgba(0, 0, 0, 0.03) !important; }
+:root:not(.dark) .bg-white\/5  { background-color: rgba(0, 0, 0, 0.04) !important; }
+:root:not(.dark) .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
+:root:not(.dark) .bg-white\/20 { background-color: rgba(0, 0, 0, 0.07) !important; }
+
+:root:not(.dark) .hover\:bg-white\/2:hover  { background-color: rgba(0, 0, 0, 0.03) !important; }
+:root:not(.dark) .hover\:bg-white\/5:hover  { background-color: rgba(0, 0, 0, 0.05) !important; }
+:root:not(.dark) .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.06) !important; }
+
+/* border-white overrides */
+:root:not(.dark) .border-white\/5  { border-color: rgba(0, 0, 0, 0.06) !important; }
+:root:not(.dark) .border-white\/10 { border-color: rgba(0, 0, 0, 0.09) !important; }
+
+/* text-white → use primary text token in light mode */
+:root:not(.dark) .text-white { color: var(--text-primary) !important; }
+
+/* divide-white overrides */
+:root:not(.dark) .divide-white\/4 > * + * { border-color: rgba(0, 0, 0, 0.06) !important; }
+
+/* Tailwind bg-black/40 (used in sidebar theme toggle) */
+:root:not(.dark) .bg-black\/40 { background-color: rgba(0, 0, 0, 0.04) !important; }

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import AppLayout from "@/components/AppLayout";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,12 +38,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-brand-bg text-text-primary`}>
-        <ToastProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-        </ToastProvider>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        {/*
+          Providers must wrap everything so ThemeProvider can inject
+          class="dark" on <html> before any component renders.
+          suppressHydrationWarning on <html> prevents mismatch from
+          the class being added by next-themes on the client.
+        */}
+        <Providers>
+          <ToastProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </ToastProvider>
+        </Providers>
       </body>
     </html>
   );

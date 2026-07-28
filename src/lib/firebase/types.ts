@@ -12,3 +12,63 @@
 export type FirestoreRecord = { id: string } & Record<string, any>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FirestoreWriteData = Record<string, any>
+
+export type Permission = 
+  | 'view_dashboard'
+  | 'view_applications'
+  | 'edit_applications'
+  | 'verify_documents'
+  | 'generate_offers'
+  | 'generate_admit_cards'
+  | 'verify_payments'
+  | 'complete_enrollment'
+  | 'manage_programs'
+  | 'manage_staff'
+  | 'edit_university'
+  | 'view_reports'
+  | 'view_audit_logs'
+
+export interface ActorContext {
+  uid: string
+  name: string
+  role: string
+}
+
+export interface AuditLog extends FirestoreRecord {
+  timestamp: string
+  actorUid: string
+  actorName: string
+  actorRole: string
+  universityId: string
+  actionType: string
+  entityType: string
+  entityId: string
+  oldValue?: Record<string, any>
+  newValue?: Record<string, any>
+  status: 'success' | 'failed' | 'warning'
+  metadata?: Record<string, any>
+}
+
+export type StaffRole = 
+  | 'owner'
+  | 'super_admin'
+  | 'admissions_head'
+  | 'admissions_officer'
+  | 'document_officer'
+  | 'finance_officer'
+  | 'exam_coordinator'
+  | 'registrar'
+  | 'analyst'
+  | 'support'
+
+export interface StaffMember extends FirestoreRecord {
+  uid: string
+  name: string
+  email: string
+  role: StaffRole
+  department?: string
+  status: 'active' | 'suspended'
+  permissions: Permission[]
+  joinedAt: string
+  lastLogin?: string
+}

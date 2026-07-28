@@ -2,40 +2,94 @@
 
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { Search, Bell, User } from 'lucide-react'
+import { Search, User } from 'lucide-react'
+import NotificationBell from '@/components/NotificationBell'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function Navbar() {
   const { userData } = useAuth()
 
-
   return (
-    <header className="h-20 bg-card backdrop-blur-[20px] border-b border-brand-indigo/15 sticky top-0 z-40 px-8 flex items-center justify-between transition-colors duration-300">
-      <div className="relative w-96">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+    <header
+      style={{
+        height: '56px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 28px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg-elevated)',
+        backdropFilter: 'blur(12px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
+      }}
+    >
+      {/* Search bar */}
+      <div style={{ position: 'relative', width: '320px' }}>
+        <Search
+          size={15}
+          style={{
+            position: 'absolute',
+            left: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'var(--text-muted)',
+            pointerEvents: 'none',
+          }}
+        />
         <input
           type="text"
-          placeholder="Search for applications, students..."
-          className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-12 pr-4 focus:ring-1 focus:ring-brand-indigo/50 transition-all outline-none text-white text-sm placeholder:text-white/20"
+          placeholder="Search applications, students…"
+          aria-label="Search"
+          style={{
+            width: '100%',
+            padding: '8px 14px 8px 36px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: '10px',
+            color: 'var(--text-primary)',
+            fontSize: '13px',
+            outline: 'none',
+            transition: 'border-color 0.15s',
+          }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-hover)' }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
         />
       </div>
 
-      <div className="flex items-center gap-6">
-        <button className="relative p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-brand-gold rounded-full border-2 border-brand-bg" />
-        </button>
+      {/* Right controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Theme quick toggle */}
+        <ThemeToggle />
 
-        <div className="h-8 w-px bg-white/10 mx-2" />
+        {/* Notifications */}
+        <NotificationBell />
 
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-white leading-none">{userData?.name || 'Admin User'}</p>
-            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider font-bold">Main Campus</p>
+        {/* Divider */}
+        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }} />
+
+        {/* User avatar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
+              {userData?.name || 'Admin User'}
+            </p>
+            <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600' }}>
+              University Admin
+            </p>
           </div>
-          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 overflow-hidden">
-            <div className="w-full h-full bg-brand-gold/20 flex items-center justify-center">
-               <User className="w-5 h-5 text-brand-gold" />
-            </div>
+          <div style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--indigo), #7C3AED)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px solid var(--border)',
+          }}>
+            <User size={15} style={{ color: 'white' }} />
           </div>
         </div>
       </div>
