@@ -153,32 +153,29 @@ export default function StudentsDirectoryPage() {
 
   return (
     <RouteGuard require="view_applications">
-      <div className="p-8 max-w-7xl mx-auto h-[calc(100vh-2rem)] flex flex-col">
-        <header className="mb-8 flex justify-between items-end shrink-0">
+      <div className="flex flex-col" style={{ minHeight: '60vh' }}>
+        <div className="page-header">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-              <Users className="text-brand-primary" size={32} />
-              Student Directory
-            </h1>
-            <p className="text-text-secondary">Enterprise CRM for managing the complete student lifecycle.</p>
+            <h1 className="page-title">Student Directory</h1>
+            <p className="page-subtitle">Enterprise CRM for managing the complete student lifecycle</p>
           </div>
           
-          <div className="flex gap-4">
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {selectedStudents.length > 0 && (
               <button 
                 onClick={() => setIsTagModalOpen(true)}
-                className="btn-secondary flex items-center gap-2 border-brand-primary/50 text-brand-primary"
+                className="btn-secondary"
               >
-                <Tag size={16} /> Assign Tag ({selectedStudents.length})
+                <Tag size={14} /> Assign Tag ({selectedStudents.length})
               </button>
             )}
-            <button className="btn-secondary flex items-center gap-2">
-              <Download size={16} /> Export CRM Data
+            <button className="btn-secondary">
+              <Download size={14} /> Export CRM Data
             </button>
           </div>
-        </header>
+        </div>
 
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-4 mb-6 flex gap-4 shrink-0">
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
             <input 
@@ -325,9 +322,14 @@ export default function StudentsDirectoryPage() {
 
                 {filteredStudents.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={7} className="p-12 text-center text-text-muted">
-                      <Users size={48} className="mx-auto mb-4 opacity-20" />
-                      <p>No students found matching your CRM criteria.</p>
+                    <td colSpan={7}>
+                      <div className="empty-state">
+                        <div className="empty-state-icon">
+                          <Users size={22} />
+                        </div>
+                        <p className="empty-state-title">No students found</p>
+                        <p className="empty-state-description">Try adjusting your filters or search term.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
