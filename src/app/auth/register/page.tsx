@@ -6,13 +6,14 @@ import { auth, db } from '@/lib/firebase/config'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import toast from 'react-hot-toast'
+import { useToast } from '@/components/Toast'
 import { motion } from 'framer-motion'
 import { UserPlus, Mail, Lock, Building2, User, MapPin, Phone, Globe, Info, GraduationCap, Building } from 'lucide-react'
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   // Form State
   const [formData, setFormData] = useState({
@@ -103,7 +104,7 @@ export default function RegisterPage() {
         updatedAt: serverTimestamp(),
       })
 
-      toast.success('University account created! Your account is pending approval — you\'ll be notified once verified.')
+      toast.success('University account created! Pending approval — you\'ll be notified once verified.')
       // createUserWithEmailAndPassword auto-signs the user in. Without
       // explicitly signing out here, a pending/unapproved user would stay
       // authenticated and could simply navigate straight to /dashboard —
