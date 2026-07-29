@@ -2,7 +2,6 @@
 
 import { ThemeProvider } from 'next-themes'
 import { ReactNode } from 'react'
-import { ToastProvider } from '@/components/Toast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AuthProvider } from '@/context/AuthContext'
 
@@ -10,6 +9,11 @@ import { AuthProvider } from '@/context/AuthContext'
  * Root providers — order matters:
  *   ThemeProvider  → injects class="dark" on <html> before paint
  *   AuthProvider   → listens to Firebase auth state
+ *
+ * NOTE: ToastProvider is intentionally NOT here — it lives in layout.tsx
+ * as the single authoritative instance. Having two ToastProviders creates
+ * two separate React contexts; the outer one wins but the inner one
+ * renders a dead duplicate toast container.
  *
  * storageKey: persists across refresh, browser restart, and login/logout.
  * attribute="class": drives CSS var switching via :root.dark in globals.css.
@@ -28,11 +32,9 @@ export function Providers({ children }: { children: ReactNode }) {
         storageKey="eduing-theme"
         disableTransitionOnChange={false}
       >
-        <ToastProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ToastProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   )
