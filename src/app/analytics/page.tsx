@@ -67,15 +67,15 @@ export default function ExecutiveDashboard() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-0 max-w-7xl mx-auto space-y-8">
       
-      <header className="flex justify-between items-end">
+      <header className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Executive Dashboard</h1>
-          <p className="text-text-secondary text-sm">High-level overview of university performance</p>
+          <h1 className="page-title">Executive Dashboard</h1>
+          <p className="page-subtitle">High-level overview of university performance</p>
         </div>
-        <button onClick={handleExport} className="btn-secondary flex items-center gap-2">
-          <Download size={16} /> Export KPIs
+        <button onClick={handleExport} className="btn-secondary">
+          <Download size={15} /> Export KPIs
         </button>
       </header>
 
@@ -114,9 +114,11 @@ export default function ExecutiveDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Main Chart */}
-        <div className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6">University Activity Trend (30 Days)</h3>
-          <div className="h-80 w-full">
+        <div className="lg:col-span-2 section-card">
+          <div className="section-card-header">
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>University Activity Trend (30 Days)</h3>
+          </div>
+          <div style={{ padding: '20px' }} className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activityData}>
                 <defs>
@@ -139,9 +141,11 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Funnel Summary */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6">Admissions Pipeline</h3>
-          <div className="space-y-4">
+        <div className="section-card">
+          <div className="section-card-header">
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Admissions Pipeline</h3>
+          </div>
+          <div style={{ padding: '20px' }} className="space-y-4">
             <FunnelStep label="Total Applicants" count={kpis.totalReceived} total={kpis.totalReceived} color="bg-blue-500" />
             <FunnelStep label="Offers Issued" count={kpis.offersIssued} total={kpis.totalReceived} color="bg-purple-500" />
             <FunnelStep label="Seat Accepted" count={kpis.seatAccepted} total={kpis.totalReceived} color="bg-pink-500" />
@@ -156,16 +160,20 @@ export default function ExecutiveDashboard() {
 
 function KPICard({ title, value, icon, trend, trendUp }: any) {
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm flex flex-col justify-between">
+    <div className="glass-card p-6 flex flex-col justify-between">
       <div className="flex justify-between items-start mb-4">
-        <div className="p-3 bg-white/5 rounded-lg">
+        <div style={{
+          padding: '10px',
+          background: 'rgba(99,102,241,0.08)',
+          borderRadius: '10px',
+        }}>
           {icon}
         </div>
       </div>
       <div>
-        <h4 className="text-sm text-text-muted font-medium mb-1">{title}</h4>
-        <p className="text-2xl font-bold text-white">{value}</p>
-        <p className={`text-xs mt-2 ${trendUp ? 'text-brand-success' : 'text-text-muted'}`}>{trend}</p>
+        <h4 style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: '0 0 6px' }}>{title}</h4>
+        <p style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>{value}</p>
+        <p style={{ fontSize: '12px', marginTop: '6px', color: trendUp ? 'var(--green)' : 'var(--text-muted)' }}>{trend}</p>
       </div>
     </div>
   )
