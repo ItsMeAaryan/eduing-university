@@ -30,21 +30,32 @@ const glowColors = {
   orange: 'hover:shadow-[0_0_20px_rgba(249,115,22,0.15)]',
 }
 
+const iconBg = {
+  indigo: 'rgba(99,102,241,0.10)',
+  gold: 'rgba(245,158,11,0.10)',
+  emerald: 'rgba(16,185,129,0.10)',
+  rose: 'rgba(239,68,68,0.10)',
+  orange: 'rgba(249,115,22,0.10)',
+}
+
 export default function StatCard({ title, value, icon: Icon, description, trend, color }: StatCardProps) {
   return (
     <div className={cn(
       "glass-card p-6 relative group transition-all duration-300",
       glowColors[color]
     )}>
-      <div className="absolute top-6 right-6 p-2 bg-white/5 rounded-lg border border-white/10 group-hover:scale-110 transition-transform">
-        <Icon className="w-4 h-4 text-white/50" />
+      <div
+        className="absolute top-6 right-6 p-2 rounded-lg group-hover:scale-110 transition-transform"
+        style={{ background: iconBg[color] }}
+      >
+        <Icon className={cn("w-4 h-4", valueColors[color])} />
       </div>
 
       <div className="mt-2">
         <span className={cn("text-4xl font-black tracking-tighter", valueColors[color])}>
           {value}
         </span>
-        <h3 className="text-white/50 font-bold text-xs uppercase tracking-widest mt-2">{title}</h3>
+        <h3 style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginTop: '8px' }}>{title}</h3>
       </div>
 
       {trend && (
@@ -57,12 +68,12 @@ export default function StatCard({ title, value, icon: Icon, description, trend,
           )}>
             {trend.isUp ? '↑' : '↓'} {trend.value}%
           </span>
-          <span className="text-[10px] text-white/20 font-bold uppercase tracking-tighter">vs last month</span>
+          <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>vs last month</span>
         </div>
       )}
       
       {description && !trend && (
-        <p className="mt-4 text-[10px] text-white/20 font-bold uppercase tracking-tighter">{description}</p>
+        <p style={{ marginTop: '16px', fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{description}</p>
       )}
     </div>
   )
