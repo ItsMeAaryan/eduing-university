@@ -20,7 +20,8 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
-  Shield
+  Shield,
+  UserSquare
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { auth } from '@/lib/firebase/config'
@@ -28,16 +29,35 @@ import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard',      href: '/dashboard' },
-  { icon: FileText,        label: 'Applications',   href: '/applications' },
-  { icon: BookOpen,        label: 'Programs',        href: '/programs' },
-  { icon: GraduationCap,  label: 'Exams',           href: '/exams' },
-  { icon: Users,           label: 'Seat Allocation', href: '/seats' },
-  { icon: BarChart3,       label: 'Analytics',       href: '/analytics' },
-  { icon: Settings,        label: 'Settings',        href: '/settings' },
-  { icon: Shield,          label: 'Audit Logs',      href: '/audit', requiredPermission: 'view_audit_logs' },
+const navGroups = [
+  {
+    label: 'Core',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard',      href: '/dashboard' },
+      { icon: UserSquare,      label: 'Students',        href: '/students' },
+      { icon: FileText,        label: 'Applications',   href: '/applications' },
+    ]
+  },
+  {
+    label: 'Management',
+    items: [
+      { icon: BookOpen,        label: 'Programs',        href: '/programs' },
+      { icon: GraduationCap,  label: 'Exams',           href: '/exams' },
+      { icon: Users,           label: 'Seat Allocation', href: '/seats' },
+      { icon: BarChart3,       label: 'Analytics',       href: '/analytics' },
+    ]
+  },
+  {
+    label: 'System',
+    items: [
+      { icon: Settings,        label: 'Settings',        href: '/settings' },
+      { icon: Shield,          label: 'Audit Logs',      href: '/audit', requiredPermission: 'view_audit_logs' as const },
+    ]
+  },
 ]
+
+// Flat list for backwards-compat lookups
+const navItems = navGroups.flatMap(g => g.items)
 
 const THEME_OPTIONS = [
   { id: 'light' as const,  icon: Sun,     label: 'Light'  },
@@ -286,34 +306,57 @@ export default function Sidebar() {
       </div>
 
       {/* ── Navigation ── */}
-      <nav style={{ flex: 1, padding: '10px', overflowY: 'auto' }}>
-        {navItems.filter(item => !item.requiredPermission || hasPermission(item.requiredPermission as any)).map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+      <nav style={{ flex: 1, padding: '8px', overflowY: 'auto' }}>
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter(item =>
+            !item.requiredPermission || hasPermission(item.requiredPermission as Parameters<typeof hasPermission>[0])
+          )
+          if (visibleItems.length === 0) return null
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative mb-0.5',
-                isActive
-                  ? 'bg-[rgba(99,102,241,0.12)] text-[var(--indigo-light)] border border-[rgba(99,102,241,0.25)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border border-transparent'
-              )}
-              style={{ textDecoration: 'none' }}
-            >
-              <item.icon size={16} strokeWidth={isActive ? 2.5 : 2} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '13.5px', fontWeight: isActive ? '600' : '400' }}>
-                {item.label}
-              </span>
-              {isActive && (
-                <div style={{
-                  position: 'absolute', right: '10px',
-                  width: '6px', height: '6px', borderRadius: '50%',
-                  background: 'var(--indigo-light)',
-                  boxShadow: '0 0 8px rgba(99,102,241,0.5)',
-                }} />
-              )}
-            </Link>
+            <div key={group.label} style={{ marginBottom: '6px' }}>
+              <div style={{
+                fontSize: '10px',
+                fontWeight: '700',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--text-muted)',
+                padding: '6px 12px 4px',
+                opacity: 0.7,
+              }}>
+                {group.label}
+              </div>
+              {visibleItems.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-150 group relative mb-0.5',
+                      isActive
+                        ? 'bg-[rgba(99,102,241,0.12)] text-[var(--indigo-light)] border border-[rgba(99,102,241,0.25)]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border border-transparent'
+                    )}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <item.icon size={15} strokeWidth={isActive ? 2.5 : 2} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '13px', fontWeight: isActive ? '600' : '400', flex: 1 }}>
+                      {item.label}
+                    </span>
+                    {isActive && (
+                      <div style={{
+                        width: '5px',
+                        height: '5px',
+                        borderRadius: '50%',
+                        background: 'var(--indigo-light)',
+                        boxShadow: '0 0 6px rgba(99,102,241,0.6)',
+                        flexShrink: 0,
+                      }} />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
           )
         })}
       </nav>
