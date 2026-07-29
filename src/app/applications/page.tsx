@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { getApplicationsPage, updateApplicationStatus } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
-import { MoreVertical, CheckSquare, Square } from 'lucide-react'
+import { MoreVertical, CheckSquare, Square, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import ApplicationPanel from '@/components/ApplicationPanel'
@@ -140,7 +140,12 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-white sr-only">Applications</h1>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Applications</h1>
+          <p className="page-subtitle">Review and manage student applications</p>
+        </div>
+      </div>
       {/* Filters row - compact inline */}
       <div style={{
         display: 'flex', gap: '12px', marginBottom: '20px',
@@ -150,17 +155,22 @@ export default function ApplicationsPage() {
       }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', opacity: 0.4 }}>🔍</span>
+          <Search
+            size={14}
+            style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
+          />
           <input 
             placeholder="Search students..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="focus:ring-2 focus:ring-brand-primary"
             style={{
-              width: '100%', padding: '9px 12px 9px 36px',
-              background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px',
-            }} 
+              width: '100%', padding: '8px 12px 8px 32px',
+              background: 'var(--input-bg)', border: '1px solid var(--input-border)',
+              borderRadius: 'var(--radius-sm)', color: 'var(--input-text)', fontSize: '13px',
+              outline: 'none', transition: 'border-color 0.15s',
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--input-border-focus)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'var(--input-border)' }}
           />
         </div>
         
@@ -168,12 +178,8 @@ export default function ApplicationsPage() {
         <select 
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          style={{
-            padding: '9px 14px', background: 'rgba(255,255,255,0.05)',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer',
-          }}
-          className="focus:ring-2 focus:ring-brand-primary"
+          className="input-field"
+          style={{ padding: '8px 14px', fontSize: '13px', cursor: 'pointer', minWidth: '140px' }}
         >
           <option value="all">All Status</option>
           <option value="submitted">Submitted</option>
@@ -187,12 +193,8 @@ export default function ApplicationsPage() {
         <select 
           value={programFilter}
           onChange={(e) => setProgramFilter(e.target.value)}
-          style={{
-            padding: '9px 14px', background: 'rgba(255,255,255,0.05)',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-            color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer',
-          }}
-          className="focus:ring-2 focus:ring-brand-primary"
+          className="input-field"
+          style={{ padding: '8px 14px', fontSize: '13px', cursor: 'pointer', minWidth: '140px' }}
         >
           <option value="all">All Programs</option>
           {programs.map(p => (
@@ -203,11 +205,8 @@ export default function ApplicationsPage() {
         {/* Export button */}
         <button 
           onClick={exportCSV}
-          style={{
-            padding: '9px 18px', background: 'linear-gradient(135deg, #5B5FEF, #7C3AED)',
-            border: 'none', borderRadius: 'var(--radius-sm)', color: 'white',
-            fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-          }}
+          className="btn-secondary"
+          style={{ gap: '6px' }}
         >
           ↓ Export CSV
         </button>
@@ -334,8 +333,14 @@ export default function ApplicationsPage() {
               ))}
               {filteredApps.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted text-sm italic">
-                    No applications found matching your criteria
+                  <td colSpan={6}>
+                    <div className="empty-state">
+                      <div className="empty-state-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      </div>
+                      <p className="empty-state-title">No applications found</p>
+                      <p className="empty-state-description">Try adjusting your filters or search term.</p>
+                    </div>
                   </td>
                 </tr>
               )}
