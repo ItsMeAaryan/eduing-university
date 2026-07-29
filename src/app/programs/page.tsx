@@ -46,19 +46,19 @@ export default function ProgramsPage() {
   return (
     <div className="space-y-8 min-h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Academic Programs</h1>
-          <p className="text-text-secondary text-sm mt-1">Manage and configure your course offerings</p>
+          <h1 className="page-title">Academic Programs</h1>
+          <p className="page-subtitle">Manage and configure your course offerings</p>
         </div>
         <button 
           onClick={() => {
             setEditingProgram(null)
             setIsPanelOpen(true)
           }}
-          className="bg-brand-primary text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-brand-primary/90 transition-all shadow-lg shadow-brand-primary/20 active:scale-95"
+          className="btn-primary"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           <span>New Program</span>
         </button>
       </div>
@@ -171,15 +171,16 @@ export default function ProgramsPage() {
             <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
               <BookOpen className="text-brand-primary-text" size={40} />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No programs created yet</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px' }}>No programs created yet</h3>
             <p className="text-text-secondary text-sm max-w-sm mb-8">
               Start building your academic portfolio by adding your first program or course offering.
             </p>
             <button 
               onClick={() => setIsPanelOpen(true)}
-              className="bg-white text-brand-bg px-8 py-3 rounded-xl font-bold hover:bg-white/90 transition-all active:scale-95 shadow-xl"
+              className="btn-primary"
+              style={{ height: '40px', padding: '0 24px' }}
             >
-              Create your first program
+              <Plus size={16} /> Create your first program
             </button>
           </motion.div>
         )}
@@ -210,7 +211,7 @@ export default function ProgramsPage() {
               <div className="w-16 h-16 bg-brand-error/10 text-brand-error rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trash2 size={32} />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Delete Program?</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px' }}>Delete Program?</h3>
               <p className="text-text-secondary text-sm mb-8 leading-relaxed">
                 This will also affect active applications. This action cannot be undone.
               </p>
