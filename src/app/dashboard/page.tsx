@@ -128,10 +128,10 @@ export default function UniversityDashboard() {
   return (
     <div>
       {/* Header */}
-      <motion.div {...fadeUp(0)} style={{ marginBottom: '28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <motion.div {...fadeUp(0)} className="page-header">
         <div>
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.03em', margin: 0 }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Overview of your admissions activity</p>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Overview of your admissions activity</p>
         </div>
       </motion.div>
 
@@ -159,8 +159,10 @@ export default function UniversityDashboard() {
         ))}
       </div>
 
-      {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
+      {/* Main grid — responsive: stacks on smaller screens */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '20px' }}
+        className="dashboard-main-grid"
+      >
         {/* Recent Applications */}
         <motion.div {...fadeUp(5)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -175,9 +177,11 @@ export default function UniversityDashboard() {
 
           {recent.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-              <Users size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 12px' }} />
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>No applications yet</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', opacity: 0.6 }}>Applications will appear here once students apply</p>
+              <div className="empty-state-icon" style={{ margin: '0 auto 12px' }}>
+                <Users size={22} />
+              </div>
+              <p className="empty-state-title">No applications yet</p>
+              <p className="empty-state-description" style={{ margin: '8px auto 0' }}>Applications will appear here once students apply to your programs.</p>
             </div>
           ) : (
             <div style={{ padding: '12px 0' }}>
@@ -191,8 +195,8 @@ export default function UniversityDashboard() {
                 const date = app.appliedAt?.toDate ? app.appliedAt.toDate() : new Date()
                 return (
                   <motion.div key={app.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
-                    style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: '0', padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.03)', alignItems: 'center', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                    style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: '0', padding: '14px 24px', borderBottom: '1px solid var(--border)', alignItems: 'center', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
