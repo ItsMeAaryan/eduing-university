@@ -5,17 +5,34 @@ import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { getApplicationsPage, updateApplicationTags } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
-import { Search, Filter, MoreVertical, Tag, CheckSquare, Square, ChevronRight, Download, Users, Bot, Loader2 } from 'lucide-react'
+import { Search, Tag, CheckSquare, Square, ChevronRight, Download, Users, Bot, Loader2, X } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import RouteGuard from '@/components/guards/RouteGuard'
 import type { DocumentSnapshot } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { AI_SERVICE } from '@/lib/ai'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// ─── Status config ─────────────────────────────────────────────────────────────
+
+const STATUS: Record<string, { label: string; cls: string }> = {
+  submitted: { label: 'Applicant', cls: 'badge badge-info' },
+  under_review: { label: 'In Review', cls: 'badge badge-warning' },
+  docs_verified: { label: 'Docs Verified', cls: 'badge badge-info' },
+  selected: { label: 'Selected', cls: 'badge badge-success' },
+  seat_accepted: { label: 'Seat Accepted', cls: 'badge badge-success' },
+  fee_paid: { label: 'Fee Paid', cls: 'badge badge-success' },
+  payment_verified: { label: 'Payment Verified', cls: 'badge badge-success' },
+  enrolled: { label: 'Enrolled', cls: 'badge badge-success' },
+  rejected: { label: 'Rejected', cls: 'badge badge-error' },
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function StudentsDirectoryPage() {
   const router = useRouter()
   const { toast } = useToast()
-  
+
   const [students, setStudents] = useState<FirestoreRecord[]>([])
   const [programs, setPrograms] = useState<FirestoreRecord[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,29 +50,13 @@ export default function StudentsDirectoryPage() {
   const loadStudents = async (isLoadMore = false) => {
     const user = auth.currentUser
     if (!user) return
-    
-    if (!isLoadMore) {
-      setLoading(true)
-      setStudents([])
-      setLastDoc(null)
-    }
-
+    if (!isLoadMore) { setLoading(true); setStudents([]); setLastDoc(null) }
     try {
-      const currentLastDoc = isLoadMore ? lastDoc : null
-      const res = await getApplicationsPage(user.uid, 15, currentLastDoc, {
-        status: statusFilter,
-        searchTerm: searchTerm
-      })
-      
-      if (isLoadMore) {
-        setStudents(prev => [...prev, ...res.apps])
-      } else {
-        setStudents(res.apps)
-      }
+      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, { status: statusFilter, searchTerm })
+      setStudents(prev => isLoadMore ? [...prev, ...res.apps] : res.apps)
       setLastDoc(res.lastDoc)
       setHasMore(res.apps.length === 15)
-    } catch (err) {
-      console.error(err)
+    } catch {
       toast.error('Failed to load students')
     } finally {
       setLoading(false)
@@ -63,21 +64,19 @@ export default function StudentsDirectoryPage() {
   }
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+    const unsub = auth.onAuthStateChanged(user => {
       if (user) {
         loadStudents()
         const unsubProgs = subscribeToPrograms(user.uid, setPrograms)
         return () => unsubProgs()
       }
     })
-    return () => unsubscribeAuth()
+    return () => unsub()
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadStudents()
-    }, 500)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => loadStudents(), 400)
+    return () => clearTimeout(t)
   }, [searchTerm, statusFilter])
 
   const handleAISearch = async () => {
@@ -85,15 +84,10 @@ export default function StudentsDirectoryPage() {
     setIsAiSearching(true)
     try {
       const filters = await AI_SERVICE.parseSearchIntent(aiQuery)
-      if (filters.status) {
-        setStatusFilter(filters.status)
-      }
-      if (filters.tags && filters.tags.length > 0) {
-        // Ideally we'd have a tag filter, but we can put it in searchTerm for now
-        setSearchTerm(filters.tags.join(' '))
-      }
-      toast.success('Applied AI filters')
-    } catch (err) {
+      if (filters.status) setStatusFilter(filters.status)
+      if (filters.tags?.length) setSearchTerm(filters.tags.join(' '))
+      toast.success('AI filters applied')
+    } catch {
       toast.error('AI failed to parse intent')
     } finally {
       setIsAiSearching(false)
@@ -101,50 +95,28 @@ export default function StudentsDirectoryPage() {
     }
   }
 
-  const filteredStudents = programFilter === 'all' 
-    ? students 
+  const filteredStudents = programFilter === 'all'
+    ? students
     : students.filter(s => s.programId === programFilter)
 
-  const handleSelectAll = () => {
-    if (selectedStudents.length === filteredStudents.length) {
-      setSelectedStudents([])
-    } else {
-      setSelectedStudents(filteredStudents.map(s => s.id))
-    }
-  }
+  const allSelected = filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length
 
-  const toggleSelect = (id: string) => {
-    setSelectedStudents(prev => 
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    )
-  }
+  const handleSelectAll = () => setSelectedStudents(allSelected ? [] : filteredStudents.map(s => s.id))
+  const toggleSelect = (id: string) => setSelectedStudents(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id])
 
   const handleBulkAddTag = async () => {
-    if (!newTag.trim() || selectedStudents.length === 0) return
-    
+    if (!newTag.trim() || !selectedStudents.length) return
     const user = auth.currentUser
     if (!user) return
-
     const actor = { uid: user.uid, name: user.displayName || user.email || 'Admin', role: 'admin' }
-    
-    const promise = Promise.all(
-      selectedStudents.map(async (id) => {
-        const student = students.find(s => s.id === id)
-        if (student) {
-          const currentTags = student.tags || []
-          if (!currentTags.includes(newTag.trim())) {
-            await updateApplicationTags(user.uid, id, [...currentTags, newTag.trim()], actor)
-          }
-        }
-      })
-    )
-
-    toast.promise(promise, {
-      loading: 'Adding tags...',
-      success: 'Tags added successfully',
-      error: 'Failed to add tags'
-    })
-
+    const p = Promise.all(selectedStudents.map(async id => {
+      const s = students.find(x => x.id === id)
+      if (s) {
+        const tags = s.tags || []
+        if (!tags.includes(newTag.trim())) await updateApplicationTags(user.uid, id, [...tags, newTag.trim()], actor)
+      }
+    }))
+    toast.promise(p, { loading: 'Adding tags…', success: 'Tags added', error: 'Failed to add tags' })
     setIsTagModalOpen(false)
     setNewTag('')
     setSelectedStudents([])
@@ -153,259 +125,302 @@ export default function StudentsDirectoryPage() {
 
   return (
     <RouteGuard require="view_applications">
-      <div className="flex flex-col" style={{ minHeight: '60vh' }}>
+      <div>
+        {/* Header */}
         <div className="page-header">
           <div>
-            <h1 className="page-title">Student Directory</h1>
-            <p className="page-subtitle">Enterprise CRM for managing the complete student lifecycle</p>
+            <h1 className="page-title">Students</h1>
+            <p className="page-subtitle">Complete lifecycle CRM for managing student admissions</p>
           </div>
-          
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {selectedStudents.length > 0 && (
-              <button 
-                onClick={() => setIsTagModalOpen(true)}
-                className="btn-secondary"
-              >
-                <Tag size={14} /> Assign Tag ({selectedStudents.length})
+              <button onClick={() => setIsTagModalOpen(true)} className="btn-secondary" style={{ gap: '6px' }}>
+                <Tag size={13} /> Tag ({selectedStudents.length})
               </button>
             )}
-            <button className="btn-secondary">
-              <Download size={14} /> Export CRM Data
+            <button className="btn-secondary" style={{ gap: '6px' }}>
+              <Download size={13} /> Export
             </button>
           </div>
         </div>
 
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name, email, application ID, or tags..." 
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {/* Regular search */}
+          <div style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
+            <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none' }} />
+            <input
+              placeholder="Search name, email, ID, tags…"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="input-dark w-full pl-10"
+              className="input-field"
+              style={{ paddingLeft: '30px' }}
             />
           </div>
-          
-          <div className="flex-1 relative flex">
-            <Bot className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary" size={18} />
-            <input 
-              type="text" 
-              placeholder="Ask AI (e.g. 'Show enrolled scholarship students')" 
+
+          {/* AI search */}
+          <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
+            <Bot size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
+            <input
+              placeholder="Ask AI: 'Show scholarship students'…"
               value={aiQuery}
               onChange={e => setAiQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAISearch()}
-              className="input-dark w-full pl-10 pr-12 border-brand-primary/30 focus:border-brand-primary"
+              className="input-field"
+              style={{ paddingLeft: '30px', paddingRight: '32px', borderColor: aiQuery ? 'var(--accent-border)' : undefined }}
             />
-            {isAiSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-primary animate-spin" size={16} />}
+            {isAiSearching && (
+              <Loader2 size={13} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', animation: 'spin 0.7s linear infinite' }} />
+            )}
           </div>
-          <select 
-            value={programFilter} 
-            onChange={e => setProgramFilter(e.target.value)}
-            className="input-dark w-48 truncate"
-          >
-            <option value="all">All Programs</option>
-            {programs.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
+
+          <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+            <option value="all">All programs</option>
+            {programs.map(p => <option key={p.id} value={p.id}>{p.name as string}</option>)}
           </select>
-          <select 
-            value={statusFilter} 
-            onChange={e => setStatusFilter(e.target.value)}
-            className="input-dark w-48 capitalize"
-          >
-            <option value="all">Lifecycle Stage</option>
+
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+            <option value="all">All stages</option>
             <option value="submitted">Applicant</option>
-            <option value="under_review">Under Review</option>
+            <option value="under_review">In Review</option>
             <option value="docs_verified">Docs Verified</option>
             <option value="selected">Selected</option>
             <option value="seat_accepted">Seat Accepted</option>
             <option value="fee_paid">Fee Paid</option>
             <option value="payment_verified">Payment Verified</option>
-            <option value="enrolled">Enrolled Student</option>
+            <option value="enrolled">Enrolled</option>
           </select>
         </div>
 
-        <div className="flex-1 bg-brand-surface border border-brand-border rounded-xl flex flex-col overflow-hidden">
-          <div className="overflow-x-auto flex-1 relative min-h-[300px]">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-brand-surface z-10 shadow-sm">
-                <tr className="border-b border-brand-border bg-black/40">
-                  <th className="p-4 w-12">
-                    <button onClick={handleSelectAll} className="text-text-muted hover:text-white transition-colors">
-                      {selectedStudents.length === filteredStudents.length && filteredStudents.length > 0 
-                        ? <CheckSquare size={18} className="text-brand-primary" /> 
-                        : <Square size={18} />}
+        {/* Table */}
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          borderRadius: '10px',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-card)',
+        }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '44px', paddingLeft: '16px', paddingRight: '8px' }}>
+                    <button
+                      onClick={handleSelectAll}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                      aria-label={allSelected ? 'Deselect all' : 'Select all'}
+                    >
+                      {allSelected
+                        ? <CheckSquare size={15} style={{ color: 'var(--accent)' }} />
+                        : <Square size={15} />
+                      }
                     </button>
                   </th>
-                  <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Student Profile</th>
-                  <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Identifiers</th>
-                  <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Program Details</th>
-                  <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Tags</th>
-                  <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Lifecycle Status</th>
-                  <th className="p-4 w-12"></th>
+                  <th>Student</th>
+                  <th>Identifiers</th>
+                  <th>Program</th>
+                  <th>Tags</th>
+                  <th>Stage</th>
+                  <th style={{ width: '44px' }} />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {loading && students.length === 0 && (
+              <tbody>
+                {loading && students.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-12 text-center">
-                      <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <td colSpan={7} style={{ padding: '48px', textAlign: 'center' }}>
+                      <div className="spinner" style={{ margin: '0 auto' }} />
                     </td>
                   </tr>
-                )}
-                
-                {filteredStudents.map((student) => (
-                  <tr 
-                    key={student.id} 
-                    className="group hover:bg-white/5 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/students/${student.id}`)}
-                  >
-                    <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                      <button 
-                        onClick={() => toggleSelect(student.id)}
-                        className="text-text-muted hover:text-white transition-colors mt-1"
-                      >
-                        {selectedStudents.includes(student.id) 
-                          ? <CheckSquare size={18} className="text-brand-primary" /> 
-                          : <Square size={18} />}
-                      </button>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary-text flex items-center justify-center font-bold text-sm shrink-0">
-                          {student.studentName?.charAt(0) || 'S'}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white group-hover:text-brand-primary transition-colors">{student.studentName}</p>
-                          <p className="text-xs text-text-muted">{student.studentEmail}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-xs text-text-muted space-y-1 font-mono">
-                        <p>APP: <span className="text-white">{student.id.slice(0, 8)}</span></p>
-                        {student.enrollmentDetails?.enrollmentNumber && (
-                          <p>ENR: <span className="text-brand-success">{student.enrollmentDetails.enrollmentNumber}</span></p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm text-text-secondary line-clamp-1">{student.programName}</p>
-                      <p className="text-xs text-text-muted mt-1">{student.departmentName}</p>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-1">
-                        {student.tags?.slice(0, 2).map((tag: string) => (
-                          <span key={tag} className="px-2 py-0.5 rounded bg-white/10 text-[10px] text-text-secondary border border-white/5 uppercase tracking-wider">
-                            {tag}
-                          </span>
-                        ))}
-                        {student.tags?.length > 2 && (
-                          <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-text-muted border border-white/5">
-                            +{student.tags.length - 2}
-                          </span>
-                        )}
-                        {!student.tags?.length && (
-                          <span className="text-xs text-text-muted italic">-</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <StatusBadge status={student.status} />
-                    </td>
-                    <td className="p-4 text-right">
-                      <ChevronRight size={18} className="text-text-muted group-hover:text-brand-primary transition-colors" />
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredStudents.length === 0 && !loading && (
+                ) : filteredStudents.length === 0 ? (
                   <tr>
                     <td colSpan={7}>
                       <div className="empty-state">
-                        <div className="empty-state-icon">
-                          <Users size={22} />
-                        </div>
+                        <div className="empty-state-icon"><Users size={18} /></div>
                         <p className="empty-state-title">No students found</p>
                         <p className="empty-state-description">Try adjusting your filters or search term.</p>
                       </div>
                     </td>
                   </tr>
-                )}
+                ) : filteredStudents.map(student => {
+                  const isSelected = selectedStudents.includes(student.id)
+                  const s = STATUS[student.status as string] || STATUS.submitted
+
+                  return (
+                    <tr
+                      key={student.id}
+                      onClick={() => router.push(`/students/${student.id}`)}
+                      style={{ background: isSelected ? 'var(--accent-bg)' : undefined }}
+                    >
+                      {/* Checkbox */}
+                      <td style={{ paddingLeft: '16px', paddingRight: '8px' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => toggleSelect(student.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                        >
+                          {isSelected
+                            ? <CheckSquare size={15} style={{ color: 'var(--accent)' }} />
+                            : <Square size={15} />
+                          }
+                        </button>
+                      </td>
+
+                      {/* Student */}
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '30px', height: '30px', borderRadius: '7px', flexShrink: 0,
+                            background: 'var(--accent-bg)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '12px', fontWeight: '600', color: 'var(--accent)',
+                          }}>
+                            {((student.studentName as string) || 'S').charAt(0)}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                              {student.studentName as string || '—'}
+                            </div>
+                            <div className="text-caption">{student.studentEmail as string || ''}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Identifiers */}
+                      <td>
+                        <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.6 }}>
+                          <span style={{ color: 'var(--text-muted)' }}>APP </span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{student.id.slice(0, 8)}</span>
+                          {(student.enrollmentDetails as any)?.enrollmentNumber && (
+                            <>
+                              <br />
+                              <span style={{ color: 'var(--text-muted)' }}>ENR </span>
+                              <span style={{ color: 'var(--green)', fontWeight: '600' }}>
+                                {(student.enrollmentDetails as any).enrollmentNumber}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Program */}
+                      <td>
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{student.programName as string || '—'}</div>
+                        {student.departmentName && (
+                          <div className="text-caption">{student.departmentName as string}</div>
+                        )}
+                      </td>
+
+                      {/* Tags */}
+                      <td>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {(student.tags as string[] | undefined)?.slice(0, 2).map((tag: string) => (
+                            <span key={tag} style={{
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              background: 'var(--bg-card-hover)',
+                              border: '1px solid var(--border)',
+                              fontSize: '10px',
+                              fontWeight: '500',
+                              color: 'var(--text-muted)',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                            }}>
+                              {tag}
+                            </span>
+                          ))}
+                          {((student.tags as string[] | undefined)?.length ?? 0) > 2 && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
+                              +{(student.tags as string[]).length - 2}
+                            </span>
+                          )}
+                          {!((student.tags as string[] | undefined)?.length) && (
+                            <span style={{ fontSize: '12px', color: 'var(--text-faint)', fontStyle: 'italic' }}>—</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Stage */}
+                      <td>
+                        <span className={s.cls}>{s.label}</span>
+                      </td>
+
+                      {/* Arrow */}
+                      <td>
+                        <ChevronRight size={14} style={{ color: 'var(--text-faint)' }} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
+
           {hasMore && (
-            <div className="p-4 border-t border-brand-border flex justify-center bg-black/20">
-              <button
-                onClick={() => loadStudents(true)}
-                disabled={loading}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Loading...' : 'Load More Students'}
+            <div style={{ padding: '12px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
+              <button onClick={() => loadStudents(true)} disabled={loading} className="btn-secondary" style={{ fontSize: '13px' }}>
+                {loading ? 'Loading…' : 'Load more'}
               </button>
             </div>
           )}
         </div>
-      </div>
 
-      {isTagModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-brand-surface border border-brand-border rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-2">Assign CRM Tag</h3>
-            <p className="text-text-muted text-sm mb-6">Apply a custom tag to {selectedStudents.length} selected student(s).</p>
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-text-secondary mb-2">Tag Name (e.g., VIP, Priority, Scholarship)</label>
-              <input 
-                type="text" 
-                value={newTag}
-                onChange={e => setNewTag(e.target.value)}
-                className="input-dark w-full"
-                placeholder="Enter tag..."
-                autoFocus
-              />
-            </div>
-            
-            <div className="flex justify-end gap-3">
-              <button 
+        {/* Tag modal */}
+        <AnimatePresence>
+          {isTagModalOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50 }}
                 onClick={() => setIsTagModalOpen(false)}
-                className="btn-secondary"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  position: 'fixed', top: '50%', left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '100%', maxWidth: '400px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  boxShadow: 'var(--shadow-dropdown)',
+                  zIndex: 51,
+                  padding: '20px',
+                }}
               >
-                Cancel
-              </button>
-              <button 
-                onClick={handleBulkAddTag}
-                disabled={!newTag.trim()}
-                className="btn-primary"
-              >
-                Assign Tag
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
+                    Assign tag
+                  </h3>
+                  <button onClick={() => setIsTagModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                  Apply a tag to {selectedStudents.length} selected student{selectedStudents.length !== 1 ? 's' : ''}.
+                </p>
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={e => setNewTag(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleBulkAddTag()}
+                  className="input-field"
+                  placeholder="e.g. VIP, Scholarship, Priority"
+                  autoFocus
+                  style={{ marginBottom: '16px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                  <button onClick={() => setIsTagModalOpen(false)} className="btn-secondary">Cancel</button>
+                  <button onClick={handleBulkAddTag} disabled={!newTag.trim()} className="btn-primary">Assign tag</button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
     </RouteGuard>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    submitted: 'bg-brand-primary/10 text-brand-primary-text border border-brand-primary/20',
-    under_review: 'bg-brand-warning/10 text-brand-warning border border-brand-warning/20',
-    docs_verified: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-    selected: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
-    seat_accepted: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
-    fee_paid: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    payment_verified: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    enrolled: 'bg-brand-success/10 text-brand-success border border-brand-success/20',
-    rejected: 'bg-brand-error/10 text-brand-error border border-brand-error/20'
-  }
-  
-  return (
-    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${styles[status] || styles.submitted}`}>
-      {status.replace('_', ' ')}
-    </span>
   )
 }
