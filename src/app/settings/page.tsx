@@ -4,19 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase/config'
 import { subscribeToUniversity, updateUniversityProfile } from '@/lib/firebase/university'
 import { sendPasswordResetEmail } from 'firebase/auth'
-import { 
-  User, 
-  Bell, 
-  ShieldAlert, 
-  Key, 
-  Mail, 
-  ChevronRight,
-  Palette,
-  Sun,
-  Moon,
-  Monitor,
-  Check
-} from 'lucide-react'
+import { User, Bell, ShieldAlert, Key, Mail, ChevronRight, Palette, Sun, Moon, Monitor, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import { useTheme } from 'next-themes'
@@ -24,10 +12,70 @@ import type { AppTheme } from '@/context/ThemeContext'
 import { THEMES } from '@/context/ThemeContext'
 
 const THEME_ICONS: Record<AppTheme, React.ElementType> = {
-  light:  Sun,
-  dark:   Moon,
+  light: Sun,
+  dark: Moon,
   system: Monitor,
 }
+
+// ─── Section wrapper ───────────────────────────────────────────────────────────
+
+function Section({ icon: Icon, iconColor, title, subtitle, children }: {
+  icon: React.ElementType
+  iconColor: string
+  title: string
+  subtitle: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
+  return (
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `${iconColor}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon size={16} color={iconColor} />
+        </div>
+        <div>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>{title}</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '1px 0 0' }}>{subtitle}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ─── Toggle ────────────────────────────────────────────────────────────────────
+
+function ToggleRow({ label, description, isActive, onToggle }: {
+  label: string; description: string; isActive: boolean; onToggle: () => void
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '2px' }}>{label}</div>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{description}</div>
+      </div>
+      <button
+        onClick={onToggle}
+        role="switch"
+        aria-checked={isActive}
+        aria-label={label}
+        style={{
+          width: '40px', height: '22px', borderRadius: '999px', flexShrink: 0,
+          background: isActive ? 'var(--accent)' : 'var(--border-hover)',
+          border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.15s',
+        }}
+      >
+        <motion.div
+          animate={{ x: isActive ? 20 : 2 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          style={{ position: 'absolute', top: '3px', width: '16px', height: '16px', borderRadius: '50%', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}
+        />
+      </button>
+    </div>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -37,444 +85,194 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     newApplicationAlerts: true,
     statusUpdateNotifications: true,
-    deadlineReminders: true
+    deadlineReminders: true,
   })
 
-  useEffect(() => { 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true) 
-  }, [])
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+    const unsub = auth.onAuthStateChanged(user => {
       if (user) {
-        const unsub = subscribeToUniversity(user.uid, (data) => {
+        const unsubUni = subscribeToUniversity(user.uid, data => {
           if (data.settings) setSettings(data.settings as typeof settings)
           setLoading(false)
         })
-        return () => unsub()
+        return () => unsubUni()
       }
     })
-    return () => unsubscribeAuth()
+    return () => unsub()
   }, [])
 
   const handlePasswordReset = async () => {
     try {
       await sendPasswordResetEmail(auth, auth.currentUser!.email!)
-      toast.success('Password reset email sent!')
-    } catch (error) {
-      console.error(error)
+      toast.success('Password reset email sent')
+    } catch {
       toast.error('Failed to send reset email')
     }
   }
 
   const toggleSetting = async (key: keyof typeof settings) => {
-    const previous = settings
-    const updated = { ...settings, [key]: !settings[key] }
-    setSettings(updated)
+    const prev = settings
+    const next = { ...settings, [key]: !settings[key] }
+    setSettings(next)
     try {
-      await updateUniversityProfile(auth.currentUser!.uid, { settings: updated })
-    } catch (error) {
-      console.error(error)
-      setSettings(previous)
-      toast.error('Failed to update settings')
+      await updateUniversityProfile(auth.currentUser!.uid, { settings: next })
+    } catch {
+      setSettings(prev)
+      toast.error('Failed to update setting')
     }
   }
 
-  if (loading) return null
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div className="spinner" />
+    </div>
+  )
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <h1 className="text-xl font-bold sr-only" style={{ color: 'var(--text-primary)' }}>Settings</h1>
-
-      {/* ── Appearance Section ── */}
-      <section
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-        }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'rgba(99,102,241,0.10)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--indigo-light)',
-          }}>
-            <Palette size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-              Appearance
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-              Choose how the portal looks for you
-            </p>
-          </div>
+    <div style={{ maxWidth: '640px' }}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Settings</h1>
+          <p className="page-subtitle">Manage your account, appearance, and notifications</p>
         </div>
+      </div>
 
-        {/* Theme cards */}
-        <div style={{ padding: '20px 24px' }}>
-          <p style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '14px' }}>
-            Theme
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-            {THEMES.map(({ value, label, description, emoji }) => {
-              const isActive = mounted && theme === value
-              const Icon = THEME_ICONS[value]
-              return (
-                <motion.button
-                  key={value}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setTheme(value)}
-                  style={{
-                    position: 'relative',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    background: isActive ? 'rgba(99,102,241,0.08)' : 'var(--bg)',
-                    border: isActive
-                      ? '1.5px solid rgba(99,102,241,0.4)'
-                      : '1.5px solid var(--border)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {/* Checkmark */}
-                  {isActive && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        background: 'var(--indigo)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Check size={12} color="white" />
-                    </motion.div>
-                  )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                  {/* Icon */}
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '10px',
-                    background: isActive ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.06)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: isActive ? 'var(--indigo-light)' : 'var(--text-muted)',
-                    marginBottom: '12px',
-                    fontSize: '20px',
-                  }}>
-                    <Icon size={18} />
-                  </div>
-
-                  {/* Label */}
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: isActive ? 'var(--indigo-light)' : 'var(--text-primary)',
-                    margin: '0 0 4px',
-                  }}>
-                    {label}
-                  </p>
-
-                  {/* Description */}
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'var(--text-muted)',
-                    margin: 0,
-                    lineHeight: 1.4,
-                  }}>
-                    {description}
-                  </p>
-                </motion.button>
-              )
-            })}
+        {/* Appearance */}
+        <Section icon={Palette} iconColor="var(--accent)" title="Appearance" subtitle="Choose how the portal looks">
+          <div style={{ padding: '16px 20px' }}>
+            <div className="text-eyebrow" style={{ marginBottom: '10px' }}>Theme</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              {THEMES.map(({ value, label, description }) => {
+                const isActive = mounted && theme === value
+                const Icon = THEME_ICONS[value]
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    style={{
+                      position: 'relative',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      background: isActive ? 'var(--accent-bg)' : 'var(--bg)',
+                      border: isActive ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.12s',
+                      fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.borderColor = 'var(--border-hover)' }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.borderColor = 'var(--border)' }}
+                  >
+                    {isActive && (
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Check size={10} color="white" />
+                      </div>
+                    )}
+                    <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: isActive ? 'var(--accent-bg)' : 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--accent)' : 'var(--text-muted)', marginBottom: '10px' }}>
+                      <Icon size={14} />
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: isActive ? 'var(--accent)' : 'var(--text-primary)', marginBottom: '2px' }}>{label}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4 }}>{description}</div>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </Section>
 
-      {/* ── Account Section ── */}
-      <section
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-        }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'rgba(99,102,241,0.10)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--indigo-light)',
-          }}>
-            <User size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-              Account Settings
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-              Manage your login credentials
-            </p>
-          </div>
-        </div>
-        
-        <div style={{ borderTop: 'none' }}>
-          {/* Email row */}
-          <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '50%',
-                background: 'rgba(99,102,241,0.06)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-muted)',
-              }}>
-                <Mail size={18} />
+        {/* Account */}
+        <Section icon={User} iconColor="var(--accent)" title="Account" subtitle="Manage your login credentials">
+          {/* Email */}
+          <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '7px', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Mail size={14} style={{ color: 'var(--text-muted)' }} />
               </div>
               <div>
-                <p style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: '0 0 4px' }}>
-                  Email Address
-                </p>
-                <p style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', margin: 0 }}>
-                  {auth.currentUser?.email}
-                </p>
+                <div className="text-eyebrow" style={{ marginBottom: '2px' }}>Email address</div>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)' }}>{auth.currentUser?.email}</div>
               </div>
             </div>
-            <span style={{
-              fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em',
-              color: '#16A34A', background: 'rgba(22,163,74,0.10)', padding: '3px 8px', borderRadius: '6px',
-            }}>
-              Verified
-            </span>
+            <span className="badge badge-success">Verified</span>
           </div>
 
-          {/* Password row */}
-          <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '50%',
-                background: 'rgba(99,102,241,0.06)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-muted)',
-              }}>
-                <Key size={18} />
+          {/* Password */}
+          <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '7px', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Key size={14} style={{ color: 'var(--text-muted)' }} />
               </div>
               <div>
-                <p style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: '0 0 4px' }}>
-                  Password
-                </p>
-                <p style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', margin: 0 }}>
-                  ••••••••••••
-                </p>
+                <div className="text-eyebrow" style={{ marginBottom: '2px' }}>Password</div>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', letterSpacing: '2px' }}>••••••••</div>
               </div>
             </div>
             <button
               onClick={handlePasswordReset}
-              style={{
-                fontSize: '13px', fontWeight: '700',
-                color: 'var(--indigo-light)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '4px',
-              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--accent)', fontFamily: 'inherit', fontWeight: '500' }}
             >
-              Change <ChevronRight size={14} />
+              Change <ChevronRight size={13} />
             </button>
           </div>
-        </div>
-      </section>
+        </Section>
 
-      {/* ── Notifications Section ── */}
-      <section
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-        }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'rgba(245,158,11,0.10)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--gold)',
-          }}>
-            <Bell size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-              Notification Preferences
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-              Control how you receive alerts
-            </p>
-          </div>
-        </div>
-        
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <ToggleItem 
-            label="New Application Alerts" 
+        {/* Notifications */}
+        <Section icon={Bell} iconColor="var(--gold)" title="Notifications" subtitle="Control how you receive alerts">
+          <ToggleRow
+            label="New application alerts"
             description="Get notified when a student applies to your programs"
             isActive={settings.newApplicationAlerts}
             onToggle={() => toggleSetting('newApplicationAlerts')}
           />
-          <ToggleItem 
-            label="Status Update Notifications" 
+          <ToggleRow
+            label="Status update confirmations"
             description="Confirmation when you update application statuses"
             isActive={settings.statusUpdateNotifications}
             onToggle={() => toggleSetting('statusUpdateNotifications')}
           />
-          <ToggleItem 
-            label="Deadline Reminders" 
-            description="Alerts for upcoming program application deadlines"
-            isActive={settings.deadlineReminders}
-            onToggle={() => toggleSetting('deadlineReminders')}
-          />
-        </div>
-      </section>
+          <div style={{ borderBottom: 'none' }}>
+            <ToggleRow
+              label="Deadline reminders"
+              description="Alerts for upcoming program application deadlines"
+              isActive={settings.deadlineReminders}
+              onToggle={() => toggleSetting('deadlineReminders')}
+            />
+          </div>
+        </Section>
 
-      {/* ── Danger Zone ── */}
-      <section
-        style={{
-          background: 'rgba(220,38,38,0.04)',
-          border: '1px solid rgba(220,38,38,0.20)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-        }}
-      >
+        {/* Danger zone */}
         <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid rgba(220,38,38,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
+          background: 'rgba(220,38,38,0.04)',
+          border: '1px solid rgba(220,38,38,0.15)',
+          borderRadius: '10px',
+          overflow: 'hidden',
         }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'rgba(220,38,38,0.10)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--red)',
-          }}>
-            <ShieldAlert size={20} />
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(220,38,38,0.10)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '7px', background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ShieldAlert size={15} style={{ color: 'var(--red)' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--red)', letterSpacing: '-0.2px' }}>Danger Zone</div>
+              <div style={{ fontSize: '12px', color: 'rgba(220,38,38,0.55)' }}>Destructive account actions</div>
+            </div>
           </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--red)', margin: 0 }}>
-              Danger Zone
-            </h3>
-            <p style={{ fontSize: '12px', color: 'rgba(220,38,38,0.60)', margin: '2px 0 0' }}>
-              Destructive actions for your account
-            </p>
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '3px' }}>Deactivate account</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '380px', lineHeight: 1.5 }}>
+                Hides your university from all students and pauses active applications. Contact support to reactivate.
+              </div>
+            </div>
+            <button onClick={() => toast.info('Contact support to deactivate')} className="btn-danger" style={{ flexShrink: 0 }}>
+              Deactivate
+            </button>
           </div>
         </div>
-        
-        <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 4px' }}>
-              Deactivate University Account
-            </p>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, maxWidth: '420px' }}>
-              This will hide your university from all students and pause active applications.
-              You will need to contact support to reactivate.
-            </p>
-          </div>
-          <button 
-            onClick={() => toast.info('Contact support to deactivate')}
-            style={{
-              padding: '9px 18px',
-              borderRadius: '8px',
-              border: '1px solid var(--red)',
-              color: 'var(--red)',
-              background: 'none',
-              fontSize: '12px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.08)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-          >
-            Deactivate
-          </button>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function ToggleItem({ label, description, isActive, onToggle }: {
-  label: string
-  description: string
-  isActive: boolean
-  onToggle: () => void
-}) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-      <div>
-        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 3px' }}>
-          {label}
-        </p>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-          {description}
-        </p>
       </div>
-      <button 
-        onClick={onToggle}
-        role="switch"
-        aria-checked={isActive}
-        aria-label={label}
-        style={{
-          width: '48px', height: '26px', borderRadius: '100px',
-          background: isActive ? 'var(--indigo)' : 'var(--border-hover)',
-          border: 'none', cursor: 'pointer', position: 'relative',
-          transition: 'background 0.2s', flexShrink: 0,
-        }}
-      >
-        <motion.div 
-          animate={{ x: isActive ? 24 : 2 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          style={{
-            position: 'absolute',
-            top: '3px',
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            background: 'white',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-          }}
-        />
-      </button>
     </div>
   )
 }
