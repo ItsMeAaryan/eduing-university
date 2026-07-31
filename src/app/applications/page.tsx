@@ -5,11 +5,23 @@ import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { getApplicationsPage, updateApplicationStatus } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
-import { MoreVertical, CheckSquare, Square, Search } from 'lucide-react'
+import { Search, CheckSquare, Square, Download, ChevronRight, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import ApplicationPanel from '@/components/ApplicationPanel'
 import type { DocumentSnapshot } from 'firebase/firestore'
+
+// ─── Status config ─────────────────────────────────────────────────────────────
+
+const STATUS: Record<string, { label: string; cls: string }> = {
+  submitted: { label: 'Submitted', cls: 'badge badge-info' },
+  under_review: { label: 'In Review', cls: 'badge badge-warning' },
+  selected: { label: 'Selected', cls: 'badge badge-success' },
+  waitlisted: { label: 'Waitlisted', cls: 'badge badge-orange' },
+  rejected: { label: 'Rejected', cls: 'badge badge-error' },
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ApplicationsPage() {
   const { toast } = useToast()
@@ -21,14 +33,13 @@ export default function ApplicationsPage() {
   const [selectedApps, setSelectedApps] = useState<string[]>([])
   const [viewingApp, setViewingApp] = useState<FirestoreRecord | null>(null)
   const [loading, setLoading] = useState(true)
-
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null)
   const [hasMore, setHasMore] = useState(true)
 
   const loadApps = async (isLoadMore = false) => {
     const user = auth.currentUser
     if (!user) return
-    
+
     if (!isLoadMore) {
       setLoading(true)
       setApps([])
@@ -36,21 +47,14 @@ export default function ApplicationsPage() {
     }
 
     try {
-      const currentLastDoc = isLoadMore ? lastDoc : null
-      const res = await getApplicationsPage(user.uid, 15, currentLastDoc, {
+      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, {
         status: statusFilter,
-        searchTerm: searchTerm
+        searchTerm,
       })
-      
-      if (isLoadMore) {
-        setApps(prev => [...prev, ...res.apps])
-      } else {
-        setApps(res.apps)
-      }
+      setApps(prev => isLoadMore ? [...prev, ...res.apps] : res.apps)
       setLastDoc(res.lastDoc)
       setHasMore(res.apps.length === 15)
-    } catch (err) {
-      console.error(err)
+    } catch {
       toast.error('Failed to load applications')
     } finally {
       setLoading(false)
@@ -58,327 +62,335 @@ export default function ApplicationsPage() {
   }
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+    const unsub = auth.onAuthStateChanged((user) => {
       if (user) {
         loadApps()
         const unsubProgs = subscribeToPrograms(user.uid, setPrograms)
         return () => unsubProgs()
       }
     })
-    return () => unsubscribeAuth()
-  }, []) // Initial load
+    return () => unsub()
+  }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadApps()
-    }, 500) // Debounce search
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => loadApps(), 400)
+    return () => clearTimeout(t)
   }, [searchTerm, statusFilter, programFilter])
 
-  const filteredApps = apps // Server side filtered mostly, though program is not fully covered yet
-
   const handleSelectAll = () => {
-    if (selectedApps.length === filteredApps.length) {
-      setSelectedApps([])
-    } else {
-      setSelectedApps(filteredApps.map(a => a.id))
-    }
+    setSelectedApps(selectedApps.length === apps.length ? [] : apps.map(a => a.id))
   }
 
   const toggleSelect = (id: string) => {
-    setSelectedApps(prev => 
-      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
-    )
+    setSelectedApps(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id])
   }
 
   const handleBulkUpdate = async (status: string) => {
-    if (selectedApps.length === 0) return
+    if (!selectedApps.length) return
     const user = auth.currentUser
     if (!user) return
-    
-    const promise = Promise.all(
-      selectedApps.map(async (id) => {
+    const p = Promise.all(
+      selectedApps.map(id => {
         const app = apps.find(a => a.id === id)
-        if (app) await updateApplicationStatus(
-          user.uid, 
-          id, 
-          app.studentId, 
-          status,
+        if (app) return updateApplicationStatus(
+          user.uid, id, app.studentId as string, status,
           { uid: user.uid, name: user.displayName || user.email || 'Admin', role: 'admin' }
         )
       })
     )
-    toast.promise(promise, {
-      loading: `Updating ${selectedApps.length} applications...`,
-      success: `Updated ${selectedApps.length} applications to ${status}`,
-      error: 'Failed to update some applications'
+    toast.promise(p, {
+      loading: `Updating ${selectedApps.length} applications…`,
+      success: `Updated ${selectedApps.length} to ${status.replace('_', ' ')}`,
+      error: 'Failed to update some applications',
     })
     setSelectedApps([])
   }
 
   const exportCSV = () => {
-    const headers = ['Student Name', 'Email', 'Program', 'Status', 'Applied Date']
-    const rows = filteredApps.map(app => [
-      app.studentName,
-      app.studentEmail,
-      app.programName,
-      app.status,
-      app.appliedAt?.seconds ? new Date(app.appliedAt.seconds * 1000).toLocaleDateString() : ''
-    ])
-
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n")
-    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const rows = [
+      ['Student Name', 'Email', 'Program', 'Status', 'Applied Date'],
+      ...apps.map(a => [
+        a.studentName, a.studentEmail, a.programName, a.status,
+        a.appliedAt?.seconds ? new Date(a.appliedAt.seconds * 1000).toLocaleDateString() : '',
+      ]),
+    ]
+    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `applications_${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
+    Object.assign(document.createElement('a'), { href: url, download: `applications_${new Date().toISOString().split('T')[0]}.csv` }).click()
     URL.revokeObjectURL(url)
   }
 
-  if (loading) return null
+  const allSelected = apps.length > 0 && selectedApps.length === apps.length
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div className="spinner" />
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
+    <div>
+      {/* Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Applications</h1>
           <p className="page-subtitle">Review and manage student applications</p>
         </div>
+        <button onClick={exportCSV} className="btn-secondary" style={{ gap: '6px' }}>
+          <Download size={13} />
+          Export CSV
+        </button>
       </div>
-      {/* Filters row - compact inline */}
+
+      {/* Filters */}
       <div style={{
-        display: 'flex', gap: '12px', marginBottom: '20px',
-        background: 'var(--bg-card)', padding: '14px 18px',
-        borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)',
-        alignItems: 'center', flexWrap: 'wrap',
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '16px',
+        alignItems: 'center',
+        flexWrap: 'wrap',
       }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
-          <Search
-            size={14}
-            style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
-          />
-          <input 
-            placeholder="Search students..." 
+          <Search size={13} style={{
+            position: 'absolute', left: '10px', top: '50%',
+            transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none',
+          }} />
+          <input
+            placeholder="Search students…"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%', padding: '8px 12px 8px 32px',
-              background: 'var(--input-bg)', border: '1px solid var(--input-border)',
-              borderRadius: 'var(--radius-sm)', color: 'var(--input-text)', fontSize: '13px',
-              outline: 'none', transition: 'border-color 0.15s',
-            }}
-            onFocus={e => { e.currentTarget.style.borderColor = 'var(--input-border-focus)' }}
-            onBlur={e => { e.currentTarget.style.borderColor = 'var(--input-border)' }}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: '30px' }}
           />
         </div>
-        
-        {/* Status dropdown */}
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="input-field"
-          style={{ padding: '8px 14px', fontSize: '13px', cursor: 'pointer', minWidth: '140px' }}
-        >
-          <option value="all">All Status</option>
+
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+          <option value="all">All status</option>
           <option value="submitted">Submitted</option>
-          <option value="under_review">Under Review</option>
+          <option value="under_review">In Review</option>
           <option value="selected">Selected</option>
           <option value="waitlisted">Waitlisted</option>
           <option value="rejected">Rejected</option>
         </select>
 
-        {/* Program dropdown */}
-        <select 
-          value={programFilter}
-          onChange={(e) => setProgramFilter(e.target.value)}
-          className="input-field"
-          style={{ padding: '8px 14px', fontSize: '13px', cursor: 'pointer', minWidth: '140px' }}
-        >
-          <option value="all">All Programs</option>
-          {programs.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
+        <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+          <option value="all">All programs</option>
+          {programs.map(p => <option key={p.id} value={p.id}>{p.name as string}</option>)}
         </select>
-
-        {/* Export button */}
-        <button 
-          onClick={exportCSV}
-          className="btn-secondary"
-          style={{ gap: '6px' }}
-        >
-          ↓ Export CSV
-        </button>
       </div>
 
-      {/* Bulk Action Bar */}
+      {/* Bulk action bar */}
       <AnimatePresence>
         {selectedApps.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4 flex items-center justify-between"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              background: 'var(--accent-bg)',
+              border: '1px solid var(--accent-border)',
+              borderRadius: '8px',
+              marginBottom: '12px',
+            }}
           >
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-brand-primary-text">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--accent)' }}>
                 {selectedApps.length} selected
               </span>
-              <div className="h-4 w-px bg-brand-primary/20" />
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => handleBulkUpdate('under_review')}
-                  className="px-3 py-1.5 rounded-lg bg-brand-primary/10 text-brand-primary-text text-xs font-bold hover:bg-brand-primary/20 transition-colors"
-                >
-                  Set Under Review
-                </button>
-                <button 
-                  onClick={() => handleBulkUpdate('selected')}
-                  className="px-3 py-1.5 rounded-lg bg-brand-success/10 text-brand-success text-xs font-bold hover:bg-brand-success/20 transition-colors"
-                >
-                  Select All
-                </button>
-                <button 
-                  onClick={() => handleBulkUpdate('rejected')}
-                  className="px-3 py-1.5 rounded-lg bg-brand-error/10 text-brand-error text-xs font-bold hover:bg-brand-error/20 transition-colors"
-                >
-                  Reject All
-                </button>
+              <div style={{ width: '1px', height: '16px', background: 'var(--accent-border)' }} />
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[
+                  { label: 'Mark In Review', value: 'under_review' },
+                  { label: 'Select', value: 'selected' },
+                  { label: 'Reject', value: 'rejected' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleBulkUpdate(opt.value)}
+                    className="btn-ghost"
+                    style={{
+                      height: '28px',
+                      fontSize: '12px',
+                      color: opt.value === 'rejected' ? 'var(--red)' : 'var(--text-secondary)',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setSelectedApps([])}
-              className="text-xs text-text-muted hover:text-white"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}
             >
-              Cancel
+              <X size={14} />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Table */}
-      <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div style={{
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-card)',
+      }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
             <thead>
-              <tr className="bg-white/2">
-                <th className="px-6 py-4 w-10">
-                  <button onClick={handleSelectAll} className="text-text-muted hover:text-brand-primary-text">
-                    {selectedApps.length === filteredApps.length && filteredApps.length > 0 ? (
-                      <CheckSquare size={18} className="text-brand-primary-text" />
-                    ) : (
-                      <Square size={18} />
-                    )}
+              <tr>
+                {/* Checkbox col */}
+                <th style={{ width: '44px', paddingLeft: '16px', paddingRight: '8px' }}>
+                  <button
+                    onClick={handleSelectAll}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                    aria-label={allSelected ? 'Deselect all' : 'Select all'}
+                  >
+                    {allSelected
+                      ? <CheckSquare size={15} style={{ color: 'var(--accent)' }} />
+                      : <Square size={15} />
+                    }
                   </button>
                 </th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider text-text-muted font-semibold">Student</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider text-text-muted font-semibold">Program</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider text-text-muted font-semibold">Applied</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider text-text-muted font-semibold">Status</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider text-text-muted font-semibold text-right">Action</th>
+                <th>Student</th>
+                <th>Program</th>
+                <th>Applied</th>
+                <th>Status</th>
+                <th style={{ width: '48px' }} />
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/4">
-              {filteredApps.map((app) => (
-                <tr 
-                  key={app.id} 
-                  className={`hover:bg-white/2 transition-colors group cursor-pointer ${selectedApps.includes(app.id) ? 'bg-brand-primary/5' : ''}`}
-                  onClick={() => setViewingApp(app)}
-                >
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => toggleSelect(app.id)} className="text-text-muted" aria-label={selectedApps.includes(app.id) ? 'Deselect application' : 'Select application'}>
-                      {selectedApps.includes(app.id) ? (
-                        <CheckSquare size={18} className="text-brand-primary-text" />
-                      ) : (
-                        <Square size={18} />
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary-text flex items-center justify-center font-bold text-xs shrink-0">
-                        {app.studentName?.charAt(0) || 'S'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{app.studentName}</p>
-                        <p className="text-xs text-text-muted">{app.studentEmail}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-text-secondary">{app.programName}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-text-muted whitespace-nowrap">
-                      {app.appliedAt?.seconds ? new Date(app.appliedAt.seconds * 1000).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      }) : '-'}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={app.status} />
-                  </td>
-                  <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      onClick={() => setViewingApp(app)}
-                      className="p-1.5 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
-                    >
-                      <MoreVertical size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredApps.length === 0 && (
+            <tbody>
+              {apps.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
                     <div className="empty-state">
                       <div className="empty-state-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <Search size={18} />
                       </div>
                       <p className="empty-state-title">No applications found</p>
                       <p className="empty-state-description">Try adjusting your filters or search term.</p>
                     </div>
                   </td>
                 </tr>
-              )}
+              ) : apps.map(app => {
+                const s = STATUS[app.status as string] || STATUS.submitted
+                const isSelected = selectedApps.includes(app.id)
+                const date = app.appliedAt?.seconds
+                  ? new Date(app.appliedAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—'
+
+                return (
+                  <tr
+                    key={app.id}
+                    onClick={() => setViewingApp(app)}
+                    style={{ background: isSelected ? 'var(--accent-bg)' : undefined }}
+                  >
+                    {/* Checkbox */}
+                    <td style={{ paddingLeft: '16px', paddingRight: '8px' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => toggleSelect(app.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                        aria-label={isSelected ? 'Deselect' : 'Select'}
+                      >
+                        {isSelected
+                          ? <CheckSquare size={15} style={{ color: 'var(--accent)' }} />
+                          : <Square size={15} />
+                        }
+                      </button>
+                    </td>
+
+                    {/* Student */}
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+                          background: 'var(--accent-bg)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', fontWeight: '600', color: 'var(--accent)',
+                        }}>
+                          {((app.studentName as string) || 'S').charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                            {app.studentName as string || '—'}
+                          </div>
+                          <div className="text-caption">{app.studentEmail as string || ''}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Program */}
+                    <td>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {app.programName as string || '—'}
+                      </span>
+                    </td>
+
+                    {/* Date */}
+                    <td>
+                      <span className="text-caption">{date}</span>
+                    </td>
+
+                    {/* Status */}
+                    <td>
+                      <span className={s.cls}>{s.label}</span>
+                    </td>
+
+                    {/* Action */}
+                    <td onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => setViewingApp(app)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--text-faint)', padding: '4px 6px', borderRadius: '5px',
+                          display: 'flex', alignItems: 'center',
+                          transition: 'background 0.1s, color 0.1s',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'var(--bg-card-hover)'
+                          e.currentTarget.style.color = 'var(--text-secondary)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'none'
+                          e.currentTarget.style.color = 'var(--text-faint)'
+                        }}
+                        aria-label="View application"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+
+        {/* Load more */}
         {hasMore && (
-          <div className="p-4 border-t border-white/5 flex justify-center">
-            <button
-              onClick={() => loadApps(true)}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Load More
+          <div style={{
+            padding: '12px',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'center',
+          }}>
+            <button onClick={() => loadApps(true)} className="btn-secondary" style={{ fontSize: '13px' }}>
+              Load more
             </button>
           </div>
         )}
       </div>
 
-      <ApplicationPanel 
-        app={viewingApp} 
-        onClose={() => setViewingApp(null)} 
-      />
+      {/* Detail panel */}
+      <ApplicationPanel app={viewingApp} onClose={() => setViewingApp(null)} />
     </div>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    submitted: 'bg-brand-primary/10 text-brand-primary-text',
-    under_review: 'bg-brand-warning/10 text-brand-warning',
-    selected: 'bg-brand-success/10 text-brand-success',
-    waitlisted: 'bg-orange-500/10 text-orange-500',
-    rejected: 'bg-brand-error/10 text-brand-error'
-  }
-  
-  return (
-    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${styles[status] || styles.submitted}`}>
-      {status.replace('_', ' ')}
-    </span>
   )
 }
