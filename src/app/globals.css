@@ -1,159 +1,194 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────────────
-   SEMANTIC TOKEN SYSTEM
-   All components should use these vars — never hardcode colours.
-   next-themes injects class="dark" on <html> when dark mode is active.
+   NOTION-INSPIRED TOKEN SYSTEM
+   Warm paper canvas · near-black ink · single blue accent
+   Dark mode: deep charcoal, not black glass
    ───────────────────────────────────────────────────────────────────── */
 
-/* ── LIGHT THEME (default) ── */
+/* ── LIGHT THEME ── */
 :root {
   color-scheme: light;
 
-  /* Backgrounds */
-  --bg:            #F5F6FA;
-  --bg-elevated:   #FFFFFF;
-  --bg-card:       #FFFFFF;
-  --bg-card-hover: #F0F2FA;
-  --bg-sidebar:    #FFFFFF;
+  /* Canvas — Notion's signature warm paper, never clinical white */
+  --bg: #F7F6F3;
+  /* warm paper */
+  --bg-elevated: #FFFFFF;
+  /* card surface */
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F1F0ED;
+  --bg-sidebar: #FBFAF8;
+  /* sidebar is barely-off-white */
 
-  /* Borders */
-  --border:        rgba(99, 102, 241, 0.14);
-  --border-hover:  rgba(99, 102, 241, 0.35);
+  /* Borders — hairlines only, no glow */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.18);
 
-  /* Text */
-  --text-primary:   #0F0F1A;
-  --text-secondary: #4B4B6E;
-  --text-muted:     #7070A0;
+  /* Text — ink hierarchy */
+  --text-primary: #1A1A18;
+  /* near-black, warm */
+  --text-secondary: #4A4A45;
+  /* warm charcoal */
+  --text-muted: #8C8C85;
+  /* stone */
+  --text-faint: #AEADA6;
+  /* ash — metadata, captions */
 
-  /* Brand */
-  --indigo:        #4F46E5;
-  --indigo-light:  #6366F1;
-  --gold:          #D97706;
-  --green:         #16A34A;
-  --red:           #DC2626;
-  --orange:        #EA580C;
+  /* Accent — ONE blue, used sparingly */
+  --accent: #0075DE;
+  /* Notion blue */
+  --accent-hover: #005BAB;
+  /* pressed */
+  --accent-bg: rgba(0, 117, 222, 0.07);
+  --accent-border: rgba(0, 117, 222, 0.18);
 
-  /* Shadows */
-  --shadow-card: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(99,102,241,0.06);
-  --shadow-glow: 0 0 40px rgba(79,70,229,0.10);
+  /* Semantic */
+  --green: #1AAE39;
+  --gold: #D97706;
+  --red: #DC2626;
+  --orange: #EA580C;
+
+  /* Sidebar active item */
+  --sidebar-active-bg: rgba(0, 117, 222, 0.07);
+  --sidebar-active-border: rgba(0, 117, 222, 0.15);
+  --sidebar-active-text: #0075DE;
+
+  /* Elevation — barely-there layered shadows */
+  --shadow-card: 0 0.175px 1px rgba(0, 0, 0, 0.015),
+    0 0.8px 2.9px rgba(0, 0, 0, 0.022),
+    0 2px 7.8px rgba(0, 0, 0, 0.027),
+    0 4px 18px rgba(0, 0, 0, 0.035);
+  --shadow-hover: 0 0.175px 1px rgba(0, 0, 0, 0.02),
+    0 0.8px 3px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 6px 24px rgba(0, 0, 0, 0.05);
+  --shadow-dropdown: 0 4px 6px rgba(0, 0, 0, 0.04),
+    0 10px 24px rgba(0, 0, 0, 0.10),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
 
   /* Radii */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-
-  /* Chart colours */
-  --chart-axis: rgba(0, 0, 0, 0.3);
-  --chart-grid: rgba(0, 0, 0, 0.06);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
 
   /* Scrollbar */
-  --scrollbar-track: #F0F0F5;
-  --scrollbar-thumb: rgba(99, 102, 241, 0.2);
-  --scrollbar-thumb-hover: rgba(99, 102, 241, 0.4);
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
 
   /* Input */
   --input-bg: #FFFFFF;
-  --input-border: rgba(99, 102, 241, 0.2);
-  --input-border-focus: #4F46E5;
-  --input-text: #0F0F1A;
-  --input-placeholder: rgba(15, 15, 26, 0.35);
+  --input-border: rgba(0, 0, 0, 0.12);
+  --input-border-focus: #0075DE;
+  --input-text: #1A1A18;
+  --input-placeholder: rgba(26, 26, 24, 0.35);
+
+  /* Chart */
+  --chart-axis: rgba(0, 0, 0, 0.25);
+  --chart-grid: rgba(0, 0, 0, 0.05);
 
   /* Selection */
-  --selection-bg: rgba(99, 102, 241, 0.2);
+  --selection-bg: rgba(0, 117, 222, 0.15);
 }
 
 /* ── DARK THEME ── */
 :root.dark {
   color-scheme: dark;
 
-  --bg:            #0A0A0F;
-  --bg-elevated:   #111118;
-  --bg-card:       #16161F;
-  --bg-card-hover: #1C1C28;
-  --bg-sidebar:    #111118;
+  /* Warm charcoal, not pure black — keeps document feel */
+  --bg: #191918;
+  --bg-elevated: #211F1E;
+  --bg-card: #252422;
+  --bg-card-hover: #2D2B29;
+  --bg-sidebar: #1E1C1B;
 
-  --border:        rgba(99, 102, 241, 0.15);
-  --border-hover:  rgba(99, 102, 241, 0.40);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.14);
 
-  --text-primary:   #F0F0FF;
-  --text-secondary: #8B8BA8;
-  --text-muted:     #8484A9;
+  --text-primary: #EEECEA;
+  --text-secondary: #9B9892;
+  --text-muted: #706D68;
+  --text-faint: #5A5754;
 
-  --indigo:        #5B5FEF;
-  --indigo-light:  #818CF8;
-  --gold:          #F59E0B;
-  --green:         #10B981;
-  --red:           #EF4444;
-  --orange:        #F97316;
+  --accent: #2D8FE8;
+  --accent-hover: #4AA3F5;
+  --accent-bg: rgba(45, 143, 232, 0.10);
+  --accent-border: rgba(45, 143, 232, 0.20);
 
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.08);
-  --shadow-glow: 0 0 40px rgba(91,95,239,0.12);
+  --green: #1AAE39;
+  --gold: #D97706;
+  --red: #DC2626;
+  --orange: #EA580C;
 
-  --chart-axis: rgba(255, 255, 255, 0.30);
-  --chart-grid: rgba(255, 255, 255, 0.05);
+  --sidebar-active-bg: rgba(45, 143, 232, 0.10);
+  --sidebar-active-border: rgba(45, 143, 232, 0.18);
+  --sidebar-active-text: #4AA3F5;
+
+  --shadow-card: 0 0.175px 1px rgba(0, 0, 0, 0.08),
+    0 0.8px 3px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.16),
+    0 4px 18px rgba(0, 0, 0, 0.20);
+  --shadow-hover: 0 0.175px 1px rgba(0, 0, 0, 0.12),
+    0 0.8px 3px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.22),
+    0 6px 24px rgba(0, 0, 0, 0.28);
+  --shadow-dropdown: 0 4px 6px rgba(0, 0, 0, 0.20),
+    0 10px 28px rgba(0, 0, 0, 0.40),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
 
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(99, 102, 241, 0.20);
-  --scrollbar-thumb-hover: rgba(99, 102, 241, 0.40);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.10);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.18);
 
-  --input-bg: #16161F;
-  --input-border: rgba(255, 255, 255, 0.08);
-  --input-border-focus: #5B5FEF;
-  --input-text: #F0F0FF;
-  --input-placeholder: rgba(255, 255, 255, 0.28);
+  --input-bg: #252422;
+  --input-border: rgba(255, 255, 255, 0.09);
+  --input-border-focus: #2D8FE8;
+  --input-text: #EEECEA;
+  --input-placeholder: rgba(238, 236, 234, 0.30);
 
-  --selection-bg: rgba(99, 102, 241, 0.3);
+  --chart-axis: rgba(255, 255, 255, 0.25);
+  --chart-grid: rgba(255, 255, 255, 0.05);
+
+  --selection-bg: rgba(45, 143, 232, 0.20);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   TAILWIND v4 THEME TOKENS
-   These generate Tailwind utility classes (e.g. bg-brand-primary).
-   Point to CSS vars so they respond to theme switching.
+   TAILWIND v4 THEME
    ───────────────────────────────────────────────────────────────────── */
 @theme {
-  /* Brand palette — static */
-  --color-brand-primary:      #4F46E5;
-  --color-brand-primary-text: #7169EA;
-  --color-brand-gold:         #F59E0B;
-  --color-brand-success:      #22C55E;
-  --color-brand-warning:      #F59E0B;
-  --color-brand-error:        #EF4444;
-
-  /* Semantic — dynamic (point to CSS vars) */
-  --color-brand-bg:      var(--bg);
+  --color-brand-bg: var(--bg);
   --color-brand-surface: var(--bg-card);
-  --color-brand-border:  var(--border);
+  --color-brand-border: var(--border);
+  --color-brand-accent: var(--accent);
 
-  --color-text-primary:   var(--text-primary);
+  --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-text-muted:     var(--text-muted);
+  --color-text-muted: var(--text-muted);
 
-  --radius-card:   var(--radius-lg);
-  --radius-button: 8px;
+  --radius-card: var(--radius-lg);
+  --radius-button: var(--radius-md);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   BASE STYLES
+   BASE
    ───────────────────────────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-/* Smooth theme transitions — no flashing, no layout shift */
 *,
 *::before,
 *::after {
   transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease,
-    box-shadow 200ms ease;
-}
-
-/* Don't animate transforms or layout properties */
-*, *::before, *::after {
-  animation-duration: inherit;
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 html {
@@ -163,11 +198,14 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text-primary);
-  font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
+  /* Inter matches Notion's NotionInter — apply explicit negative tracking at display sizes */
+  font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 ::selection {
@@ -175,152 +213,137 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   UTILITY CLASSES
+   TYPOGRAPHY SCALE — mirrors Notion's tight negative tracking system
    ───────────────────────────────────────────────────────────────────── */
-.section-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  color: var(--indigo-light);
+
+.text-display {
+  font-size: 40px;
   font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--text-primary);
 }
 
-.flat-card {
-  background-color: var(--bg-card);
+.text-heading-1 {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.text-heading-2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.25px;
+  color: var(--text-primary);
+}
+
+.text-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.1px;
+  color: var(--text-primary);
+}
+
+.text-body {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.text-sm {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.text-caption {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.text-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE LAYOUT
+   ───────────────────────────────────────────────────────────────────── */
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SURFACE CARDS — Notion-style hairline + barely-there shadow
+   ───────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.flat-card:hover {
+.card:hover {
   border-color: var(--border-hover);
+  box-shadow: var(--shadow-hover);
 }
 
-/* Unified input style — replaces .input-dark, works in both themes */
-.input-field,
-.input-dark {
-  background-color: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  color: var(--input-text);
-  padding: 10px 14px;
-  width: 100%;
-  font-size: 14px;
-  transition: border-color 0.15s;
-  outline: none;
+/* Legacy aliases */
+.flat-card,
+.glass-card,
+.section-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
-.input-field:focus,
-.input-dark:focus {
-  outline: none;
-  border-color: var(--input-border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.input-field::placeholder,
-.input-dark::placeholder {
-  color: var(--input-placeholder);
-}
-
-/* Select element theming */
-select.input-field,
-select.input-dark {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366F1' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
+.section-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   SCROLLBAR
-   ───────────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   FOCUS RINGS (WCAG AA)
-   ───────────────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--indigo-light);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   SPINNER ANIMATION
-   ───────────────────────────────────────────────────────────────────── */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(99, 102, 241, 0.2);
-  border-top-color: var(--indigo);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   PREVENT FLASH ON LOAD
-   The next-themes script runs before paint; suppressing transitions
-   for the first 0ms prevents FOUC on theme restoration.
-   ───────────────────────────────────────────────────────────────────── */
-.no-transitions *,
-.no-transitions *::before,
-.no-transitions *::after {
-  transition: none !important;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   LIGHT MODE OVERRIDES — make white-alpha utilities visible on light bg
-   These classes were written for dark mode; in light mode we remap them
-   to neutral grey equivalents so table rows, hover states, etc. still
-   look correct without modifying every page.
-   ───────────────────────────────────────────────────────────────────── */
-:root:not(.dark) .bg-white\/1  { background-color: rgba(0, 0, 0, 0.01) !important; }
-:root:not(.dark) .bg-white\/2  { background-color: rgba(0, 0, 0, 0.02) !important; }
-:root:not(.dark) .bg-white\/3  { background-color: rgba(0, 0, 0, 0.03) !important; }
-:root:not(.dark) .bg-white\/5  { background-color: rgba(0, 0, 0, 0.04) !important; }
-:root:not(.dark) .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
-:root:not(.dark) .bg-white\/20 { background-color: rgba(0, 0, 0, 0.07) !important; }
-
-:root:not(.dark) .hover\:bg-white\/2:hover  { background-color: rgba(0, 0, 0, 0.03) !important; }
-:root:not(.dark) .hover\:bg-white\/5:hover  { background-color: rgba(0, 0, 0, 0.05) !important; }
-:root:not(.dark) .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.06) !important; }
-
-/* border-white overrides */
-:root:not(.dark) .border-white\/5  { border-color: rgba(0, 0, 0, 0.06) !important; }
-:root:not(.dark) .border-white\/10 { border-color: rgba(0, 0, 0, 0.09) !important; }
-
-/* text-white → use primary text token in light mode */
-:root:not(.dark) .text-white { color: var(--text-primary) !important; }
-
-/* divide-white overrides */
-:root:not(.dark) .divide-white\/4 > * + * { border-color: rgba(0, 0, 0, 0.06) !important; }
-
-/* Tailwind bg-black/40 (used in sidebar theme toggle) */
-:root:not(.dark) .bg-black\/40 { background-color: rgba(0, 0, 0, 0.04) !important; }
-
-/* ─────────────────────────────────────────────────────────────────────
-   BUTTON SYSTEM
-   Consistent across the whole portal — use these instead of inline styles.
+   BUTTONS — Notion-style: pill marketing CTAs vs tight utility buttons
    ───────────────────────────────────────────────────────────────────── */
 
 .btn-primary {
@@ -328,24 +351,24 @@ select.input-dark {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background: var(--indigo);
+  height: 34px;
+  padding: 0 14px;
+  background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25), 0 0 0 0 rgba(79,70,229,0);
+  transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+  box-shadow: none;
   text-decoration: none;
+  letter-spacing: 0;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  background: var(--accent-hover);
 }
 
 .btn-primary:active {
@@ -353,7 +376,7 @@ select.input-dark {
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
   transform: none;
 }
@@ -363,17 +386,17 @@ select.input-dark {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background: var(--bg-card);
+  height: 34px;
+  padding: 0 14px;
+  background: var(--bg-elevated);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   text-decoration: none;
 }
 
@@ -387,27 +410,22 @@ select.input-dark {
   transform: scale(0.97);
 }
 
-.btn-secondary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   text-decoration: none;
 }
 
@@ -425,43 +443,36 @@ select.input-dark {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 16px;
+  height: 34px;
+  padding: 0 14px;
   background: transparent;
   color: var(--red);
-  border: 1px solid var(--red);
-  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-  text-decoration: none;
+  transition: all 0.12s ease;
 }
 
 .btn-danger:hover {
-  background: rgba(220, 38, 38, 0.08);
-}
-
-.btn-danger:active {
-  transform: scale(0.97);
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   BADGE / STATUS SYSTEM
-   Unified status badges — replaces copy-pasted StatusBadge components.
+   BADGE / STATUS — pill labels, no glow
    ───────────────────────────────────────────────────────────────────── */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 100px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -471,111 +482,72 @@ select.input-dark {
   height: 5px;
   border-radius: 50%;
   background: currentColor;
-  opacity: 0.8;
+  opacity: 0.7;
   flex-shrink: 0;
 }
 
 .badge-success {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--green);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(26, 174, 57, 0.10);
+  color: #148A2C;
+  border: 1px solid rgba(26, 174, 57, 0.18);
+}
+
+:root.dark .badge-success {
+  color: #34D068;
+  background: rgba(26, 174, 57, 0.12);
 }
 
 .badge-warning {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--gold);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(217, 119, 6, 0.10);
+  color: #92600A;
+  border: 1px solid rgba(217, 119, 6, 0.18);
+}
+
+:root.dark .badge-warning {
+  color: #F59E0B;
+  background: rgba(217, 119, 6, 0.12);
 }
 
 .badge-error {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--red);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(220, 38, 38, 0.10);
+  color: #991B1B;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+:root.dark .badge-error {
+  color: #F87171;
+  background: rgba(220, 38, 38, 0.12);
 }
 
 .badge-info {
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--indigo-light);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
 }
 
 .badge-neutral {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(0, 0, 0, 0.05);
   color: var(--text-muted);
   border: 1px solid var(--border);
+}
+
+:root.dark .badge-neutral {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .badge-orange {
-  background: rgba(249, 115, 22, 0.12);
-  color: var(--orange);
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  background: rgba(234, 88, 12, 0.10);
+  color: #9A3C0A;
+  border: 1px solid rgba(234, 88, 12, 0.18);
+}
+
+:root.dark .badge-orange {
+  color: #FB923C;
+  background: rgba(234, 88, 12, 0.12);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   GLASS CARD
-   Used by StatCard component. Layered surface with subtle border.
-   ───────────────────────────────────────────────────────────────────── */
-
-.glass-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.glass-card:hover {
-  border-color: var(--border-hover);
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   PAGE LAYOUT UTILITIES
-   Consistent page-level typography and layout patterns.
-   ───────────────────────────────────────────────────────────────────── */
-
-.page-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-top: 4px;
-  line-height: 1.5;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-}
-
-.section-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.section-card-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   TABLE UTILITIES
-   Shared table styles for consistent density and hover states.
+   TABLES — clean document tables, Notion-density
    ───────────────────────────────────────────────────────────────────── */
 
 .data-table {
@@ -589,11 +561,11 @@ select.input-dark {
 }
 
 .data-table thead th {
-  padding: 10px 16px;
+  padding: 8px 14px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -613,14 +585,63 @@ select.input-dark {
 }
 
 .data-table tbody td {
-  padding: 14px 16px;
+  padding: 11px 14px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   INPUTS
+   ───────────────────────────────────────────────────────────────────── */
+
+.input-field,
+.input-dark {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  color: var(--input-text);
+  padding: 7px 11px;
+  width: 100%;
+  font-size: 13px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.input-field:focus,
+.input-dark:focus {
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.input-field::placeholder,
+.input-dark::placeholder {
+  color: var(--input-placeholder);
+}
+
+select.input-field,
+select.input-dark {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C85' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SECTION LABELS
+   ───────────────────────────────────────────────────────────────────── */
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    EMPTY STATE
-   Consistent empty state pattern.
    ───────────────────────────────────────────────────────────────────── */
 
 .empty-state {
@@ -630,14 +651,14 @@ select.input-dark {
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .empty-state-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: rgba(99, 102, 241, 0.08);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -645,9 +666,13 @@ select.input-dark {
   margin-bottom: 4px;
 }
 
+:root.dark .empty-state-icon {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .empty-state-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
@@ -656,65 +681,144 @@ select.input-dark {
   font-size: 13px;
   color: var(--text-muted);
   margin: 0;
-  max-width: 320px;
+  max-width: 300px;
   line-height: 1.5;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   RESPONSIVE OVERRIDES
+   FOCUS RING (WCAG AA)
    ───────────────────────────────────────────────────────────────────── */
 
-/* Dashboard main grid: collapse right column on narrow screens */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SCROLLBAR
+   ───────────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SPINNER
+   ───────────────────────────────────────────────────────────────────── */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   NO-FLASH ON LOAD
+   ───────────────────────────────────────────────────────────────────── */
+
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   LIGHT MODE: remap dark-mode-biased utilities
+   ───────────────────────────────────────────────────────────────────── */
+
+:root:not(.dark) .bg-white\/1 {
+  background-color: rgba(0, 0, 0, 0.01) !important;
+}
+
+:root:not(.dark) .bg-white\/2 {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+:root:not(.dark) .bg-white\/3 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+:root:not(.dark) .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+:root:not(.dark) .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root:not(.dark) .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+:root:not(.dark) .hover\:bg-white\/2:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+:root:not(.dark) .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root:not(.dark) .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+:root:not(.dark) .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+:root:not(.dark) .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.09) !important;
+}
+
+:root:not(.dark) .text-white {
+  color: var(--text-primary) !important;
+}
+
+:root:not(.dark) .divide-white\/4>*+* {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+:root:not(.dark) .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────────── */
+
 @media (max-width: 1100px) {
   .dashboard-main-grid {
     grid-template-columns: 1fr !important;
   }
 }
 
-/* General content max-width cap on ultra-wide monitors */
 @media (min-width: 1800px) {
   .main-content-area {
-    max-width: 1600px;
+    max-width: 1520px;
     margin: 0 auto;
   }
 }
-
-/* ─────────────────────────────────────────────────────────────────────
-   INPUT FIELD UTILITIES
-   Themed inputs and selects that work in both light and dark modes.
-   ───────────────────────────────────────────────────────────────────── */
-
-.input-field {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  color: var(--input-text);
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.input-field:focus {
-  border-color: var(--input-border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
-}
-
-/* Legacy alias — some components use .input-dark */
-.input-dark {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  color: var(--input-text);
-  padding: 8px 12px;
-  font-size: 13px;
-  outline: none;
-  width: 100%;
-  transition: border-color 0.15s ease;
-}
-
-.input-dark:focus {
-  border-color: var(--input-border-focus);
-}
-
-
-
