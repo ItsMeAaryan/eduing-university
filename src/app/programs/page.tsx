@@ -4,10 +4,155 @@ import React, { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { subscribeToPrograms, deleteProgram } from '@/lib/firebase/programs'
-import { Plus, Edit2, Trash2, Calendar, IndianRupee, AlertCircle, BookOpen } from 'lucide-react'
+import { Plus, Edit2, Trash2, Calendar, IndianRupee, AlertCircle, BookOpen, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/Toast'
 import ProgramPanel from '@/components/ProgramPanel'
+
+// ─── Deadline badge ────────────────────────────────────────────────────────────
+
+function DeadlineBadge({ date }: { date: string }) {
+  const d = new Date(date)
+  const daysLeft = Math.ceil((d.getTime() - Date.now()) / 86400000)
+  const color = daysLeft < 30 ? 'var(--red)' : daysLeft < 60 ? 'var(--gold)' : 'var(--text-muted)'
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color }}>
+      <Calendar size={12} />
+      <span style={{ fontSize: '12px', fontWeight: '500' }}>{d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+      {daysLeft > 0 && daysLeft < 60 && (
+        <span style={{ fontSize: '11px', color }}>{daysLeft}d left</span>
+      )}
+    </div>
+  )
+}
+
+// ─── Program card ─────────────────────────────────────────────────────────────
+
+function ProgramCard({ p, onEdit, onDelete }: { p: FirestoreRecord; onEdit: () => void; onDelete: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  const filled = (p.filledSeats as number) || 0
+  const total = (p.totalSeats as number) || 1
+  const pct = Math.min(100, (filled / total) * 100)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'var(--bg-elevated)',
+        border: `1px solid ${hovered ? 'var(--border-hover)' : 'var(--border)'}`,
+        borderRadius: '10px',
+        padding: '18px 20px',
+        boxShadow: hovered ? 'var(--shadow-hover)' : 'var(--shadow-card)',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {p.level && (
+            <span className="badge badge-info" style={{ marginBottom: '6px', display: 'inline-flex' }}>
+              {p.level as string}
+            </span>
+          )}
+          <h3 style={{
+            fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)',
+            margin: 0, letterSpacing: '-0.2px', lineHeight: 1.3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {p.name as string}
+          </h3>
+        </div>
+
+        {/* Actions — always visible, not hidden on hover (better UX) */}
+        <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
+          <button
+            onClick={onEdit}
+            title="Edit"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-faint)', padding: '5px', borderRadius: '5px',
+              display: 'flex', transition: 'background 0.1s, color 0.1s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-faint)' }}
+          >
+            <Edit2 size={13} />
+          </button>
+          <button
+            onClick={onDelete}
+            title="Delete"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-faint)', padding: '5px', borderRadius: '5px',
+              display: 'flex', transition: 'background 0.1s, color 0.1s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.06)'; e.currentTarget.style.color = 'var(--red)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-faint)' }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+        {[
+          { label: 'Duration', value: p.duration as string || '—' },
+          { label: 'Total', value: String(p.totalSeats || 0) },
+          { label: 'Available', value: String(total - filled), green: true },
+        ].map(stat => (
+          <div key={stat.label}>
+            <div className="text-eyebrow" style={{ marginBottom: '2px' }}>{stat.label}</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: stat.green ? 'var(--green)' : 'var(--text-primary)' }}>
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Seat utilization */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+          <span className="text-eyebrow">Utilization</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{filled} / {total}</span>
+        </div>
+        <div style={{ height: '3px', background: 'var(--bg-card-hover)', borderRadius: '2px', overflow: 'hidden' }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            style={{ height: '100%', background: 'var(--accent)', borderRadius: '2px' }}
+          />
+        </div>
+      </div>
+
+      {/* Fee + deadline */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--gold)', fontSize: '13px', fontWeight: '600' }}>
+          <IndianRupee size={13} />
+          {((p.annualFee as number) || 0).toLocaleString('en-IN')}/yr
+        </div>
+        {p.deadline && <DeadlineBadge date={p.deadline as string} />}
+      </div>
+
+      {/* Entrance exam notice */}
+      {p.hasEntranceExam && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+          <AlertCircle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <span style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: '500' }}>
+            {(p.entranceExam as string) || 'Entrance exam required'}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ProgramsPage() {
   const { toast } = useToast()
@@ -18,237 +163,133 @@ export default function ProgramsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+    const unsub = auth.onAuthStateChanged(user => {
       if (user) {
-        const unsub = subscribeToPrograms(user.uid, (data) => {
+        const unsubProgs = subscribeToPrograms(user.uid, data => {
           setPrograms(data)
           setLoading(false)
         })
-        return () => unsub()
+        return () => unsubProgs()
       }
     })
-    return () => unsubscribeAuth()
+    return () => unsub()
   }, [])
 
   const handleDelete = async (id: string) => {
     try {
       await deleteProgram(id)
-      toast.success('Program deleted successfully')
+      toast.success('Program deleted')
       setDeleteConfirm(null)
-    } catch (error) {
-      console.error(error)
+    } catch {
       toast.error('Failed to delete program')
     }
   }
 
-  if (loading) return null
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div className="spinner" />
+    </div>
+  )
 
   return (
-    <div className="space-y-8 min-h-full">
+    <div>
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Academic Programs</h1>
-          <p className="page-subtitle">Manage and configure your course offerings</p>
+          <h1 className="page-title">Programs</h1>
+          <p className="page-subtitle">Manage your academic course offerings</p>
         </div>
-        <button 
-          onClick={() => {
-            setEditingProgram(null)
-            setIsPanelOpen(true)
-          }}
+        <button
+          onClick={() => { setEditingProgram(null); setIsPanelOpen(true) }}
           className="btn-primary"
+          style={{ gap: '6px' }}
         >
-          <Plus size={16} />
-          <span>New Program</span>
+          <Plus size={13} /> New Program
         </button>
       </div>
 
       {/* Grid */}
-      <AnimatePresence mode="wait">
-        {programs.length > 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-          >
-            {programs.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-brand-surface border border-brand-border rounded-2xl p-6 flex flex-col group hover:border-brand-primary/40 hover:shadow-2xl hover:shadow-brand-primary/5 transition-all duration-300 relative overflow-hidden"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary-text text-[10px] font-bold uppercase tracking-wider">
-                        {p.level}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-brand-primary-text transition-colors truncate">
-                      {p.name}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <button 
-                      onClick={() => {
-                        setEditingProgram(p)
-                        setIsPanelOpen(true)
-                      }}
-                      className="p-2 rounded-xl hover:bg-white/5 text-text-muted hover:text-white transition-colors"
-                      title="Edit Program"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={() => setDeleteConfirm(p.id)}
-                      className="p-2 rounded-xl hover:bg-brand-error/10 text-text-muted hover:text-brand-error transition-colors"
-                      title="Delete Program"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
+      {programs.length === 0 ? (
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '64px 24px', textAlign: 'center',
+          border: '1px dashed var(--border)', borderRadius: '10px',
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+            <BookOpen size={20} style={{ color: 'var(--accent)' }} />
+          </div>
+          <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px' }}>No programs yet</h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '300px', marginBottom: '20px' }}>
+            Start building your academic portfolio by adding your first program.
+          </p>
+          <button onClick={() => setIsPanelOpen(true)} className="btn-primary" style={{ gap: '6px' }}>
+            <Plus size={13} /> Create first program
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+          {programs.map(p => (
+            <ProgramCard
+              key={p.id}
+              p={p}
+              onEdit={() => { setEditingProgram(p); setIsPanelOpen(true) }}
+              onDelete={() => setDeleteConfirm(p.id)}
+            />
+          ))}
+        </div>
+      )}
 
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <p className="text-[10px] text-text-muted uppercase font-bold mb-1 tracking-tight">Duration</p>
-                    <p className="text-sm font-semibold text-white">{p.duration}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-text-muted uppercase font-bold mb-1 tracking-tight">Total Seats</p>
-                    <p className="text-sm font-semibold text-white">{p.totalSeats || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-text-muted uppercase font-bold mb-1 tracking-tight">Available</p>
-                    <p className="text-sm font-semibold text-brand-success">{(p.totalSeats || 0) - (p.filledSeats || 0)}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest mb-1.5">
-                      <span className="text-text-muted">Seats Utilization</span>
-                      <span className="text-brand-primary-text">{p.filledSeats || 0} / {p.totalSeats || 0}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, ((p.filledSeats || 0) / (p.totalSeats || 1)) * 100)}%` }}
-                        className="h-full bg-linear-to-r from-brand-primary to-indigo-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5 text-brand-gold font-bold">
-                      <IndianRupee size={14} />
-                      <span>{(p.annualFee || 0).toLocaleString()}/yr</span>
-                    </div>
-                    {p.deadline && <DeadlineBadge date={p.deadline} />}
-                  </div>
-                </div>
-
-                {p.hasEntranceExam && (
-                  <div className="mt-auto pt-4 border-t border-white/5 flex items-center gap-2">
-                    <AlertCircle size={14} className="text-brand-gold" />
-                    <span className="text-[10px] font-bold uppercase text-brand-gold truncate opacity-80">
-                      {p.entranceExam || 'Entrance Required'}
-                    </span>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 px-6 bg-brand-surface/30 border border-dashed border-brand-border rounded-3xl text-center"
-          >
-            <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
-              <BookOpen className="text-brand-primary-text" size={40} />
-            </div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px' }}>No programs created yet</h3>
-            <p className="text-text-secondary text-sm max-w-sm mb-8">
-              Start building your academic portfolio by adding your first program or course offering.
-            </p>
-            <button 
-              onClick={() => setIsPanelOpen(true)}
-              className="btn-primary"
-              style={{ height: '40px', padding: '0 24px' }}
-            >
-              <Plus size={16} /> Create your first program
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {/* Program panel */}
       <AnimatePresence>
         {isPanelOpen && (
-          <ProgramPanel 
+          <ProgramPanel
             program={editingProgram}
-            onClose={() => {
-              setIsPanelOpen(false)
-              setEditingProgram(null)
-            }}
+            onClose={() => { setIsPanelOpen(false); setEditingProgram(null) }}
           />
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation */}
+      {/* Delete confirm modal */}
       <AnimatePresence>
         {deleteConfirm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-200 flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-brand-surface border border-brand-border rounded-2xl p-8 max-w-sm w-full text-center"
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 50 }}
+              onClick={() => setDeleteConfirm(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: '100%', maxWidth: '360px',
+                background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+                borderRadius: '12px', boxShadow: 'var(--shadow-dropdown)',
+                zIndex: 51, padding: '20px',
+              }}
             >
-              <div className="w-16 h-16 bg-brand-error/10 text-brand-error rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trash2 size={32} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>Delete program?</h3>
+                <button onClick={() => setDeleteConfirm(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}>
+                  <X size={16} />
+                </button>
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px' }}>Delete Program?</h3>
-              <p className="text-text-secondary text-sm mb-8 leading-relaxed">
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: 1.5 }}>
                 This will also affect active applications. This action cannot be undone.
               </p>
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 h-12 rounded-lg border border-brand-border text-white font-semibold hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 h-12 rounded-lg bg-brand-error text-white font-semibold hover:bg-brand-error/90 transition-colors"
-                >
-                  Delete
-                </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setDeleteConfirm(null)} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>
+                <button onClick={() => handleDelete(deleteConfirm!)} className="btn-danger" style={{ flex: 1 }}>Delete</button>
               </div>
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-function DeadlineBadge({ date }: { date: string }) {
-  const d = new Date(date)
-  const daysLeft = Math.ceil((d.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  
-  let colorClass = 'text-text-muted'
-  if (daysLeft < 30) colorClass = 'text-brand-error'
-  else if (daysLeft < 60) colorClass = 'text-brand-warning'
-
-  return (
-    <div className={`flex items-center gap-1.5 ${colorClass}`}>
-      <Calendar size={14} />
-      <span className="text-xs font-medium">{d.toLocaleDateString()}</span>
     </div>
   )
 }
