@@ -1,3 +1,6 @@
+// ─── analytics/students/page.tsx ──────────────────────────────────────────────
+// Copy this file to src/app/analytics/students/page.tsx
+
 'use client'
 
 import React, { useMemo } from 'react'
@@ -7,181 +10,120 @@ import { Download, AlertCircle, Users, MapPin, Tag } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false })
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
-const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false })
-const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false })
-const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false })
-const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false })
+const BarChart = dynamic(() => import('recharts').then(m => m.BarChart), { ssr: false })
+const Bar = dynamic(() => import('recharts').then(m => m.Bar), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
+const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
+const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
+const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
+const Legend = dynamic(() => import('recharts').then(m => m.Legend), { ssr: false })
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6']
+const PIE_COLORS = ['#0075DE', '#6366F1', '#D97706', '#EA580C', '#1AAE39', '#DC2626', '#8B5CF6', '#14B8A6']
+
+function ChartCard({ title, icon: Icon, children, span2 }: { title: string; icon?: React.ElementType; children: React.ReactNode; span2?: boolean }) {
+  return (
+    <div style={{
+      background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px',
+      overflow: 'hidden', boxShadow: 'var(--shadow-card)',
+      gridColumn: span2 ? 'span 2' : undefined,
+    }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '7px' }}>
+        {Icon && <Icon size={13} style={{ color: 'var(--text-muted)' }} />}
+        <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>{title}</h3>
+      </div>
+      <div style={{ padding: '16px', height: '300px' }}>{children}</div>
+    </div>
+  )
+}
 
 export default function StudentAnalytics() {
   const { apps, loading, error } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
-  const studentData = useMemo(() => {
-    const geoCounts: Record<string, number> = {}
-    const tagCounts: Record<string, number> = {}
-    const statusCounts: Record<string, number> = {}
+  const isLight = resolvedTheme === 'light'
+  const axisStroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'
+  const gridStroke = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }
 
+  const data = useMemo(() => {
+    const geo: Record<string, number> = {}
+    const tags: Record<string, number> = {}
+    const status: Record<string, number> = {}
     apps.forEach(app => {
-      // Geography
-      const state = app.studentProfile?.state || app.city || 'Unknown'
-      geoCounts[state] = (geoCounts[state] || 0) + 1
-
-      // Tags
-      if (app.tags && Array.isArray(app.tags)) {
-        app.tags.forEach(tag => {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1
-        })
-      }
-
-      // Status
-      const status = app.status || 'unknown'
-      statusCounts[status] = (statusCounts[status] || 0) + 1
+      const state = (app.studentProfile as any)?.state || app.city || 'Unknown'
+      geo[state as string] = (geo[state as string] || 0) + 1
+      if (Array.isArray(app.tags)) (app.tags as string[]).forEach(t => { tags[t] = (tags[t] || 0) + 1 })
+      const s = (app.status as string) || 'unknown'
+      status[s] = (status[s] || 0) + 1
     })
-
-    const geoChart = Object.keys(geoCounts)
-      .map(name => ({ name, value: geoCounts[name] }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10)
-
-    const tagChart = Object.keys(tagCounts)
-      .map(name => ({ name, value: tagCounts[name] }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8)
-
-    const statusChart = Object.keys(statusCounts)
-      .map(name => ({ name: name.replace('_', ' ').toUpperCase(), value: statusCounts[name] }))
-      .sort((a, b) => b.value - a.value)
-
-    return { geoChart, tagChart, statusChart }
+    return {
+      geoChart: Object.entries(geo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10),
+      tagChart: Object.entries(tags).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8),
+      statusChart: Object.entries(status).map(([name, value]) => ({ name: name.replace(/_/g, ' ').toUpperCase(), value })).sort((a, b) => b.value - a.value),
+    }
   }, [apps])
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center text-brand-error flex-col gap-4">
-        <AlertCircle size={48} />
-        <p>Failed to load analytics: {error}</p>
-      </div>
-    )
-  }
-
-  const isLight = resolvedTheme === 'light'
-  const axisStroke  = isLight ? 'rgba(0,0,0,0.30)'  : 'rgba(255,255,255,0.30)'
-  const gridStroke  = isLight ? 'rgba(0,0,0,0.06)'  : 'rgba(255,255,255,0.05)'
-
-  const handleExport = () => {
-    exportToCSV(studentData.geoChart, 'Student_Demographics')
-  }
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}><div className="spinner" /></div>
+  if (error) return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '12px', color: 'var(--red)' }}><AlertCircle size={32} /><p style={{ fontSize: '14px' }}>{error}</p></div>
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      
-      <header className="flex justify-between items-end">
+    <div>
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Student Analytics</h1>
-          <p className="text-text-secondary text-sm">Demographics, lifecycle distribution, and tag tracking</p>
+          <h1 className="page-title">Student Analytics</h1>
+          <p className="page-subtitle">Demographics, lifecycle distribution, and tag tracking</p>
         </div>
-        <button onClick={handleExport} className="btn-secondary flex items-center gap-2">
-          <Download size={16} /> Export Demographics
+        <button onClick={() => exportToCSV(data.geoChart, 'Student_Demographics')} className="btn-secondary" style={{ gap: '6px' }}>
+          <Download size={13} /> Export
         </button>
-      </header>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Geography Chart */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <MapPin size={18} className="text-brand-primary" /> Geographic Distribution
-          </h3>
-          <div className="h-80 w-full">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <ChartCard title="Geographic Distribution" icon={MapPin}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.geoChart}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+              <XAxis dataKey="name" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={tipStyle} cursor={{ fill: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)' }} />
+              <Bar dataKey="value" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Lifecycle Status" icon={Users}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data.statusChart} cx="50%" cy="44%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value">
+                {data.statusChart.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="none" />)}
+              </Pie>
+              <Tooltip contentStyle={tipStyle} />
+              <Legend verticalAlign="bottom" height={32} iconSize={10} wrapperStyle={{ fontSize: '11px' }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Top CRM Tags" icon={Tag} span2>
+          {data.tagChart.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic' }}>
+              No tags assigned yet.
+            </div>
+          ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={studentData.geoChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                <XAxis dataKey="name" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                />
-                <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              <BarChart data={data.tagChart} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
+                <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} width={120} />
+                <Tooltip contentStyle={tipStyle} cursor={{ fill: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)' }} />
+                <Bar dataKey="value" fill="#D97706" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Status Distribution Pie */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <Users size={18} className="text-purple-500" /> Lifecycle Status Distribution
-          </h3>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={studentData.statusChart}
-                  cx="50%"
-                  cy="45%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {studentData.statusChart.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Tag Distribution */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm lg:col-span-2">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <Tag size={18} className="text-pink-500" /> Top CRM Tags Assigned
-          </h3>
-          <div className="h-80 w-full">
-            {studentData.tagChart.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={studentData.tagChart} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={true} vertical={false} />
-                  <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    cursor={{ fill: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  />
-                  <Bar dataKey="value" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-text-muted italic">
-                No tags have been assigned to students yet.
-              </div>
-            )}
-          </div>
-        </div>
-
+          )}
+        </ChartCard>
       </div>
     </div>
   )
