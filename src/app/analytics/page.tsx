@@ -4,196 +4,174 @@ import React from 'react'
 import { useAnalytics } from '@/context/AnalyticsContext'
 import { getExecutiveKPIs, getActivityTrend } from '@/lib/analytics'
 import { exportToCSV } from '@/utils/export'
-import { FileText, Download, TrendingUp, Users, FileCheck, CheckCircle, Wallet, AlertCircle } from 'lucide-react'
+import { Download, AlertCircle, TrendingUp, Users, FileCheck, Wallet } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 
-// Lazy load Recharts for performance optimization
-const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false })
-const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
-const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart), { ssr: false })
-const Area = dynamic(() => import('recharts').then(mod => mod.Area), { ssr: false })
+const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false })
+const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
+
+// ─── KPI card ──────────────────────────────────────────────────────────────────
+
+function KPICard({ title, value, icon: Icon, sub, accent }: {
+  title: string; value: string | number; icon: React.ElementType; sub: string; accent: string
+}) {
+  return (
+    <div style={{
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--border)',
+      borderRadius: '10px',
+      padding: '18px 20px',
+      boxShadow: 'var(--shadow-card)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <span style={{ fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+          {title}
+        </span>
+        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: `${accent}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={14} color={accent} />
+        </div>
+      </div>
+      <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-1px', lineHeight: 1, marginBottom: '6px' }}>
+        {value}
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{sub}</div>
+    </div>
+  )
+}
+
+// ─── Funnel step ───────────────────────────────────────────────────────────────
+
+function FunnelStep({ label, count, total }: { label: string; count: number; total: number }) {
+  const pct = total > 0 ? (count / total) * 100 : 0
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '5px' }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{label}</span>
+        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{count}</span>
+      </div>
+      <div style={{ height: '4px', width: '100%', background: 'var(--bg-card-hover)', borderRadius: '2px', overflow: 'hidden' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          style={{ height: '100%', background: 'var(--accent)', borderRadius: '2px' }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ExecutiveDashboard() {
   const { apps, auditLogs, loading, error } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    )
-  }
+  const isLight = resolvedTheme === 'light'
+  const axisStroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'
+  const gridStroke = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
 
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center text-brand-error flex-col gap-4">
-        <AlertCircle size={48} />
-        <p>Failed to load analytics: {error}</p>
-      </div>
-    )
-  }
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div className="spinner" />
+    </div>
+  )
+
+  if (error) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '12px', color: 'var(--red)' }}>
+      <AlertCircle size={32} />
+      <p style={{ fontSize: '14px' }}>Failed to load analytics: {error}</p>
+    </div>
+  )
 
   const kpis = getExecutiveKPIs(apps)
   const activityData = getActivityTrend(auditLogs)
-  const isLight = resolvedTheme === 'light'
-  const axisStroke  = isLight ? 'rgba(0,0,0,0.30)'  : 'rgba(255,255,255,0.30)'
-  const gridStroke  = isLight ? 'rgba(0,0,0,0.06)'  : 'rgba(255,255,255,0.05)'
 
-  const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num)
-  }
-
-  const handleExport = () => {
-    const data = [
-      { Metric: 'Total Applications', Value: kpis.totalReceived },
-      { Metric: 'Under Review', Value: kpis.underReview },
-      { Metric: 'Docs Pending Approval', Value: kpis.docsPending },
-      { Metric: 'Offers Issued', Value: kpis.offersIssued },
-      { Metric: 'Enrolled Students', Value: kpis.enrolled },
-      { Metric: 'Acceptance Rate (%)', Value: kpis.acceptanceRate },
-      { Metric: 'Enrollment Rate (%)', Value: kpis.enrollmentRate },
-      { Metric: 'Revenue Collected (INR)', Value: kpis.revenueCollected },
-      { Metric: 'Pending Revenue (INR)', Value: kpis.pendingRevenue }
-    ]
-    exportToCSV(data, 'Executive_KPIs')
-  }
+  const handleExport = () => exportToCSV([
+    { Metric: 'Total Applications', Value: kpis.totalReceived },
+    { Metric: 'Under Review', Value: kpis.underReview },
+    { Metric: 'Offers Issued', Value: kpis.offersIssued },
+    { Metric: 'Enrolled Students', Value: kpis.enrolled },
+    { Metric: 'Acceptance Rate (%)', Value: kpis.acceptanceRate },
+    { Metric: 'Enrollment Rate (%)', Value: kpis.enrollmentRate },
+    { Metric: 'Revenue Collected (INR)', Value: kpis.revenueCollected },
+    { Metric: 'Pending Revenue (INR)', Value: kpis.pendingRevenue },
+  ], 'Executive_KPIs')
 
   return (
-    <div className="p-0 max-w-7xl mx-auto space-y-8">
-      
-      <header className="page-header">
+    <div>
+      {/* Header */}
+      <div className="page-header">
         <div>
           <h1 className="page-title">Executive Dashboard</h1>
           <p className="page-subtitle">High-level overview of university performance</p>
         </div>
-        <button onClick={handleExport} className="btn-secondary">
-          <Download size={15} /> Export KPIs
+        <button onClick={handleExport} className="btn-secondary" style={{ gap: '6px' }}>
+          <Download size={13} /> Export KPIs
         </button>
-      </header>
-
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard 
-          title="Total Applications" 
-          value={kpis.totalReceived} 
-          icon={<Users className="text-blue-500" />} 
-          trend="+12%" 
-          trendUp={true} 
-        />
-        <KPICard 
-          title="Conversion Rate" 
-          value={`${kpis.enrollmentRate}%`} 
-          icon={<TrendingUp className="text-brand-success" />} 
-          trend="Enrolled / Offers" 
-          trendUp={true} 
-        />
-        <KPICard 
-          title="Revenue Collected" 
-          value={formatCurrency(kpis.revenueCollected)} 
-          icon={<Wallet className="text-emerald-500" />} 
-          trend={`${formatCurrency(kpis.pendingRevenue)} pending`} 
-          trendUp={true} 
-        />
-        <KPICard 
-          title="Pending Actions" 
-          value={kpis.underReview + kpis.docsPending} 
-          icon={<FileCheck className="text-brand-warning" />} 
-          trend="Needs staff review" 
-          trendUp={false} 
-        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Main Chart */}
-        <div className="lg:col-span-2 section-card">
-          <div className="section-card-header">
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>University Activity Trend (30 Days)</h3>
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+        <KPICard title="Total Applications" value={kpis.totalReceived} icon={Users} sub="All time" accent="#0075DE" />
+        <KPICard title="Conversion Rate" value={`${kpis.enrollmentRate}%`} icon={TrendingUp} sub="Enrolled / offers" accent="#1AAE39" />
+        <KPICard title="Revenue Collected" value={formatCurrency(kpis.revenueCollected)} icon={Wallet} sub={`${formatCurrency(kpis.pendingRevenue)} pending`} accent="#1AAE39" />
+        <KPICard title="Pending Actions" value={kpis.underReview + kpis.docsPending} icon={FileCheck} sub="Needs staff review" accent="#D97706" />
+      </div>
+
+      {/* Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '16px' }}>
+
+        {/* Activity trend */}
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
+              Activity Trend — 30 days
+            </h3>
           </div>
-          <div style={{ padding: '20px' }} className="h-80 w-full">
+          <div style={{ padding: '16px', height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activityData}>
                 <defs>
                   <linearGradient id="colorActions" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                <XAxis dataKey="date" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                <XAxis dataKey="date" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} dy={8} />
                 <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  itemStyle={{ color: '#4F46E5', fontWeight: 'bold' }}
-                />
-                <Area type="monotone" dataKey="actions" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorActions)" />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
+                <Area type="monotone" dataKey="actions" stroke="var(--accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorActions)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Funnel Summary */}
-        <div className="section-card">
-          <div className="section-card-header">
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Admissions Pipeline</h3>
+        {/* Pipeline funnel */}
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
+              Admissions Pipeline
+            </h3>
           </div>
-          <div style={{ padding: '20px' }} className="space-y-4">
-            <FunnelStep label="Total Applicants" count={kpis.totalReceived} total={kpis.totalReceived} color="bg-blue-500" />
-            <FunnelStep label="Offers Issued" count={kpis.offersIssued} total={kpis.totalReceived} color="bg-purple-500" />
-            <FunnelStep label="Seat Accepted" count={kpis.seatAccepted} total={kpis.totalReceived} color="bg-pink-500" />
-            <FunnelStep label="Enrolled Students" count={kpis.enrolled} total={kpis.totalReceived} color="bg-emerald-500" />
+          <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <FunnelStep label="Total applicants" count={kpis.totalReceived} total={kpis.totalReceived} />
+            <FunnelStep label="Offers issued" count={kpis.offersIssued} total={kpis.totalReceived} />
+            <FunnelStep label="Seat accepted" count={kpis.seatAccepted} total={kpis.totalReceived} />
+            <FunnelStep label="Enrolled" count={kpis.enrolled} total={kpis.totalReceived} />
           </div>
         </div>
-
-      </div>
-    </div>
-  )
-}
-
-function KPICard({ title, value, icon, trend, trendUp }: any) {
-  return (
-    <div className="glass-card p-6 flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-4">
-        <div style={{
-          padding: '10px',
-          background: 'rgba(99,102,241,0.08)',
-          borderRadius: '10px',
-        }}>
-          {icon}
-        </div>
-      </div>
-      <div>
-        <h4 style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: '0 0 6px' }}>{title}</h4>
-        <p style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>{value}</p>
-        <p style={{ fontSize: '12px', marginTop: '6px', color: trendUp ? 'var(--green)' : 'var(--text-muted)' }}>{trend}</p>
-      </div>
-    </div>
-  )
-}
-
-function FunnelStep({ label, count, total, color }: any) {
-  const percentage = total > 0 ? (count / total) * 100 : 0
-  return (
-    <div>
-      <div className="flex justify-between items-end mb-1.5">
-        <span className="text-sm font-medium text-text-secondary">{label}</span>
-        <span className="text-sm font-bold text-white">{count}</span>
-      </div>
-      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-        <motion.div 
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className={`h-full ${color}`}
-        />
       </div>
     </div>
   )
