@@ -8,128 +8,102 @@ import { Download, AlertCircle, Activity, ShieldCheck } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false })
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
+const BarChart = dynamic(() => import('recharts').then(m => m.BarChart), { ssr: false })
+const Bar = dynamic(() => import('recharts').then(m => m.Bar), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
+
+function ChartCard({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '7px' }}>
+        <Icon size={13} style={{ color: 'var(--text-muted)' }} />
+        <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>{title}</h3>
+      </div>
+      <div style={{ padding: '16px', height: '320px' }}>{children}</div>
+    </div>
+  )
+}
 
 export default function StaffAnalytics() {
   const { auditLogs, staff, loading, error } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    )
-  }
+  const isLight = resolvedTheme === 'light'
+  const axisStroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'
+  const gridStroke = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }
 
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center text-brand-error flex-col gap-4">
-        <AlertCircle size={48} />
-        <p>Failed to load analytics: {error}</p>
-      </div>
-    )
-  }
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}><div className="spinner" /></div>
+  if (error) return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '12px', color: 'var(--red)' }}><AlertCircle size={32} /><p style={{ fontSize: '14px' }}>{error}</p></div>
 
   const staffData = getStaffProductivity(auditLogs, staff)
 
-  const isLight = resolvedTheme === 'light'
-  const axisStroke  = isLight ? 'rgba(0,0,0,0.30)'  : 'rgba(255,255,255,0.30)'
-  const gridStroke  = isLight ? 'rgba(0,0,0,0.06)'  : 'rgba(255,255,255,0.05)'
-
-  const handleExport = () => {
-    exportToCSV(staffData, 'Staff_Productivity')
-  }
-
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      
-      <header className="flex justify-between items-end">
+    <div>
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Staff Productivity</h1>
-          <p className="text-text-secondary text-sm">Measure team activity and operational efficiency</p>
+          <h1 className="page-title">Staff Productivity</h1>
+          <p className="page-subtitle">Team activity and operational efficiency</p>
         </div>
-        <button onClick={handleExport} className="btn-secondary flex items-center gap-2">
-          <Download size={16} /> Export Data
+        <button onClick={() => exportToCSV(staffData, 'Staff_Productivity')} className="btn-secondary" style={{ gap: '6px' }}>
+          <Download size={13} /> Export
         </button>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Total Actions Chart */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <Activity size={18} className="text-brand-primary" /> Total Actions by Staff
-          </h3>
-          <div className="h-96 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={true} vertical={false} />
-                <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  cursor={{ fill: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                />
-                <Bar dataKey="actions" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={24} name="Total Actions" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Total Reviews Chart */}
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <ShieldCheck size={18} className="text-brand-success" /> Verification & Status Updates
-          </h3>
-          <div className="h-96 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={true} vertical={false} />
-                <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  cursor={{ fill: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                />
-                <Bar dataKey="reviews" fill="#10B981" radius={[0, 4, 4, 0]} barSize={24} name="Review Actions" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
       </div>
 
-      {/* Raw Data Table */}
-      <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
+      {/* Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <ChartCard title="Total Actions by Staff" icon={Activity}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
+              <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} width={120} />
+              <Tooltip cursor={{ fill: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)' }} contentStyle={tipStyle} />
+              <Bar dataKey="actions" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={20} name="Actions" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Verifications & Reviews" icon={ShieldCheck}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
+              <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} width={120} />
+              <Tooltip cursor={{ fill: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)' }} contentStyle={tipStyle} />
+              <Bar dataKey="reviews" fill="#1AAE39" radius={[0, 4, 4, 0]} barSize={20} name="Reviews" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      {/* Table */}
+      <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        <table className="data-table">
           <thead>
-            <tr className="border-b border-brand-border bg-black/20">
-              <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Staff Member</th>
-              <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider">Role</th>
-              <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Total Actions</th>
-              <th className="p-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Verifications/Reviews</th>
+            <tr>
+              <th>Staff member</th>
+              <th>Role</th>
+              <th style={{ textAlign: 'right' }}>Total actions</th>
+              <th style={{ textAlign: 'right' }}>Verifications</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody>
             {staffData.map(member => (
-              <tr key={member.name} className="hover:bg-white/5 transition-colors">
-                <td className="p-4 text-sm font-bold text-white">{member.name}</td>
-                <td className="p-4 text-sm text-text-secondary uppercase">{member.role.replace('_', ' ')}</td>
-                <td className="p-4 text-sm text-white text-right font-mono">{member.actions}</td>
-                <td className="p-4 text-sm text-brand-success text-right font-mono font-bold">{member.reviews}</td>
+              <tr key={member.name}>
+                <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{member.name}</td>
+                <td style={{ textTransform: 'capitalize' }}>{member.role.replace(/_/g, ' ')}</td>
+                <td style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '13px' }}>{member.actions}</td>
+                <td style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '13px', color: 'var(--green)', fontWeight: '600' }}>{member.reviews}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }
