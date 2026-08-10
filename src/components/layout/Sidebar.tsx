@@ -299,6 +299,8 @@ export default function Sidebar() {
             width={26}
             height={26}
             style={{
+              width: '26px',
+              height: '26px',
               objectFit: 'contain',
               filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
               transition: 'filter 180ms ease',
@@ -362,17 +364,17 @@ export default function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    style={{ textDecoration: 'none' }}
+                    style={{
+                      textDecoration: 'none',
+                      background: isActive ? 'var(--sidebar-active-bg)' : undefined,
+                      border: isActive ? '1px solid var(--sidebar-active-border)' : '1px solid transparent',
+                    }}
                     className={cn(
                       'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md transition-all duration-100 mb-0.5 group',
                       isActive
                         ? 'text-[var(--sidebar-active-text)]'
                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]'
                     )}
-                    style={{
-                      background: isActive ? 'var(--sidebar-active-bg)' : undefined,
-                      border: isActive ? '1px solid var(--sidebar-active-border)' : '1px solid transparent',
-                    }}
                   >
                     <item.icon
                       size={14}
