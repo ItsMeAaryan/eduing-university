@@ -36,7 +36,7 @@ function StatCard({ title, value, icon: Icon, accent }: { title: string; value: 
 }
 
 export default function FinancialAnalytics() {
-  const { apps, loading, error } = useAnalytics()
+  const { apps, loading, error, permissionDenied } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
   const isLight = resolvedTheme === 'light'
@@ -76,6 +76,23 @@ export default function FinancialAnalytics() {
 
   return (
     <div>
+      {(permissionDenied || apps.length === 0) && (
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <AlertCircle size={15} style={{ color: 'var(--text-muted)' }} />
+          <span>Live data unavailable — showing empty state.</span>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h1 className="page-title">Financial Analytics</h1>
@@ -100,8 +117,8 @@ export default function FinancialAnalytics() {
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>Monthly Revenue Trend</h3>
           </div>
-          <div style={{ padding: '16px', height: '280px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ padding: '16px', height: '280px', width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
               <AreaChart data={financialData.trendData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -112,7 +129,7 @@ export default function FinancialAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="month" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} dy={8} />
                 <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => [formatCurrency(v), 'Revenue']} contentStyle={tipStyle} />
+                <Tooltip formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Revenue']} contentStyle={tipStyle} />
                 <Area type="monotone" dataKey="revenue" stroke="#1AAE39" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -124,13 +141,13 @@ export default function FinancialAnalytics() {
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>Collection Status</h3>
           </div>
-          <div style={{ padding: '16px', height: '280px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ padding: '16px', height: '280px', width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
               <PieChart>
                 <Pie data={financialData.pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value">
                   {financialData.pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="none" />)}
                 </Pie>
-                <Tooltip formatter={(v: number) => [formatCurrency(v), 'Amount']} contentStyle={tipStyle} />
+                <Tooltip formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Amount']} contentStyle={tipStyle} />
                 <Legend verticalAlign="bottom" height={32} iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>

@@ -23,13 +23,13 @@ function ChartCard({ title, icon: Icon, children }: { title: string; icon: React
         <Icon size={13} style={{ color: 'var(--text-muted)' }} />
         <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>{title}</h3>
       </div>
-      <div style={{ padding: '16px', height: '320px' }}>{children}</div>
+      <div style={{ padding: '16px', height: '320px', width: '100%', minHeight: '320px', position: 'relative' }}>{children}</div>
     </div>
   )
 }
 
 export default function StaffAnalytics() {
-  const { auditLogs, staff, loading, error } = useAnalytics()
+  const { auditLogs, staff, loading, error, permissionDenied } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
   const isLight = resolvedTheme === 'light'
@@ -44,6 +44,23 @@ export default function StaffAnalytics() {
 
   return (
     <div>
+      {(permissionDenied || auditLogs.length === 0) && (
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <AlertCircle size={15} style={{ color: 'var(--text-muted)' }} />
+          <span>Live data unavailable — showing empty state.</span>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h1 className="page-title">Staff Productivity</h1>
@@ -57,7 +74,7 @@ export default function StaffAnalytics() {
       {/* Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
         <ChartCard title="Total Actions by Staff" icon={Activity}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
             <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
               <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
@@ -69,7 +86,7 @@ export default function StaffAnalytics() {
         </ChartCard>
 
         <ChartCard title="Verifications & Reviews" icon={ShieldCheck}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
             <BarChart data={staffData.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
               <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />

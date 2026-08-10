@@ -25,13 +25,13 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
         <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>{title}</h3>
       </div>
-      <div style={{ padding: '16px', height: '340px' }}>{children}</div>
+      <div style={{ padding: '16px', height: '340px', width: '100%', minHeight: '340px', position: 'relative' }}>{children}</div>
     </div>
   )
 }
 
 export default function AdmissionsAnalytics() {
-  const { apps, programs, loading, error } = useAnalytics()
+  const { apps, programs, loading, error, permissionDenied } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
   const isLight = resolvedTheme === 'light'
@@ -47,6 +47,23 @@ export default function AdmissionsAnalytics() {
 
   return (
     <div>
+      {(permissionDenied || apps.length === 0) && (
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <AlertCircle size={15} style={{ color: 'var(--text-muted)' }} />
+          <span>Live data unavailable — showing empty state.</span>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h1 className="page-title">Admissions Analytics</h1>
@@ -59,7 +76,7 @@ export default function AdmissionsAnalytics() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <ChartCard title="Demand by Program">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
             <BarChart data={programData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
               <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
@@ -71,7 +88,7 @@ export default function AdmissionsAnalytics() {
         </ChartCard>
 
         <ChartCard title="Conversion Funnel">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
             <FunnelChart>
               <Tooltip contentStyle={tipStyle} />
               <Funnel dataKey="count" data={funnelData} isAnimationActive fill="var(--accent)">

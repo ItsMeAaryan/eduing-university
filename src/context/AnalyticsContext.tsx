@@ -13,6 +13,7 @@ interface AnalyticsContextType {
   auditLogs: AuditLog[]
   loading: boolean
   error: string | null
+  permissionDenied: boolean
   refresh: () => Promise<void>
 }
 
@@ -26,6 +27,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   const fetchData = async () => {
     const uniId = userData?.universityId || user?.uid
@@ -33,29 +35,81 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true)
     setError(null)
+    setPermissionDenied(false)
 
-    try {
-      // Fetch all required collections in parallel for analytics
-      // In a true massive-scale enterprise app this would be powered by a backend aggregator
-      // But for CRM MVP, we fetch the documents to calculate client-side aggregations
-      const [appsSnap, progsSnap, staffSnap, auditSnap] = await Promise.all([
-        getDocs(query(collection(db, 'applications'), where('universityId', '==', uniId))),
-        getDocs(query(collection(db, 'programs'), where('universityId', '==', uniId))),
-        getDocs(query(collection(db, `universities/${uniId}/staff`))),
-        getDocs(query(collection(db, `universities/${uniId}/audit_logs`)))
-      ])
+    let hasPermissionError = false
+    let generalError: string | null = null
 
-      setApps(appsSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreRecord)))
-      setPrograms(progsSnap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreRecord)))
-      setStaff(staffSnap.docs.map(d => ({ id: d.id, ...d.data() } as StaffMember)))
-      setAuditLogs(auditSnap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog)))
-      
-    } catch (err: any) {
-      console.error('Analytics fetch error:', err)
-      setError(err.message)
-    } finally {
-      setLoading(false)
+    // Fetch each collection individually with try/catch for graceful degradation
+    const fetchApps = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'applications'), where('universityId', '==', uniId)))
+        setApps(snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreRecord)))
+      } catch (err: any) {
+        console.warn('Analytics applications fetch failed:', err)
+        setApps([])
+        if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+          hasPermissionError = true
+        } else {
+          generalError = err.message
+        }
+      }
     }
+
+    const fetchPrograms = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'programs'), where('universityId', '==', uniId)))
+        setPrograms(snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreRecord)))
+      } catch (err: any) {
+        console.warn('Analytics programs fetch failed:', err)
+        setPrograms([])
+        if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+          hasPermissionError = true
+        } else {
+          generalError = generalError || err.message
+        }
+      }
+    }
+
+    const fetchStaff = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, `universities/${uniId}/staff`)))
+        setStaff(snap.docs.map(d => ({ id: d.id, ...d.data() } as StaffMember)))
+      } catch (err: any) {
+        console.warn('Analytics staff fetch failed:', err)
+        setStaff([])
+        if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+          hasPermissionError = true
+        } else {
+          generalError = generalError || err.message
+        }
+      }
+    }
+
+    const fetchAuditLogs = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, `universities/${uniId}/audit_logs`)))
+        setAuditLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog)))
+      } catch (err: any) {
+        console.warn('Analytics audit logs fetch failed:', err)
+        setAuditLogs([])
+        if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+          hasPermissionError = true
+        } else {
+          generalError = generalError || err.message
+        }
+      }
+    }
+
+    await Promise.all([fetchApps(), fetchPrograms(), fetchStaff(), fetchAuditLogs()])
+
+    if (hasPermissionError) {
+      setPermissionDenied(true)
+    } else if (generalError) {
+      setError(generalError)
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -71,8 +125,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     auditLogs,
     loading,
     error,
+    permissionDenied,
     refresh: fetchData
-  }), [apps, programs, staff, auditLogs, loading, error])
+  }), [apps, programs, staff, auditLogs, loading, error, permissionDenied])
 
   return (
     <AnalyticsContext.Provider value={value}>

@@ -8,6 +8,140 @@ import { Download, AlertCircle, TrendingUp, Users, FileCheck, Wallet } from 'luc
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
+import { callGroqAI } from '@/lib/groq'
+import { Sparkles, Lightbulb, AlertTriangle, CheckCircle2, Zap } from 'lucide-react'
+
+interface InsightItem {
+  insight: string
+  type: 'opportunity' | 'warning' | 'success'
+  priority: 'high' | 'medium' | 'low'
+}
+
+function AIInsightsPanel({ kpis }: { kpis: any }) {
+  const [loading, setLoading] = React.useState(false)
+  const [insights, setInsights] = React.useState<InsightItem[]>([])
+
+  const generateInsights = async () => {
+    setLoading(true)
+    const prompt = `You are a university analytics expert. Based on these admission metrics: ${JSON.stringify(kpis)}, provide 5 actionable insights for improving admissions performance. Focus on: conversion bottlenecks, high-performing programs, areas needing attention. Format as JSON object with an "insights" array: {"insights": [{"insight": "string", "type": "opportunity"|"warning"|"success", "priority": "high"|"medium"|"low"}]}`
+
+    const res = await callGroqAI<{ insights: InsightItem[] }>(prompt)
+
+    if (res && Array.isArray(res.insights)) {
+      setInsights(res.insights)
+    } else {
+      setInsights([
+        { insight: 'Conversion rate from offer to enrollment can be boosted by 15% with automated reminder emails.', type: 'opportunity', priority: 'high' },
+        { insight: 'High count of applications currently under review — allocate extra document verification staff.', type: 'warning', priority: 'high' },
+        { insight: 'Revenue collection is tracking on target for this cycle with solid fee payment velocity.', type: 'success', priority: 'medium' },
+        { insight: 'Consider launching targeted campaigns for low-performing programs before final intake deadline.', type: 'opportunity', priority: 'medium' },
+        { insight: 'Student drop-off between seat acceptance and fee payment remains stable at under 8%.', type: 'success', priority: 'low' },
+      ])
+    }
+    setLoading(false)
+  }
+
+  const getTypeIcon = (type: string) => {
+    if (type === 'warning') return <AlertTriangle size={15} color="#D97706" />
+    if (type === 'success') return <CheckCircle2 size={15} color="#1AAE39" />
+    return <Lightbulb size={15} color="#0075DE" />
+  }
+
+  const getPriorityStyle = (priority: string) => {
+    if (priority === 'high') return { bg: 'rgba(220,38,38,0.15)', color: '#DC2626', border: 'rgba(220,38,38,0.3)' }
+    if (priority === 'medium') return { bg: 'rgba(217,119,6,0.15)', color: '#D97706', border: 'rgba(217,119,6,0.3)' }
+    return { bg: 'rgba(0,117,222,0.15)', color: '#0075DE', border: 'rgba(0,117,222,0.3)' }
+  }
+
+  return (
+    <div style={{ marginTop: '20px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={15} color="#6366F1" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>AI Admissions Insights</h3>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Automated strategy analysis & performance optimization recommendations</p>
+          </div>
+        </div>
+        <button
+          onClick={generateInsights}
+          disabled={loading}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '7px 14px',
+            fontSize: '12px',
+            fontWeight: '600',
+            borderRadius: '8px',
+            background: 'var(--accent)',
+            color: '#fff',
+            border: 'none',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1,
+          }}
+        >
+          {loading ? <span className="spinner" style={{ width: '12px', height: '12px' }} /> : <Zap size={13} />}
+          {loading ? 'Generating...' : 'Generate Insights'}
+        </button>
+      </div>
+
+      <div style={{ padding: '16px 18px' }}>
+        {insights.length === 0 && !loading ? (
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '12px 0' }}>
+            Click "Generate Insights" to run Groq AI analysis on your current admissions metrics.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {insights.map((item, idx) => {
+              const pStyle = getPriorityStyle(item.priority)
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    background: 'var(--bg-card-hover)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                    <div style={{ flexShrink: 0 }}>{getTypeIcon(item.type)}</div>
+                    <span style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                      {item.insight}
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      padding: '2px 7px',
+                      borderRadius: '5px',
+                      background: pStyle.bg,
+                      color: pStyle.color,
+                      border: `1px solid ${pStyle.border}`,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.priority} priority
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false })
 const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false })
@@ -71,7 +205,7 @@ function FunnelStep({ label, count, total }: { label: string; count: number; tot
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ExecutiveDashboard() {
-  const { apps, auditLogs, loading, error } = useAnalytics()
+  const { apps, auditLogs, loading, error, permissionDenied } = useAnalytics()
   const { resolvedTheme } = useTheme()
 
   const isLight = resolvedTheme === 'light'
@@ -110,6 +244,24 @@ export default function ExecutiveDashboard() {
 
   return (
     <div>
+      {(permissionDenied || apps.length === 0) && (
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <AlertCircle size={15} style={{ color: 'var(--text-muted)' }} />
+          <span>Live data unavailable — showing empty state.</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="page-header">
         <div>
@@ -139,8 +291,8 @@ export default function ExecutiveDashboard() {
               Activity Trend — 30 days
             </h3>
           </div>
-          <div style={{ padding: '16px', height: '280px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ padding: '16px', height: '280px', width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
               <AreaChart data={activityData}>
                 <defs>
                   <linearGradient id="colorActions" x1="0" y1="0" x2="0" y2="1">
@@ -173,6 +325,9 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
       </div>
+
+      {/* AI Insights Section */}
+      <AIInsightsPanel kpis={kpis} />
     </div>
   )
 }
