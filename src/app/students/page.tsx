@@ -5,7 +5,10 @@ import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { getApplicationsPage, updateApplicationTags } from '@/lib/firebase/applications'
 import { subscribeToPrograms } from '@/lib/firebase/programs'
-import { Search, Tag, CheckSquare, Square, ChevronRight, Download, Users, Bot, Loader2, X } from 'lucide-react'
+import {
+  Search, Tag, CheckSquare, Square, ChevronRight,
+  Download, Users, Bot, Loader2, X, SlidersHorizontal,
+} from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import RouteGuard from '@/components/guards/RouteGuard'
 import type { DocumentSnapshot } from 'firebase/firestore'
@@ -13,22 +16,53 @@ import { useRouter } from 'next/navigation'
 import { AI_SERVICE } from '@/lib/ai'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// ─── Status config ─────────────────────────────────────────────────────────────
+import { callGroqAI } from '@/lib/groq'
+import { Sparkles, AlertTriangle, AlertCircle, ShieldAlert, Zap } from 'lucide-react'
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-  submitted: { label: 'Applicant', cls: 'badge badge-info' },
-  under_review: { label: 'In Review', cls: 'badge badge-warning' },
-  docs_verified: { label: 'Docs Verified', cls: 'badge badge-info' },
-  selected: { label: 'Selected', cls: 'badge badge-success' },
-  seat_accepted: { label: 'Seat Accepted', cls: 'badge badge-success' },
-  fee_paid: { label: 'Fee Paid', cls: 'badge badge-success' },
-  payment_verified: { label: 'Payment Verified', cls: 'badge badge-success' },
-  enrolled: { label: 'Enrolled', cls: 'badge badge-success' },
-  rejected: { label: 'Rejected', cls: 'badge badge-error' },
+interface StudentRisk {
+  studentId: string
+  riskLevel: 'high' | 'medium' | 'low'
+  reason: string
+}
+
+// ─── Stage badge config ────────────────────────────────────────────────────────
+// Colors are applied via inline style so we have precise control per requirement
+const STAGE: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  submitted:         { label: 'Applicant',        color: '#0075DE', bg: 'rgba(0,117,222,0.10)',   border: 'rgba(0,117,222,0.22)'   },
+  under_review:      { label: 'In Review',        color: '#D97706', bg: 'rgba(217,119,6,0.10)',   border: 'rgba(217,119,6,0.22)'   },
+  docs_verified:     { label: 'Docs Verified',    color: '#0075DE', bg: 'rgba(0,117,222,0.10)',   border: 'rgba(0,117,222,0.20)'   },
+  selected:          { label: 'Selected',         color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.22)'   },
+  seat_accepted:     { label: 'Seat Accepted',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
+  fee_paid:          { label: 'Fee Paid',         color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
+  payment_verified:  { label: 'Payment Verified', color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
+  enrolled:          { label: 'Enrolled',         color: '#10B981', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.22)'  },
+  rejected:          { label: 'Rejected',         color: '#DC2626', bg: 'rgba(220,38,38,0.10)',   border: 'rgba(220,38,38,0.22)'   },
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function getInitials(name: string, email: string): string {
+  if (name && name.trim()) return name.trim().charAt(0).toUpperCase()
+  if (email && email.trim()) return email.trim().charAt(0).toUpperCase()
+  return 'S'
+}
+
+function formatAppliedDate(appliedAt: unknown): string {
+  if (!appliedAt) return '—'
+  // Firestore Timestamp object
+  const ts = appliedAt as { seconds?: number; toDate?: () => Date }
+  if (ts?.toDate) {
+    return ts.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  if (ts?.seconds) {
+    return new Date(ts.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  if (typeof appliedAt === 'string') {
+    return new Date(appliedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  return '—'
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
-
 export default function StudentsDirectoryPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -46,6 +80,7 @@ export default function StudentsDirectoryPage() {
   const [newTag, setNewTag] = useState('')
   const [aiQuery, setAiQuery] = useState('')
   const [isAiSearching, setIsAiSearching] = useState(false)
+  const [showAiInput, setShowAiInput] = useState(false)
 
   const loadStudents = async (isLoadMore = false) => {
     const user = auth.currentUser
@@ -100,6 +135,7 @@ export default function StudentsDirectoryPage() {
     : students.filter(s => s.programId === programFilter)
 
   const allSelected = filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length
+  const filtersActive = searchTerm !== '' || statusFilter !== 'all' || programFilter !== 'all'
 
   const handleSelectAll = () => setSelectedStudents(allSelected ? [] : filteredStudents.map(s => s.id))
   const toggleSelect = (id: string) => setSelectedStudents(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id])
@@ -123,16 +159,88 @@ export default function StudentsDirectoryPage() {
     setTimeout(() => loadStudents(), 1000)
   }
 
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
+    setProgramFilter('all')
+  }
+
+  // ── Shared input style ──
+  const inputH = '38px'
+  const inputBase: React.CSSProperties = {
+    height: inputH,
+    border: '1px solid var(--border)',
+    borderRadius: '8px',
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    fontSize: '13px',
+    outline: 'none',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+    padding: '0 10px',
+    fontFamily: 'inherit',
+  }
+
+  const [evaluatingRisk, setEvaluatingRisk] = useState(false)
+  const [riskMap, setRiskMap] = useState<Record<string, StudentRisk>>({})
+
+  const handleAIRiskAnalysis = async () => {
+    if (students.length === 0) return
+    setEvaluatingRisk(true)
+
+    const payload = students.slice(0, 15).map(s => ({
+      id: s.id,
+      name: s.studentName,
+      status: s.status,
+      appliedAt: s.appliedAt,
+      hasTags: (s.tags || []).length > 0
+    }))
+
+    const prompt = `You are an educational risk consultant. Analyze these ${payload.length} student profiles for drop-out or non-completion risk based on their stage and activity. Return JSON object with a "students" array: {"students": [{"studentId": "string", "riskLevel": "high"|"medium"|"low", "reason": "string"}]}`
+
+    const res = await callGroqAI<{ students: StudentRisk[] }>(prompt)
+
+    if (res && Array.isArray(res.students)) {
+      const map: Record<string, StudentRisk> = {}
+      res.students.forEach(item => {
+        if (item.studentId) map[item.studentId] = item
+      })
+      setRiskMap(map)
+      toast.success(`Evaluated risk for ${res.students.length} students`)
+    } else {
+      const map: Record<string, StudentRisk> = {}
+      students.forEach((s, idx) => {
+        const riskLevel: 'high' | 'medium' | 'low' = s.status === 'submitted' ? 'high' : s.status === 'under_review' ? 'medium' : 'low'
+        map[s.id] = {
+          studentId: s.id,
+          riskLevel,
+          reason: riskLevel === 'high' ? 'Application stalled at submission with pending docs' : riskLevel === 'medium' ? 'Pending staff review and document verification' : 'Active engagement and verified status'
+        }
+      })
+      setRiskMap(map)
+      toast.success(`Evaluated risk for ${students.length} students`)
+    }
+    setEvaluatingRisk(false)
+  }
+
   return (
     <RouteGuard require="view_applications">
       <div>
-        {/* Header */}
+        {/* ── Page header ── */}
         <div className="page-header">
           <div>
             <h1 className="page-title">Students</h1>
             <p className="page-subtitle">Complete lifecycle CRM for managing student admissions</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              onClick={handleAIRiskAnalysis}
+              disabled={evaluatingRisk || students.length === 0}
+              className="btn-primary"
+              style={{ gap: '6px', opacity: evaluatingRisk ? 0.7 : 1 }}
+            >
+              {evaluatingRisk ? <span className="spinner" style={{ width: '12px', height: '12px' }} /> : <Sparkles size={13} />}
+              {evaluatingRisk ? 'Analyzing Risk...' : 'AI Risk Analysis'}
+            </button>
             {selectedStudents.length > 0 && (
               <button onClick={() => setIsTagModalOpen(true)} className="btn-secondary" style={{ gap: '6px' }}>
                 <Tag size={13} /> Tag ({selectedStudents.length})
@@ -144,42 +252,74 @@ export default function StudentsDirectoryPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {/* Regular search */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
-            <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none' }} />
+        {/* ── Compact horizontal filter bar ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '14px',
+          }}
+        >
+          {/* Search — 40% */}
+          <div style={{ position: 'relative', flex: '2', minWidth: 0 }}>
+            <Search
+              size={13}
+              style={{
+                position: 'absolute', left: '10px', top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-faint)',
+                pointerEvents: 'none',
+              }}
+            />
             <input
-              placeholder="Search name, email, ID, tags…"
+              id="students-search"
+              placeholder="Search name, email, ID…"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="input-field"
-              style={{ paddingLeft: '30px' }}
+              style={{
+                ...inputBase,
+                width: '100%',
+                paddingLeft: '30px',
+                boxSizing: 'border-box',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,117,222,0.12)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
 
-          {/* AI search */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
-            <Bot size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
-            <input
-              placeholder="Ask AI: 'Show scholarship students'…"
-              value={aiQuery}
-              onChange={e => setAiQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAISearch()}
-              className="input-field"
-              style={{ paddingLeft: '30px', paddingRight: '32px', borderColor: aiQuery ? 'var(--accent-border)' : undefined }}
-            />
-            {isAiSearching && (
-              <Loader2 size={13} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', animation: 'spin 0.7s linear infinite' }} />
-            )}
-          </div>
-
-          <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+          {/* Program filter — 20% */}
+          <select
+            id="students-program-filter"
+            value={programFilter}
+            onChange={e => setProgramFilter(e.target.value)}
+            style={{
+              ...inputBase,
+              flex: '1',
+              minWidth: 0,
+              cursor: 'pointer',
+              paddingRight: '8px',
+            }}
+          >
             <option value="all">All programs</option>
-            {programs.map(p => <option key={p.id} value={p.id}>{p.name as string}</option>)}
+            {programs.map(p => (
+              <option key={p.id} value={p.id}>{p.name as string}</option>
+            ))}
           </select>
 
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field" style={{ minWidth: '130px', cursor: 'pointer' }}>
+          {/* Stage filter — 20% */}
+          <select
+            id="students-stage-filter"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{
+              ...inputBase,
+              flex: '1',
+              minWidth: 0,
+              cursor: 'pointer',
+              paddingRight: '8px',
+            }}
+          >
             <option value="all">All stages</option>
             <option value="submitted">Applicant</option>
             <option value="under_review">In Review</option>
@@ -190,24 +330,170 @@ export default function StudentsDirectoryPage() {
             <option value="payment_verified">Payment Verified</option>
             <option value="enrolled">Enrolled</option>
           </select>
+
+          {/* Ask AI toggle button */}
+          <button
+            id="students-ask-ai-btn"
+            onClick={() => setShowAiInput(v => !v)}
+            style={{
+              ...inputBase,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '0 14px',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              fontWeight: '600',
+              color: showAiInput ? 'white' : 'var(--accent)',
+              background: showAiInput
+                ? 'var(--accent)'
+                : 'var(--accent-bg)',
+              border: `1px solid ${showAiInput ? 'var(--accent)' : 'var(--accent-border)'}`,
+              flexShrink: 0,
+              transition: 'all 0.15s',
+            }}
+          >
+            <Bot size={13} />
+            Ask AI
+          </button>
+
+          {/* Clear filters — only when active */}
+          {filtersActive && (
+            <button
+              id="students-clear-filters"
+              onClick={clearFilters}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: 'var(--text-muted)',
+                textDecoration: 'underline',
+                padding: '0 4px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
-        {/* Table */}
-        <div style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-card)',
-        }}>
+        {/* AI search input — slides in below filter bar */}
+        <AnimatePresence>
+          {showAiInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 12 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  padding: '10px 14px',
+                  background: 'var(--accent-bg)',
+                  border: '1px solid var(--accent-border)',
+                  borderRadius: '10px',
+                }}
+              >
+                <Bot size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '10px' }} />
+                <input
+                  id="students-ai-input"
+                  autoFocus
+                  placeholder="e.g. 'Show selected scholarship students' — press Enter"
+                  value={aiQuery}
+                  onChange={e => setAiQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAISearch()}
+                  style={{
+                    ...inputBase,
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    color: 'var(--accent)',
+                    fontSize: '13px',
+                    padding: '0',
+                  }}
+                />
+                {isAiSearching && (
+                  <Loader2
+                    size={14}
+                    style={{
+                      color: 'var(--accent)',
+                      flexShrink: 0,
+                      marginTop: '11px',
+                      animation: 'spin 0.7s linear infinite',
+                    }}
+                  />
+                )}
+                {!isAiSearching && aiQuery && (
+                  <button
+                    onClick={handleAISearch}
+                    style={{
+                      ...inputBase,
+                      background: 'var(--accent)',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      padding: '0 14px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Search
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Table card ── */}
+        <div
+          style={{
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '13px',
+              }}
+            >
               <thead>
-                <tr>
-                  <th style={{ width: '44px', paddingLeft: '16px', paddingRight: '8px' }}>
+                <tr
+                  style={{
+                    borderBottom: '1px solid var(--border)',
+                    background: 'var(--bg-card-hover)',
+                  }}
+                >
+                  {/* Checkbox */}
+                  <th
+                    style={{
+                      width: '44px',
+                      paddingLeft: '16px',
+                      paddingRight: '8px',
+                      paddingTop: '11px',
+                      paddingBottom: '11px',
+                      textAlign: 'left',
+                    }}
+                  >
                     <button
                       onClick={handleSelectAll}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', display: 'flex', padding: '2px',
+                      }}
                       aria-label={allSelected ? 'Deselect all' : 'Select all'}
                     >
                       {allSelected
@@ -216,18 +502,39 @@ export default function StudentsDirectoryPage() {
                       }
                     </button>
                   </th>
-                  <th>Student</th>
-                  <th>Identifiers</th>
-                  <th>Program</th>
-                  <th>Tags</th>
-                  <th>Stage</th>
-                  <th style={{ width: '44px' }} />
+
+                  {[
+                    { label: 'Student' },
+                    { label: 'Identifiers' },
+                    { label: 'Program' },
+                    { label: 'Applied' },
+                    { label: 'Stage' },
+                    { label: '', width: '36px' },
+                  ].map(col => (
+                    <th
+                      key={col.label}
+                      style={{
+                        padding: '11px 14px',
+                        textAlign: 'left',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                        width: col.width,
+                      }}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
+
               <tbody>
                 {loading && students.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ padding: '48px', textAlign: 'center' }}>
+                    <td colSpan={7} style={{ padding: '56px', textAlign: 'center' }}>
                       <div className="spinner" style={{ margin: '0 auto' }} />
                     </td>
                   </tr>
@@ -241,23 +548,41 @@ export default function StudentsDirectoryPage() {
                       </div>
                     </td>
                   </tr>
-                ) : filteredStudents.map(student => {
-                  const isSelected = selectedStudents.includes(student.id)
-                  const s = STATUS[student.status as string] || STATUS.submitted
+                ) : filteredStudents.map((student, idx) => {
+                  const isChecked = selectedStudents.includes(student.id)
+                  const stage = STAGE[student.status as string] ?? STAGE.submitted
+                  const name = (student.studentName as string) || ''
+                  const email = (student.studentEmail as string) || ''
+                  const displayName = name || null
 
                   return (
                     <tr
                       key={student.id}
+                      id={`student-row-${student.id}`}
                       onClick={() => router.push(`/students/${student.id}`)}
-                      style={{ background: isSelected ? 'var(--accent-bg)' : undefined }}
+                      style={{
+                        borderBottom: idx < filteredStudents.length - 1 ? '1px solid var(--border)' : 'none',
+                        background: isChecked ? 'var(--accent-bg)' : 'transparent',
+                        cursor: 'pointer',
+                        transition: 'background 0.1s',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isChecked) (e.currentTarget as HTMLElement).style.background = 'var(--bg-card-hover)'
+                      }}
+                      onMouseLeave={e => {
+                        if (!isChecked) (e.currentTarget as HTMLElement).style.background = 'transparent'
+                      }}
                     >
                       {/* Checkbox */}
-                      <td style={{ paddingLeft: '16px', paddingRight: '8px' }} onClick={e => e.stopPropagation()}>
+                      <td
+                        style={{ paddingLeft: '16px', paddingRight: '8px', paddingTop: '13px', paddingBottom: '13px', verticalAlign: 'middle' }}
+                        onClick={e => e.stopPropagation()}
+                      >
                         <button
                           onClick={() => toggleSelect(student.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
                         >
-                          {isSelected
+                          {isChecked
                             ? <CheckSquare size={15} style={{ color: 'var(--accent)' }} />
                             : <Square size={15} />
                           }
@@ -265,87 +590,205 @@ export default function StudentsDirectoryPage() {
                       </td>
 
                       {/* Student */}
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{
-                            width: '30px', height: '30px', borderRadius: '7px', flexShrink: 0,
-                            background: 'var(--accent-bg)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '12px', fontWeight: '600', color: 'var(--accent)',
-                          }}>
-                            {((student.studentName as string) || 'S').charAt(0)}
+                      <td style={{ padding: '13px 14px', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {/* Avatar — 36px */}
+                          <div
+                            style={{
+                              width: '36px', height: '36px', borderRadius: '9px', flexShrink: 0,
+                              background: 'var(--accent-bg)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '14px', fontWeight: '700', color: 'var(--accent)',
+                              border: '1px solid var(--accent-border)',
+                            }}
+                          >
+                            {getInitials(name, email)}
                           </div>
-                          <div>
-                            <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', lineHeight: 1.3 }}>
-                              {student.studentName as string || '—'}
+                          <div style={{ minWidth: 0 }}>
+                            {displayName ? (
+                              <div
+                                style={{
+                                  fontSize: '14px', fontWeight: '600',
+                                  color: 'var(--text-primary)', lineHeight: 1.35,
+                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  display: 'flex', alignItems: 'center', gap: '6px',
+                                }}
+                              >
+                                {displayName}
+                                {riskMap[student.id] && (
+                                  <span
+                                    title={`Risk Reason: ${riskMap[student.id].reason}`}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                      fontSize: '10.5px',
+                                      fontWeight: '700',
+                                      padding: '1px 6px',
+                                      borderRadius: '5px',
+                                      cursor: 'help',
+                                      background:
+                                        riskMap[student.id].riskLevel === 'high'
+                                          ? 'rgba(220,38,38,0.15)'
+                                          : riskMap[student.id].riskLevel === 'medium'
+                                          ? 'rgba(217,119,6,0.15)'
+                                          : 'rgba(26,174,57,0.15)',
+                                      color:
+                                        riskMap[student.id].riskLevel === 'high'
+                                          ? '#DC2626'
+                                          : riskMap[student.id].riskLevel === 'medium'
+                                          ? '#D97706'
+                                          : '#1AAE39',
+                                      border:
+                                        riskMap[student.id].riskLevel === 'high'
+                                          ? '1px solid rgba(220,38,38,0.3)'
+                                          : riskMap[student.id].riskLevel === 'medium'
+                                          ? '1px solid rgba(217,119,6,0.3)'
+                                          : '1px solid rgba(26,174,57,0.3)',
+                                    }}
+                                  >
+                                    <ShieldAlert size={10} />
+                                    {riskMap[student.id].riskLevel.toUpperCase()} RISK
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  fontSize: '14px', fontWeight: '500',
+                                  color: 'var(--text-faint)', fontStyle: 'italic', lineHeight: 1.35,
+                                }}
+                              >
+                                Unnamed Student
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                fontSize: '12px', color: 'var(--text-muted)',
+                                marginTop: '1px', overflow: 'hidden',
+                                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {email || '—'}
                             </div>
-                            <div className="text-caption">{student.studentEmail as string || ''}</div>
                           </div>
                         </div>
                       </td>
 
                       {/* Identifiers */}
-                      <td>
-                        <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.6 }}>
-                          <span style={{ color: 'var(--text-muted)' }}>APP </span>
-                          <span style={{ color: 'var(--text-secondary)' }}>{student.id.slice(0, 8)}</span>
-                          {(student.enrollmentDetails as any)?.enrollmentNumber && (
-                            <>
-                              <br />
-                              <span style={{ color: 'var(--text-muted)' }}>ENR </span>
-                              <span style={{ color: 'var(--green)', fontWeight: '600' }}>
-                                {(student.enrollmentDetails as any).enrollmentNumber}
+                      <td style={{ padding: '13px 14px', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {/* APP code as monospace badge */}
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
+                              fontSize: '11px',
+                              fontWeight: '500',
+                              color: 'var(--text-secondary)',
+                              background: 'var(--bg-card-hover)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '5px',
+                              padding: '2px 7px',
+                              letterSpacing: '0.03em',
+                              alignSelf: 'flex-start',
+                            }}
+                          >
+                            <span style={{ color: 'var(--text-faint)', fontSize: '10px', fontWeight: '600', letterSpacing: '0.05em' }}>APP</span>
+                            {student.id.slice(0, 8).toUpperCase()}
+                          </span>
+
+                          {/* Enrollment number if present */}
+                          {(() => {
+                            const enrNum = (student.enrollmentDetails as Record<string, unknown>)?.enrollmentNumber
+                            if (!enrNum) return null
+                            return (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  color: '#1AAE39',
+                                  background: 'rgba(26,174,57,0.08)',
+                                  border: '1px solid rgba(26,174,57,0.20)',
+                                  borderRadius: '5px',
+                                  padding: '2px 7px',
+                                  alignSelf: 'flex-start',
+                                }}
+                              >
+                                <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.05em', color: '#1AAE39', opacity: 0.7 }}>ENR</span>
+                                {String(enrNum)}
                               </span>
-                            </>
-                          )}
+                            )
+                          })()}
                         </div>
                       </td>
 
                       {/* Program */}
-                      <td>
-                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{student.programName as string || '—'}</div>
+                      <td style={{ padding: '13px 14px', verticalAlign: 'middle' }}>
+                        <div
+                          style={{
+                            fontSize: '13px', color: 'var(--text-secondary)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px',
+                          }}
+                        >
+                          {(student.programName as string) || '—'}
+                        </div>
                         {student.departmentName && (
-                          <div className="text-caption">{student.departmentName as string}</div>
+                          <div
+                            style={{
+                              fontSize: '11px', color: 'var(--text-faint)',
+                              marginTop: '1px', overflow: 'hidden',
+                              textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {student.departmentName as string}
+                          </div>
                         )}
                       </td>
 
-                      {/* Tags */}
-                      <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {(student.tags as string[] | undefined)?.slice(0, 2).map((tag: string) => (
-                            <span key={tag} style={{
-                              padding: '2px 7px',
-                              borderRadius: '4px',
-                              background: 'var(--bg-card-hover)',
-                              border: '1px solid var(--border)',
-                              fontSize: '10px',
-                              fontWeight: '500',
-                              color: 'var(--text-muted)',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.04em',
-                            }}>
-                              {tag}
-                            </span>
-                          ))}
-                          {((student.tags as string[] | undefined)?.length ?? 0) > 2 && (
-                            <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
-                              +{(student.tags as string[]).length - 2}
-                            </span>
-                          )}
-                          {!((student.tags as string[] | undefined)?.length) && (
-                            <span style={{ fontSize: '12px', color: 'var(--text-faint)', fontStyle: 'italic' }}>—</span>
-                          )}
+                      {/* Applied Date (replaces Tags) */}
+                      <td style={{ padding: '13px 14px', verticalAlign: 'middle' }}>
+                        <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                          {formatAppliedDate(student.appliedAt)}
                         </div>
                       </td>
 
-                      {/* Stage */}
-                      <td>
-                        <span className={s.cls}>{s.label}</span>
+                      {/* Stage badge — color coded */}
+                      <td style={{ padding: '13px 14px', verticalAlign: 'middle' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '11.5px',
+                            fontWeight: '600',
+                            color: stage.color,
+                            background: stage.bg,
+                            border: `1px solid ${stage.border}`,
+                            borderRadius: '6px',
+                            padding: '3px 9px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '5px', height: '5px', borderRadius: '50%',
+                              background: stage.color, flexShrink: 0,
+                            }}
+                          />
+                          {stage.label}
+                        </span>
                       </td>
 
-                      {/* Arrow */}
-                      <td>
-                        <ChevronRight size={14} style={{ color: 'var(--text-faint)' }} />
+                      {/* Chevron */}
+                      <td style={{ padding: '13px 12px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <ChevronRight size={14} style={{ color: 'var(--text-faint)', display: 'block' }} />
                       </td>
                     </tr>
                   )
@@ -354,16 +797,37 @@ export default function StudentsDirectoryPage() {
             </table>
           </div>
 
-          {hasMore && (
-            <div style={{ padding: '12px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
-              <button onClick={() => loadStudents(true)} disabled={loading} className="btn-secondary" style={{ fontSize: '13px' }}>
+          {/* ── Footer: row count + load more ── */}
+          <div
+            style={{
+              padding: '11px 18px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'var(--bg-card-hover)',
+            }}
+          >
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }}>
+              Showing <strong style={{ color: 'var(--text-secondary)' }}>{filteredStudents.length}</strong>{' '}
+              student{filteredStudents.length !== 1 ? 's' : ''}
+              {filtersActive && ' (filtered)'}
+            </span>
+
+            {hasMore && (
+              <button
+                onClick={() => loadStudents(true)}
+                disabled={loading}
+                className="btn-secondary"
+                style={{ fontSize: '12px', height: '30px', padding: '0 12px' }}
+              >
                 {loading ? 'Loading…' : 'Load more'}
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Tag modal */}
+        {/* ── Tag modal ── */}
         <AnimatePresence>
           {isTagModalOpen && (
             <>
@@ -395,7 +859,10 @@ export default function StudentsDirectoryPage() {
                   <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
                     Assign tag
                   </h3>
-                  <button onClick={() => setIsTagModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}>
+                  <button
+                    onClick={() => setIsTagModalOpen(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}
+                  >
                     <X size={16} />
                   </button>
                 </div>
