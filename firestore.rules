@@ -2,179 +2,150 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: is this uid an approved university admin? (Owner)
-    function isApprovedUniAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'uni_admin'
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus == 'approved';
+    // Users collection - authenticated users read/write their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Helper: is this uid an EDUING platform admin?
-    function isEduingAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'eduing_admin';
-    }
-
-    // Helper: check if user is staff for a given university
-    function isUniversityStaff(universityId) {
-      return request.auth != null && (
-        request.auth.uid == universityId || // The uni owner
-        exists(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid))
+    // Student Profiles collection
+    match /student_profiles/{profileId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == profileId || 
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == request.resource.data.userId
       );
     }
 
-    // Helper: check if staff has specific permission
-    function hasStaffPermission(universityId, requiredPermission) {
-      return request.auth != null && (
-        request.auth.uid == universityId || // Owner has all permissions
-        (
-          exists(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid)) &&
-          requiredPermission in get(/databases/$(database)/documents/universities/$(universityId)/staff/$(request.auth.uid)).data.permissions
-        )
+    match /profile/{profileId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == profileId || 
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == request.resource.data.userId
       );
     }
 
-    // --------------------------------------------------------
-    // PLATFORM & CORE
-    // --------------------------------------------------------
+    // Universities collection - read allowed for authenticated users, write for university owner
+    match /universities/{universityId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid == universityId || 
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == request.resource.data.universityId
+      );
 
-    match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.data.approvalStatus == 'pending';
-      allow update: if request.auth != null
-        && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys()
-              .hasAny(['role', 'approvalStatus']);
-      allow read, update: if isEduingAdmin();
-    }
-
-    match /universities/{id} {
-      allow read: if true;
-      allow read: if isEduingAdmin();
-      allow create: if request.auth != null
-        && request.auth.uid == id
-        && request.resource.data.approvalStatus == 'pending'
-        && request.resource.data.isVerified == false;
-      allow update: if request.auth != null
-        && request.auth.uid == id
-        && !request.resource.data.diff(resource.data).affectedKeys()
-              .hasAny(['approvalStatus', 'isVerified', 'isFeatured', 'rating']);
-      allow update: if isEduingAdmin();
-      allow delete: if request.auth != null && request.auth.uid == id;
-      
-      // STAFF RBAC SUBCOLLECTIONS
+      // Staff subcollection
       match /staff/{staffId} {
-        // Staff can read their own profile to get permissions.
-        // Uni admins and staff with 'manage_staff' can read/write all.
-        allow read: if request.auth != null && request.auth.uid == staffId;
-        allow read: if hasStaffPermission(id, 'view_dashboard');
-        allow write: if hasStaffPermission(id, 'manage_staff');
+        allow read, write: if request.auth != null && (
+          request.auth.uid == universityId ||
+          request.auth.uid == staffId
+        );
       }
 
-      match /staffInvitations/{inviteId} {
-        // Uni admins and staff with 'manage_staff' can read/write.
-        allow read, write: if hasStaffPermission(id, 'manage_staff');
+      // Invitations subcollection
+      match /invitations/{inviteId} {
+        allow read, write: if request.auth != null && request.auth.uid == universityId;
       }
 
+      // Audit logs subcollection
       match /audit_logs/{logId} {
-        // Anyone with access to the dashboard can create logs.
-        // Only staff with 'view_audit_logs' can read them.
-        allow create: if isUniversityStaff(id);
-        allow read: if hasStaffPermission(id, 'view_audit_logs');
+        allow read, write: if request.auth != null && request.auth.uid == universityId;
       }
     }
 
-    // --------------------------------------------------------
-    // CORE ENTITIES
-    // --------------------------------------------------------
-
-    match /programs/{id} {
-      allow read: if true;
-      allow create: if isApprovedUniAdmin()
-        && request.resource.data.universityId == request.auth.uid;
-      allow update, delete: if isApprovedUniAdmin()
-        && resource.data.universityId == request.auth.uid;
-    }
-
-    match /student_profiles/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-      // University staff can read student profiles if they have an active application
-      // But for simplicity, we allow staff to read student profiles to view CRM.
-      // (A real production system might restrict this further).
-    }
-
-    match /applications/{id} {
-      allow create: if request.auth != null
-        && request.resource.data.studentId == request.auth.uid
-        && request.resource.data.status == 'submitted';
-
-      allow read: if request.auth != null
-        && (request.auth.uid == resource.data.studentId
-            || isUniversityStaff(resource.data.universityId));
-
-      allow update: if request.auth != null
-        && request.auth.uid == resource.data.studentId
-        && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['status'])
-        && request.resource.data.status == 'withdrawn';
-
-      allow update: if hasStaffPermission(resource.data.universityId, 'edit_applications')
-        && !request.resource.data.diff(resource.data).affectedKeys()
-              .hasAny(['studentId', 'universityId']);
-
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.studentId;
-
-      // SUBCOLLECTIONS
-      match /documents/{docId} {
-        allow read: if request.auth != null && (
-          request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId ||
-          isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId)
-        );
-        allow create, update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId;
-        allow update: if hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'verify_documents');
-      }
-
-      match /generated_documents/{docId} {
-        allow read: if request.auth != null && (
-          request.auth.uid == get(/databases/$(database)/documents/applications/$(id)).data.studentId ||
-          isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId)
-        );
-        allow create, update: if hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'generate_offers') || hasStaffPermission(get(/databases/$(database)/documents/applications/$(id)).data.universityId, 'generate_admit_cards');
-      }
-
-      match /internal_notes/{noteId} {
-        allow read, write: if isUniversityStaff(get(/databases/$(database)/documents/applications/$(id)).data.universityId);
-      }
-    }
-
-    match /exam_schedules/{id} {
-      allow read: if true; // Students need to read this to see their schedule
-      allow create, update, delete: if hasStaffPermission(request.resource.data.universityId, 'generate_admit_cards') || (resource != null && hasStaffPermission(resource.data.universityId, 'generate_admit_cards'));
-    }
-
-    match /seat_allotments/{id} {
+    // Applications collection - read/write for owner university or candidate student
+    match /applications/{appId} {
       allow read: if request.auth != null && (
+        request.auth.uid == resource.data.universityId ||
         request.auth.uid == resource.data.studentId ||
-        isUniversityStaff(resource.data.universityId)
+        request.auth.uid == resource.data.userId
       );
-      allow create, update, delete: if hasStaffPermission(request.resource.data.universityId, 'generate_offers') || (resource != null && hasStaffPermission(resource.data.universityId, 'generate_offers'));
+      allow create: if request.auth != null && (
+        request.auth.uid == request.resource.data.studentId ||
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.uid == request.resource.data.universityId
+      );
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.userId
+      );
     }
 
-    match /notifications/{id} {
-      allow read: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+    // Programs collection - public read catalog, university write
+    match /programs/{programId} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == request.resource.data.universityId ||
+        request.auth.uid == resource.data.uniId ||
+        request.auth.uid == request.resource.data.uniId
+      );
+    }
 
-      allow update, delete: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+    // Notifications collection - user or university scoped
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.universityId
+      );
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.universityId
+      );
+    }
 
-      allow create: if request.auth != null
-        && (request.resource.data.userId == request.auth.uid
-            || isApprovedUniAdmin() || request.auth.token.role != null); // Allow staff to send notifications too if needed
+    // Documents collection - user/student/university scoped
+    match /documents/{docId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.uid == request.resource.data.studentId ||
+        request.auth.uid == request.resource.data.universityId
+      );
+    }
+
+    // Payments collection - user/student/university scoped
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.uid == request.resource.data.studentId ||
+        request.auth.uid == request.resource.data.universityId
+      );
+    }
+
+    // Scholarships collection - public read, admin write
+    match /scholarships/{scholarshipId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Seat Allotments collection - university/student scoped
+    match /seat_allotments/{allotmentId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == resource.data.studentId
+      );
+      allow write: if request.auth != null && (
+        request.auth.uid == request.resource.data.universityId ||
+        request.auth.uid == resource.data.universityId
+      );
+    }
+
+    // Exams / Admit cards collection
+    match /exams/{examId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid == resource.data.universityId ||
+        request.auth.uid == request.resource.data.universityId
+      );
     }
   }
 }
