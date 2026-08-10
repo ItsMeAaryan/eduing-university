@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { auth } from '@/lib/firebase/config'
 import { useAuth } from '@/context/AuthContext'
 import RouteGuard from '@/components/guards/RouteGuard'
-import { subscribeToStaff, subscribeToInvitations, inviteStaff, revokeInvitation, updateStaffPermissions, toggleStaffStatus, removeStaff, ROLE_PERMISSIONS } from '@/lib/firebase/staff'
+import { getStaff, getInvitations, inviteStaff, revokeInvitation, updateStaffPermissions, toggleStaffStatus, removeStaff, ROLE_PERMISSIONS } from '@/lib/firebase/staff'
 import type { StaffMember, StaffRole, Permission, FirestoreRecord } from '@/lib/firebase/types'
 import { Shield, UserPlus, Search, Mail, Clock, ShieldAlert, Check, X, Edit2, UserMinus, Trash2, PowerOff } from 'lucide-react'
 import { useToast } from '@/components/Toast'
@@ -41,14 +41,43 @@ export default function StaffManagementPage() {
 
   const universityId = userData?.role === 'uni_admin' ? user?.uid : userData?.universityId
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (!universityId) return
-    const unsubStaff = subscribeToStaff(universityId, (data) => {
-      setStaff(data)
-      setLoading(false)
-    })
-    const unsubInvites = subscribeToInvitations(universityId, setInvites)
-    return () => { unsubStaff(); unsubInvites() }
+    let isUnmounted = false
+    setLoading(true)
+    setError(null)
+
+    const fetchData = async () => {
+      try {
+        const [staffData, invitesData] = await Promise.all([
+          getStaff(universityId),
+          getInvitations(universityId)
+        ])
+        if (!isUnmounted) {
+          setStaff(staffData)
+          setInvites(invitesData)
+          setLoading(false)
+        }
+      } catch (err: any) {
+        if (!isUnmounted) {
+          console.error('Error fetching staff data:', err)
+          if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+            setError('Staff data unavailable — check your permissions')
+          } else {
+            setError(err.message || 'Failed to load staff members')
+          }
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchData()
+
+    return () => { 
+      isUnmounted = true
+    }
   }, [universityId])
 
   const filteredStaff = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase()))
@@ -56,6 +85,12 @@ export default function StaffManagementPage() {
   return (
     <RouteGuard require="manage_staff">
       <div className="space-y-8 min-h-full">
+        {error && (
+          <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm flex items-center gap-2">
+            <span>⚠️ {error}</span>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
