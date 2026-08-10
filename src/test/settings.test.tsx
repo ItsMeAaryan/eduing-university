@@ -16,6 +16,7 @@ import { mockSendPasswordResetEmail, mockAuthOnAuthStateChanged } from './mocks'
 const mockUpdateUniversityProfile = vi.fn()
 
 vi.mock('@/lib/firebase/university', () => ({
+  getUniversity: vi.fn().mockResolvedValue({ settings: { emailNotifications: true, smsNotifications: false, autoApprove: false } }),
   subscribeToUniversity: vi.fn((_uid: string, cb: (data: object) => void) => {
     cb({ settings: { emailNotifications: true, smsNotifications: false, autoApprove: false } })
     return vi.fn()
@@ -56,11 +57,9 @@ describe('Settings page', () => {
     render(<ToastProvider><SettingsPage /></ToastProvider>)
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument())
 
-    const btns = screen.queryAllByRole('button')
-    // toggle buttons are the ones that aren't "Change" or "Save"
-    const toggleBtn = btns.find(b => !b.textContent?.match(/change|save|log out/i))
-    if (toggleBtn) {
-      await userEvent.click(toggleBtn)
+    const switches = screen.getAllByRole('switch')
+    if (switches.length > 0) {
+      await userEvent.click(switches[0])
       await waitFor(() => expect(mockUpdateUniversityProfile).toHaveBeenCalled())
     }
   })
@@ -70,11 +69,10 @@ describe('Settings page', () => {
     render(<ToastProvider><SettingsPage /></ToastProvider>)
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument())
 
-    const btns = screen.queryAllByRole('button')
-    const toggleBtn = btns.find(b => !b.textContent?.match(/change|save|log out/i))
-    if (toggleBtn) {
+    const switches = screen.getAllByRole('switch')
+    if (switches.length > 0) {
       // should not throw
-      await userEvent.click(toggleBtn)
+      await userEvent.click(switches[0])
       await waitFor(() => expect(mockUpdateUniversityProfile).toHaveBeenCalledTimes(1))
     }
   })

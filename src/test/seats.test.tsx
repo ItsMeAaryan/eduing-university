@@ -1,43 +1,59 @@
-/**
- * Regression tests for seats/page.tsx
- *
- * Phase 0 bug fixed: handleAllotSeat accessed program.filledSeats without
- * checking whether .find() actually returned a program.
- */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { ToastProvider } from '@/components/Toast'
 
-import { mockAuthOnAuthStateChanged, mockOnSnapshot, mockUpdateDoc } from './mocks'
+import { mockAuthOnAuthStateChanged, mockUpdateDoc } from './mocks'
+
+const mockSubscribeToPrograms = vi.fn((_uid, cb) => {
+  cb([
+    {
+      id: 'prog-1',
+      name: 'Computer Science',
+      totalSeats: 60,
+      filledSeats: 10,
+      universityId: 'uni-1',
+      seatMatrix: { general: 40, obc: 27, sc: 15, st: 7.5, ews: 10.5, nri: 0 },
+    },
+  ])
+  return vi.fn()
+})
+
+const mockSubscribeToApplications = vi.fn((_uid, cb) => {
+  cb([
+    {
+      id: 'app-1',
+      studentName: 'Test Student',
+      programId: 'prog-1',
+      programName: 'Computer Science',
+      status: 'submitted',
+      studentId: 'student-1',
+      universityId: 'uni-1',
+      category: 'General',
+    },
+  ])
+  return vi.fn()
+})
+
+vi.mock('@/lib/firebase/programs', () => ({
+  subscribeToPrograms: (uid: string, cb: (progs: unknown[]) => void) => mockSubscribeToPrograms(uid, cb),
+  updateProgram: (...args: unknown[]) => mockUpdateDoc(...args),
+}))
+
+vi.mock('@/lib/firebase/applications', () => ({
+  subscribeToApplications: (uid: string, cb: (apps: unknown[]) => void) => mockSubscribeToApplications(uid, cb),
+}))
+
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { uid: 'uni-1', email: 'admin@uni.edu' },
+    userData: { uid: 'uni-1', role: 'uni_admin', universityId: 'uni-1' },
+    loading: false,
+  }),
+}))
 
 const { default: SeatsPage } = await import('@/app/seats/page')
-
-const makeApp = (programId: string) => ({
-  id: 'app-1', studentName: 'Test Student', programId,
-  programName: 'Computer Science', status: 'submitted',
-  studentId: 'student-1', universityId: 'uni-1',
-})
-
-const makeProgram = (id: string) => ({
-  id, name: 'Computer Science', totalSeats: 60, filledSeats: 10, universityId: 'uni-1',
-})
-
-function setupData(apps: object[], programs: object[]) {
-  mockAuthOnAuthStateChanged.mockImplementation((cb: (user: { uid: string }) => void) => {
-    cb({ uid: 'uni-1' })
-    return vi.fn()
-  })
-  let callCount = 0
-  mockOnSnapshot.mockImplementation((_q: unknown, cb: (snap: object) => void) => {
-    callCount++
-    const items = callCount === 1 ? apps : programs
-    cb({ docs: items.map(a => ({ id: (a as { id: string }).id, data: () => a })) })
-    return vi.fn()
-  })
-}
 
 describe('Seat allocation', () => {
   beforeEach(() => {
@@ -45,28 +61,36 @@ describe('Seat allocation', () => {
     mockUpdateDoc.mockResolvedValue(undefined)
   })
 
-  it('does not crash when program is not found (no unhandled error)', async () => {
-    setupData([makeApp('nonexistent-id')], [makeProgram('different-id')])
-    render(<ToastProvider><SeatsPage /></ToastProvider>)
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument())
+  it('renders reservation matrix table and program selector', async () => {
+    render(
+      <ToastProvider>
+        <SeatsPage />
+      </ToastProvider>
+    )
 
-    const allotBtn = screen.queryByRole('button', { name: /allot/i })
-    if (allotBtn) {
-      await userEvent.click(allotBtn)
-      // Guard prevents the crash — updateDoc should NOT be called for a missing program
-      expect(mockUpdateDoc).not.toHaveBeenCalled()
-    }
+    await waitFor(() => {
+      expect(screen.getByText('Seat Allocation')).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByText('General (Open)')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('OBC (Other Backward Classes)')[0]).toBeInTheDocument()
   })
 
-  it('calls updateDoc when program exists and has seats', async () => {
-    setupData([makeApp('prog-1')], [makeProgram('prog-1')])
-    render(<ToastProvider><SeatsPage /></ToastProvider>)
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument())
+  it('calls updateDoc when Update Allocation button is clicked with 100% total', async () => {
+    render(
+      <ToastProvider>
+        <SeatsPage />
+      </ToastProvider>
+    )
 
-    const allotBtn = screen.queryByRole('button', { name: /allot/i })
-    if (allotBtn) {
-      await userEvent.click(allotBtn)
-      await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalled())
-    }
+    await waitFor(() => {
+      expect(screen.getByText('Seat Allocation')).toBeInTheDocument()
+    })
+
+    const updateBtn = screen.getByRole('button', { name: /Update Allocation/i })
+    expect(updateBtn).not.toBeDisabled()
+
+    await userEvent.click(updateBtn)
+    await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalled())
   })
 })
