@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase/config'
 import { useRouter, usePathname } from 'next/navigation'
 import type { Permission, StaffMember } from '@/lib/firebase/types'
@@ -50,65 +50,84 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
+    let isUnmounted = false
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
       if (user) {
         let unsubscribeStaff: (() => void) | null = null
+        let unsubscribeDoc: (() => void) | null = null
 
         const userDocRef = doc(db, 'users', user.uid)
-        const unsubscribeDoc = onSnapshot(userDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data() as UserData
-            setUserData(data)
-            
-            // RBAC Check: Only allow uni_admin and uni_staff
-            if (data.role !== 'uni_admin' && data.role !== 'uni_staff' && !pathname.startsWith('/auth')) {
-              router.push('/auth/login')
-              setLoading(false)
-              return
-            }
+        const fetchUserData = async () => {
+          try {
+            const docSnap = await getDoc(userDocRef)
+            if (isUnmounted) return
 
-            // If staff, listen to their specific staff document
-            if (data.role === 'uni_staff' && data.universityId) {
-              const staffRef = doc(db, `universities/${data.universityId}/staff`, user.uid)
+            if (docSnap.exists()) {
+              const data = docSnap.data() as UserData
+              setUserData(data)
               
-              if (unsubscribeStaff) unsubscribeStaff()
-              
-              unsubscribeStaff = onSnapshot(staffRef, (staffSnap) => {
-                if (staffSnap.exists()) {
-                  const sData = staffSnap.data() as StaffMember
-                  if (sData.status === 'suspended') {
-                    // Kick out suspended staff
-                    setStaffData(null)
-                    if (!pathname.startsWith('/auth')) {
-                      auth.signOut()
-                      router.push('/auth/login?suspended=true')
+              // RBAC Check: Only allow uni_admin and uni_staff
+              if (data.role !== 'uni_admin' && data.role !== 'uni_staff' && !pathname.startsWith('/auth')) {
+                router.push('/auth/login')
+                setLoading(false)
+                return
+              }
+
+              // If staff, get their specific staff document
+              if (data.role === 'uni_staff' && data.universityId) {
+                const staffRef = doc(db, `universities/${data.universityId}/staff`, user.uid)
+                try {
+                  const staffSnap = await getDoc(staffRef)
+                  if (isUnmounted) return
+
+                  if (staffSnap.exists()) {
+                    const sData = staffSnap.data() as StaffMember
+                    if (sData.status === 'suspended') {
+                      setStaffData(null)
+                      if (!pathname.startsWith('/auth')) {
+                        auth.signOut()
+                        router.push('/auth/login?suspended=true')
+                      }
+                    } else {
+                      setStaffData(sData)
                     }
                   } else {
-                    setStaffData(sData)
+                    setStaffData(null)
                   }
-                } else {
+                } catch (err: any) {
+                  if (err?.code === 'permission-denied') {
+                    console.warn('Insufficient permissions for AuthContext staff doc:', err.message)
+                  } else {
+                    console.error('Error in AuthContext staff fetch:', err)
+                  }
                   setStaffData(null)
                 }
-                setLoading(false)
-              })
+              } else {
+                setStaffData(null)
+              }
             } else {
+              setUserData(null)
               setStaffData(null)
-              setLoading(false)
+              if (!pathname.startsWith('/auth')) {
+                router.push('/auth/login')
+              }
             }
-          } else {
-            setUserData(null)
-            setStaffData(null)
-            if (!pathname.startsWith('/auth')) {
-              router.push('/auth/login')
+          } catch (err: any) {
+            if (err?.code === 'permission-denied') {
+              console.warn('Insufficient permissions for AuthContext user doc:', err.message)
+            } else {
+              console.error('Error in AuthContext user fetch:', err)
             }
-            setLoading(false)
+          } finally {
+            if (!isUnmounted) setLoading(false)
           }
-        })
+        }
+
+        fetchUserData()
 
         return () => {
-          unsubscribeDoc()
-          if (unsubscribeStaff) unsubscribeStaff()
+          isUnmounted = true
         }
       } else {
         setUserData(null)

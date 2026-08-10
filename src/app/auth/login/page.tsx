@@ -137,6 +137,8 @@ export default function LoginPage() {
                 width={40}
                 height={40}
                 style={{
+                  width: '40px',
+                  height: '40px',
                   objectFit: 'contain',
                   filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
                   transition: 'filter 200ms ease',
