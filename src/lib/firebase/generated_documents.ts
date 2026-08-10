@@ -25,18 +25,29 @@ export interface GeneratedDocument extends FirestoreRecord {
 /**
  * Subscribes to the generated_documents subcollection for a given application.
  */
-export const subscribeToGeneratedDocuments = (appId: string, callback: (docs: GeneratedDocument[]) => void) => {
+export const subscribeToGeneratedDocuments = (
+  appId: string, 
+  callback: (docs: GeneratedDocument[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(collection(db, `applications/${appId}/generated_documents`))
-  return onSnapshot(q, (snapshot) => {
-    const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as GeneratedDocument))
-    // Sort descending by generation time (client side sorting for simplicity)
-    docs.sort((a, b) => {
-      const timeA = (a.generatedAt as any)?.seconds || 0
-      const timeB = (b.generatedAt as any)?.seconds || 0
-      return timeB - timeA
-    })
-    callback(docs)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as GeneratedDocument))
+      // Sort descending by generation time (client side sorting for simplicity)
+      docs.sort((a, b) => {
+        const timeA = (a.generatedAt as any)?.seconds || 0
+        const timeB = (b.generatedAt as any)?.seconds || 0
+        return timeB - timeA
+      })
+      callback(docs)
+    },
+    (err) => {
+      console.error('Error in subscribeToGeneratedDocuments:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 /**

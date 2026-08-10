@@ -12,12 +12,19 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 
-export const subscribeToUniversity = (uid: string, callback: (data: FirestoreRecord) => void) => {
-  return onSnapshot(doc(db, 'universities', uid), (snap) => {
+import { getDoc } from 'firebase/firestore'
+
+export const getUniversity = async (uid: string): Promise<FirestoreRecord | null> => {
+  try {
+    const snap = await getDoc(doc(db, 'universities', uid))
     if (snap.exists()) {
-      callback({ id: snap.id, ...snap.data() })
+      return { id: snap.id, ...snap.data() }
     }
-  })
+    return null
+  } catch (err) {
+    console.error('Error in getUniversity:', err)
+    return null
+  }
 }
 
 export const updateUniversityProfile = async (uid: string, data: FirestoreWriteData) => {
@@ -31,23 +38,33 @@ export const updateUniversityProfile = async (uid: string, data: FirestoreWriteD
 // Callable only by users with role: 'eduing_admin' (enforced by Firestore rules)
 
 export const subscribeToPendingUniversities = (
-  callback: (universities: FirestoreRecord[]) => void
+  callback: (universities: FirestoreRecord[]) => void,
+  onError?: (err: Error) => void
 ) => {
   return onSnapshot(
     query(collection(db, 'universities'), where('approvalStatus', '==', 'pending')),
     (snap) => {
       callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    },
+    (err) => {
+      console.error('Error in subscribeToPendingUniversities:', err)
+      if (onError) onError(err)
     }
   )
 }
 
 export const subscribeToAllUniversities = (
-  callback: (universities: FirestoreRecord[]) => void
+  callback: (universities: FirestoreRecord[]) => void,
+  onError?: (err: Error) => void
 ) => {
   return onSnapshot(
     collection(db, 'universities'),
     (snap) => {
       callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    },
+    (err) => {
+      console.error('Error in subscribeToAllUniversities:', err)
+      if (onError) onError(err)
     }
   )
 }

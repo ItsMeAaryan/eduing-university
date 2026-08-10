@@ -29,30 +29,44 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   support: ['view_dashboard', 'view_applications']
 }
 
-export const subscribeToStaff = (universityId: string, callback: (staff: StaffMember[]) => void) => {
-  const q = query(collection(db, `universities/${universityId}/staff`))
-  return onSnapshot(q, (snapshot) => {
-    const staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StaffMember))
-    callback(staff)
-  })
+export const getStaff = async (universityId: string): Promise<StaffMember[]> => {
+  try {
+    const q = query(collection(db, `universities/${universityId}/staff`))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StaffMember))
+  } catch (err: any) {
+    if (err?.code === 'permission-denied') {
+      console.warn('Insufficient permissions for staff query:', err.message)
+    } else {
+      console.error('Error in getStaff:', err)
+    }
+    return []
+  }
 }
 
-export const subscribeToInvitations = (universityId: string, callback: (invites: FirestoreRecord[]) => void) => {
-  const q = query(collection(db, `universities/${universityId}/staffInvitations`))
-  return onSnapshot(q, (snapshot) => {
-    const invites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    callback(invites)
-  })
+export const getInvitations = async (universityId: string): Promise<FirestoreRecord[]> => {
+  try {
+    const q = query(collection(db, `universities/${universityId}/invitations`))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+  } catch (err: any) {
+    if (err?.code === 'permission-denied') {
+      console.warn('Insufficient permissions for invitations query:', err.message)
+    } else {
+      console.error('Error in getInvitations:', err)
+    }
+    return []
+  }
 }
 
 export const inviteStaff = async (universityId: string, data: { email: string; role: StaffRole; department: string; permissions: Permission[] }, actor: ActorContext) => {
-  const q = query(collection(db, `universities/${universityId}/staffInvitations`), where('email', '==', data.email))
+  const q = query(collection(db, `universities/${universityId}/invitations`), where('email', '==', data.email))
   const snap = await getDocs(q)
   const existingId = !snap.empty ? snap.docs[0].id : null
 
   await runTransaction(db, async (transaction) => {
     if (existingId) {
-      const inviteRef = doc(db, `universities/${universityId}/staffInvitations`, existingId)
+      const inviteRef = doc(db, `universities/${universityId}/invitations`, existingId)
       transaction.update(inviteRef, {
         ...data,
         status: 'pending',
@@ -67,7 +81,7 @@ export const inviteStaff = async (universityId: string, data: { email: string; r
         newValue: { ...data, status: 'pending' }
       })
     } else {
-      const newRef = doc(collection(db, `universities/${universityId}/staffInvitations`))
+      const newRef = doc(collection(db, `universities/${universityId}/invitations`))
       transaction.set(newRef, {
         ...data,
         status: 'pending',
@@ -87,7 +101,7 @@ export const inviteStaff = async (universityId: string, data: { email: string; r
 
 export const revokeInvitation = async (universityId: string, inviteId: string, actor: ActorContext) => {
   await runTransaction(db, async (transaction) => {
-    transaction.delete(doc(db, `universities/${universityId}/staffInvitations`, inviteId))
+    transaction.delete(doc(db, `universities/${universityId}/invitations`, inviteId))
     logToTransaction(transaction, universityId, actor, {
       actionType: 'staff_invitation_revoked',
       entityType: 'staff_invitation',

@@ -84,29 +84,53 @@ export const logToTransaction = (
   })
 }
 
-export const subscribeToAuditLogs = (universityId: string, limitCount: number = 100, callback: (logs: AuditLog[]) => void) => {
+export const subscribeToAuditLogs = (
+  universityId: string, 
+  limitCount: number = 100, 
+  callback: (logs: AuditLog[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(
     collection(db, `universities/${universityId}/audit_logs`),
     orderBy('timestamp', 'desc'),
     limit(limitCount)
   )
-  return onSnapshot(q, (snapshot) => {
-    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog))
-    callback(logs)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog))
+      callback(logs)
+    },
+    (err) => {
+      console.error('Error in subscribeToAuditLogs:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
-export const subscribeToEntityAuditLogs = (universityId: string, entityId: string, callback: (logs: AuditLog[]) => void) => {
+export const subscribeToEntityAuditLogs = (
+  universityId: string, 
+  entityId: string, 
+  callback: (logs: AuditLog[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(
     collection(db, `universities/${universityId}/audit_logs`),
     where('entityId', '==', entityId),
     orderBy('timestamp', 'desc'),
     limit(50)
   )
-  return onSnapshot(q, (snapshot) => {
-    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog))
-    callback(logs)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog))
+      callback(logs)
+    },
+    (err) => {
+      console.error('Error in subscribeToEntityAuditLogs:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 export const getAuditLogsPage = async (

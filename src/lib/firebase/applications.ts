@@ -20,12 +20,23 @@ import {
 import { logToTransaction } from './audit'
 import type { ActorContext } from './types'
 
-export const subscribeToApplications = (universityId: string, callback: (apps: FirestoreRecord[]) => void) => {
+export const subscribeToApplications = (
+  universityId: string, 
+  callback: (apps: FirestoreRecord[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(collection(db, 'applications'), where('universityId', '==', universityId))
-  return onSnapshot(q, (snapshot) => {
-    const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    callback(apps)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      callback(apps)
+    },
+    (err) => {
+      console.error('Error in subscribeToApplications:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 export const updateApplicationStatus = async (
@@ -134,15 +145,26 @@ export interface InternalNote extends FirestoreRecord {
   priority: 'low' | 'normal' | 'high'
 }
 
-export const subscribeToInternalNotes = (appId: string, callback: (notes: InternalNote[]) => void) => {
+export const subscribeToInternalNotes = (
+  appId: string, 
+  callback: (notes: InternalNote[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(
     collection(db, `applications/${appId}/internal_notes`),
     orderBy('createdAt', 'desc')
   )
-  return onSnapshot(q, (snapshot) => {
-    const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InternalNote))
-    callback(notes)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InternalNote))
+      callback(notes)
+    },
+    (err) => {
+      console.error('Error in subscribeToInternalNotes:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 export const addInternalNote = async (

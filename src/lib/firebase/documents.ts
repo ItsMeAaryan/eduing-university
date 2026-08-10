@@ -39,12 +39,23 @@ export interface StudentDocument extends FirestoreRecord {
 /**
  * Subscribes to the documents subcollection for a given application.
  */
-export const subscribeToApplicationDocuments = (appId: string, callback: (docs: StudentDocument[]) => void) => {
+export const subscribeToApplicationDocuments = (
+  appId: string, 
+  callback: (docs: StudentDocument[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(collection(db, `applications/${appId}/documents`))
-  return onSnapshot(q, (snapshot) => {
-    const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as StudentDocument))
-    callback(docs)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as StudentDocument))
+      callback(docs)
+    },
+    (err) => {
+      console.error('Error in subscribeToApplicationDocuments:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 /**

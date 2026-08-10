@@ -12,12 +12,23 @@ import {
   serverTimestamp 
 } from 'firebase/firestore'
 
-export const subscribeToPrograms = (universityId: string, callback: (programs: FirestoreRecord[]) => void) => {
+export const subscribeToPrograms = (
+  universityId: string, 
+  callback: (programs: FirestoreRecord[]) => void,
+  onError?: (err: Error) => void
+) => {
   const q = query(collection(db, 'programs'), where('universityId', '==', universityId))
-  return onSnapshot(q, (snapshot) => {
-    const programs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    callback(programs)
-  })
+  return onSnapshot(
+    q, 
+    (snapshot) => {
+      const programs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      callback(programs)
+    },
+    (err) => {
+      console.error('Error in subscribeToPrograms:', err)
+      if (onError) onError(err)
+    }
+  )
 }
 
 export const addProgram = async (universityId: string, programData: FirestoreWriteData) => {
