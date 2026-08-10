@@ -33,23 +33,68 @@ export default function ExamManagementPage() {
   const [activeTab, setActiveTab] = useState('schedule')
 
   useEffect(() => {
+    let isUnmounted = false
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
-        const unsubProgs = subscribeToPrograms(user.uid, (data) => {
-          setPrograms(data.filter(p => p.hasEntranceExam))
-        })
-        const unsubApps = subscribeToApplications(user.uid, setApps)
-        
-        const q = query(collection(db, 'exam_schedules'), where('universityId', '==', user.uid))
-        const unsubSchedules = onSnapshot(q, (snapshot) => {
-          setSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
-          setLoading(false)
-        })
+        let unsubProgs: (() => void) | null = null
+        let unsubApps: (() => void) | null = null
+        let unsubSchedules: (() => void) | null = null
+
+        try {
+          unsubProgs = subscribeToPrograms(user.uid, (data) => {
+            if (!isUnmounted) setPrograms(data.filter(p => p.hasEntranceExam))
+          })
+        } catch (e) {
+          console.error('Failed to setup exams programs subscription:', e)
+        }
+
+        try {
+          unsubApps = subscribeToApplications(user.uid, (data) => {
+            if (!isUnmounted) setApps(data)
+          })
+        } catch (e) {
+          console.error('Failed to setup exams apps subscription:', e)
+        }
+
+        try {
+          const q = query(collection(db, 'exam_schedules'), where('universityId', '==', user.uid))
+          unsubSchedules = onSnapshot(
+            q, 
+            (snapshot) => {
+              if (!isUnmounted) {
+                setSchedules(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+                setLoading(false)
+              }
+            },
+            (err: any) => {
+              unsubSchedules = null
+              if (err?.code === 'permission-denied') {
+                console.warn('Insufficient permissions for exam schedules query:', err.message)
+              } else {
+                console.error('Exams schedules onSnapshot error:', err)
+              }
+              if (!isUnmounted) setLoading(false)
+            }
+          )
+        } catch (e) {
+          console.error('Failed to setup exam schedules query:', e)
+          if (!isUnmounted) setLoading(false)
+        }
 
         return () => {
-          unsubProgs()
-          unsubApps()
-          unsubSchedules()
+          isUnmounted = true
+          if (unsubProgs) {
+            try { unsubProgs() } catch (err) { console.warn('Safe unsub progs error:', err) }
+            unsubProgs = null
+          }
+          if (unsubApps) {
+            try { unsubApps() } catch (err) { console.warn('Safe unsub apps error:', err) }
+            unsubApps = null
+          }
+          if (unsubSchedules) {
+            try { unsubSchedules() } catch (err) { console.warn('Safe unsub schedules error:', err) }
+            unsubSchedules = null
+          }
         }
       }
     })
