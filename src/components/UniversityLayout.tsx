@@ -13,7 +13,9 @@ import {
   GraduationCap,
   Calendar,
   Armchair,
+  BarChart2,
   TrendingUp,
+  DollarSign,
   UserCircle,
   Sun,
   Moon,
@@ -23,7 +25,8 @@ import {
   ChevronDown,
   Check,
   Users,
-  UserSquare
+  UserSquare,
+  FileSearch
 } from 'lucide-react'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { signOut } from 'firebase/auth'
@@ -48,17 +51,41 @@ type NavItem = {
   requiredPermission?: Permission
 }
 
-const NAV: NavItem[] = [
-  { href: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',          requiredPermission: 'view_dashboard' },
-  { href: '/students',     icon: UserSquare,      label: 'Students',            requiredPermission: 'view_applications' },
-  { href: '/applications', icon: ClipboardList,   label: 'Applications',        requiredPermission: 'view_applications' },
-  { href: '/programs',     icon: GraduationCap,   label: 'Programs',            requiredPermission: 'manage_programs' },
-  { href: '/exams',        icon: Calendar,        label: 'Exam Management',     requiredPermission: 'generate_admit_cards' },
-  { href: '/seats',        icon: Armchair,        label: 'Seat Allocation',     requiredPermission: 'generate_offers' },
-  { href: '/analytics',    icon: TrendingUp,      label: 'Analytics',           requiredPermission: 'view_reports' },
-  { href: '/staff',        icon: Users,           label: 'Staff Management',    requiredPermission: 'manage_staff' },
-  { href: '/profile',      icon: UserCircle,      label: 'University Profile',  requiredPermission: 'edit_university' },
-  { href: '/settings',     icon: Settings,        label: 'Settings' },
+type NavSection = {
+  label?: string   // section header — omit for unlabelled groups
+  items: NavItem[]
+}
+
+// ─── Sidebar navigation — ordered exactly to spec ─────────────────────────────
+const NAV_SECTIONS: NavSection[] = [
+  {
+    // Main section — no label
+    items: [
+      { href: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',         requiredPermission: 'view_dashboard'       },
+      { href: '/applications', icon: ClipboardList,   label: 'Applications',      requiredPermission: 'view_applications'    },
+      { href: '/students',     icon: UserSquare,      label: 'Students',          requiredPermission: 'view_applications'    },
+      { href: '/programs',     icon: GraduationCap,   label: 'Programs',          requiredPermission: 'manage_programs'      },
+      { href: '/seats',        icon: Armchair,        label: 'Seats',             requiredPermission: 'generate_offers'      },
+      { href: '/exams',        icon: Calendar,        label: 'Exams',             requiredPermission: 'generate_admit_cards' },
+      { href: '/staff',        icon: Users,           label: 'Staff',             requiredPermission: 'manage_staff'         },
+    ],
+  },
+  {
+    label: 'Analytics',
+    items: [
+      { href: '/analytics/admissions', icon: TrendingUp,  label: 'Admissions', requiredPermission: 'view_reports' },
+      { href: '/analytics/financial',  icon: DollarSign,  label: 'Financial',  requiredPermission: 'view_reports' },
+      { href: '/analytics/students',   icon: BarChart2,   label: 'Students',   requiredPermission: 'view_reports' },
+    ],
+  },
+  {
+    // Utility section — no label
+    items: [
+      { href: '/profile',  icon: UserCircle,  label: 'University Profile', requiredPermission: 'edit_university'  },
+      { href: '/audit',    icon: FileSearch,  label: 'Audit Logs',         requiredPermission: 'view_audit_logs'  },
+      { href: '/settings', icon: Settings,    label: 'Settings'                                                   },
+    ],
+  },
 ]
 
 const THEME_OPTIONS = [
@@ -469,66 +496,99 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
 
         {/* ── Nav ── */}
         <nav style={{ flex: 1, padding: '10px', overflowY: 'auto', overflowX: 'hidden' }}>
-          {NAV.filter(item => !item.requiredPermission || hasPermission(item.requiredPermission)).map((item) => {
-            const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          {NAV_SECTIONS.map((section, sIdx) => {
+            const visibleItems = section.items.filter(
+              item => !item.requiredPermission || hasPermission(item.requiredPermission)
+            )
+            if (visibleItems.length === 0) return null
 
-            const navLink = (
-              <Link key={item.href} href={item.href} style={{ textDecoration: 'none', display: 'block' }}>
-                <motion.div
-                  whileHover={{ x: collapsed ? 0 : 2 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: collapsed ? '9px 0' : '9px 12px',
-                    justifyContent: collapsed ? 'center' : 'flex-start',
-                    borderRadius: 'var(--radius-sm)',
-                    marginBottom: '2px',
-                    cursor: 'pointer',
-                    background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
-                    border: active ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-                    color: active ? 'var(--indigo-light)' : 'var(--text-secondary)',
-                    fontSize: '13.5px',
-                    fontWeight: active ? '600' : '400',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'var(--bg-card-hover)'
-                      e.currentTarget.style.color = 'var(--text-primary)'
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.color = 'var(--text-secondary)'
-                    }
-                  }}
-                >
-                  <item.icon size={16} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
-                  {/* Label — animates out when collapsed */}
-                  <span
+            return (
+              <div key={sIdx} style={{ marginBottom: sIdx < NAV_SECTIONS.length - 1 ? '6px' : 0 }}>
+                {/* Section label — hidden when collapsed */}
+                {section.label && (
+                  <div
                     style={{
-                      flex: 1,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-muted)',
+                      padding: collapsed ? '8px 0 4px' : '8px 12px 4px',
+                      textAlign: collapsed ? 'center' : 'left',
                       opacity: collapsed ? 0 : 1,
-                      maxWidth: collapsed ? '0px' : '200px',
-                      transition: 'opacity 180ms ease, max-width 300ms ease',
+                      maxHeight: collapsed ? '0px' : '28px',
+                      overflow: 'hidden',
+                      transition: 'opacity 180ms ease, max-height 300ms ease, padding 300ms ease',
+                      userSelect: 'none',
                     }}
                   >
-                    {item.label}
-                  </span>
-                  {active && !collapsed && (
-                    <ChevronRight size={14} style={{ opacity: 0.5, flexShrink: 0 }} />
-                  )}
-                </motion.div>
-              </Link>
-            )
+                    {section.label}
+                  </div>
+                )}
 
-            return collapsed
-              ? <NavTooltip key={item.href} label={item.label} sidebarWidth={sidebarWidth}>{navLink}</NavTooltip>
-              : <span key={item.href}>{navLink}</span>
+                {visibleItems.map((item) => {
+                  const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+
+                  const navLink = (
+                    <Link key={item.href} href={item.href} style={{ textDecoration: 'none', display: 'block' }}>
+                      <motion.div
+                        whileHover={{ x: collapsed ? 0 : 2 }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: collapsed ? '9px 0' : '9px 12px',
+                          justifyContent: collapsed ? 'center' : 'flex-start',
+                          borderRadius: 'var(--radius-sm)',
+                          marginBottom: '2px',
+                          cursor: 'pointer',
+                          background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
+                          border: active ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
+                          color: active ? 'var(--indigo-light)' : 'var(--text-secondary)',
+                          fontSize: '13.5px',
+                          fontWeight: active ? '600' : '400',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={e => {
+                          if (!active) {
+                            e.currentTarget.style.background = 'var(--bg-card-hover)'
+                            e.currentTarget.style.color = 'var(--text-primary)'
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!active) {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = 'var(--text-secondary)'
+                          }
+                        }}
+                      >
+                        <item.icon size={16} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
+                        {/* Label — animates out when collapsed */}
+                        <span
+                          style={{
+                            flex: 1,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            opacity: collapsed ? 0 : 1,
+                            maxWidth: collapsed ? '0px' : '200px',
+                            transition: 'opacity 180ms ease, max-width 300ms ease',
+                          }}
+                        >
+                          {item.label}
+                        </span>
+                        {active && !collapsed && (
+                          <ChevronRight size={14} style={{ opacity: 0.5, flexShrink: 0 }} />
+                        )}
+                      </motion.div>
+                    </Link>
+                  )
+
+                  return collapsed
+                    ? <NavTooltip key={item.href} label={item.label} sidebarWidth={sidebarWidth}>{navLink}</NavTooltip>
+                    : <span key={item.href}>{navLink}</span>
+                })}
+              </div>
+            )
           })}
         </nav>
 
