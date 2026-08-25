@@ -1,13 +1,11 @@
-import { db, storage } from './config'
+import { db } from './config'
 import {
   doc,
   collection,
-  updateDoc,
   serverTimestamp,
   arrayUnion,
   runTransaction
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { logToTransaction } from './audit'
 import type { ActorContext } from './types'
 
@@ -18,102 +16,6 @@ export interface EnrollmentDetails {
   department: string
   batch: string
   semester: string
-}
-
-export const simulateAcceptSeat = async (appId: string, studentId: string) => {
-  await runTransaction(db, async (transaction) => {
-    const appRef = doc(db, 'applications', appId)
-    const appDoc = await transaction.get(appRef)
-    if (!appDoc.exists()) throw new Error('Application not found')
-    if (appDoc.data().status === 'seat_accepted') return // Idempotent
-
-    transaction.update(appRef, {
-      status: 'seat_accepted',
-      updatedAt: serverTimestamp(),
-      statusHistory: arrayUnion({
-        status: 'seat_accepted',
-        date: new Date().toISOString(),
-        note: 'Student accepted the seat offer'
-      })
-    })
-
-    const notifRef = doc(collection(db, 'notifications'))
-    transaction.set(notifRef, {
-      userId: studentId,
-      title: 'Seat Accepted',
-      message: 'You have successfully accepted the seat offer. Please proceed to fee payment.',
-      type: 'seat_accepted',
-      isRead: false,
-      createdAt: serverTimestamp()
-    })
-  })
-}
-
-export const simulateDeclineSeat = async (appId: string, studentId: string) => {
-  await runTransaction(db, async (transaction) => {
-    const appRef = doc(db, 'applications', appId)
-    const appDoc = await transaction.get(appRef)
-    if (!appDoc.exists()) throw new Error('Application not found')
-    if (appDoc.data().status === 'seat_declined') return // Idempotent
-    
-    transaction.update(appRef, {
-      status: 'seat_declined',
-      updatedAt: serverTimestamp(),
-      statusHistory: arrayUnion({
-        status: 'seat_declined',
-        date: new Date().toISOString(),
-        note: 'Student declined the seat offer'
-      })
-    })
-  })
-}
-
-export const simulateUploadPaymentProof = async (
-  appId: string, 
-  studentId: string, 
-  universityId: string, 
-  fileBlob: Blob, 
-  fileName: string,
-  totalAmount: number
-) => {
-  // 1. Upload to Storage
-  const timestamp = Date.now()
-  const storagePath = `universities/${universityId}/applications/${appId}/payments/${timestamp}_${fileName}`
-  const storageRef = ref(storage, storagePath)
-  
-  await uploadBytes(storageRef, fileBlob)
-  const url = await getDownloadURL(storageRef)
-
-  // 2. Update Firestore
-  await runTransaction(db, async (transaction) => {
-    const appRef = doc(db, 'applications', appId)
-    const appDoc = await transaction.get(appRef)
-    if (!appDoc.exists()) throw new Error('Application not found')
-    
-    transaction.update(appRef, {
-      status: 'fee_paid',
-      updatedAt: serverTimestamp(),
-      'paymentDetails.receiptUrl': url,
-      'paymentDetails.amountPaid': totalAmount,
-      'paymentDetails.submittedAt': new Date().toISOString(),
-      'paymentDetails.status': 'pending_verification',
-      statusHistory: arrayUnion({
-        status: 'fee_paid',
-        date: new Date().toISOString(),
-        note: 'Student uploaded fee payment proof'
-      })
-    })
-
-    const notifRef = doc(collection(db, 'notifications'))
-    transaction.set(notifRef, {
-      userId: studentId,
-      title: 'Payment Proof Submitted',
-      message: 'Your fee payment proof has been submitted and is pending verification by the university.',
-      type: 'fee_paid',
-      isRead: false,
-      createdAt: serverTimestamp()
-    })
-  })
 }
 
 export const verifyPayment = async (universityId: string, appId: string, studentId: string, verificationNotes: string, actor: ActorContext) => {
