@@ -13,7 +13,6 @@ import type { StudentDocument, DocumentStatus } from '@/lib/firebase/documents'
 import DocumentVerificationPanel from './DocumentVerificationPanel'
 import GeneratedDocumentsSection from './GeneratedDocumentsSection'
 import AdmissionProgressSection from './AdmissionProgressSection'
-import StudentEmulatorSection from './StudentEmulatorSection'
 import PermissionGuard from './guards/PermissionGuard'
 import { subscribeToEntityAuditLogs } from '@/lib/firebase/audit'
 import type { AuditLog } from '@/lib/firebase/types'
@@ -226,7 +225,6 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
 
             {/* Phase 3: Admission Progress (Payments, Enrollment) */}
             <AdmissionProgressSection app={app} />
-            <StudentEmulatorSection app={app} />
 
             {/* Timeline */}
             <section>
