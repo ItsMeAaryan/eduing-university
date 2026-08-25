@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { LayoutDashboard, TrendingUp, Users, DollarSign, Activity } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Users, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnalyticsProvider } from '@/context/AnalyticsContext'
@@ -12,7 +12,6 @@ const tabs = [
   { href: '/analytics/admissions', label: 'Admissions', icon: TrendingUp },
   { href: '/analytics/financial', label: 'Financial', icon: DollarSign },
   { href: '/analytics/students', label: 'Students', icon: Users },
-  { href: '/analytics/staff', label: 'Staff', icon: Activity },
 ]
 
 export default function AnalyticsLayout({ children }: { children: React.ReactNode }) {

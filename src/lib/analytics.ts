@@ -1,4 +1,4 @@
-import type { FirestoreRecord, AuditLog, StaffMember } from '@/lib/firebase/types'
+import type { FirestoreRecord, AuditLog } from '@/lib/firebase/types'
 
 // -- Executive KPIs --
 export function getExecutiveKPIs(apps: FirestoreRecord[]) {
@@ -88,30 +88,3 @@ export function getActivityTrend(auditLogs: AuditLog[], days: number = 30) {
   }))
 }
 
-// -- Staff Productivity --
-export function getStaffProductivity(auditLogs: AuditLog[], staff: StaffMember[]) {
-  const staffActivity: Record<string, { name: string, role: string, actions: number, reviews: number }> = {}
-  
-  staff.forEach(s => {
-    staffActivity[s.uid] = { name: s.name, role: s.role, actions: 0, reviews: 0 }
-  })
-
-  auditLogs.forEach(log => {
-    if (staffActivity[log.actorUid]) {
-      staffActivity[log.actorUid].actions++
-      if (log.actionType.includes('status_changed') || log.actionType.includes('verify')) {
-        staffActivity[log.actorUid].reviews++
-      }
-    } else {
-      // Staff member might have been deleted, or is the admin owner
-      staffActivity[log.actorUid] = { 
-        name: log.actorName, 
-        role: log.actorRole, 
-        actions: 1, 
-        reviews: log.actionType.includes('status') ? 1 : 0 
-      }
-    }
-  })
-
-  return Object.values(staffActivity).sort((a, b) => b.actions - a.actions)
-}
