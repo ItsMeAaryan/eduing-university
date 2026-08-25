@@ -32,7 +32,7 @@ git add src/lib/firebase/admissions.ts src/components/AdmissionProgressSection.t
 git commit -m "feat(admissions): complete admission workflow"
 
 # 8. feat(enrollment): implement enrollment management
-git add src/app/exams/page.tsx src/app/settings/page.tsx src/components/StudentEmulatorSection.tsx
+git add src/app/exams/page.tsx src/app/settings/page.tsx
 git commit -m "feat(enrollment): implement enrollment management"
 
 # 9. feat(audit): enterprise audit logging
@@ -63,9 +63,9 @@ git commit -m "feat(reports): executive dashboards"
 git add src/app/analytics/admissions/ src/app/analytics/financial/
 git commit -m "feat(reports): admissions and financial analytics"
 
-# 16. feat(reports): staff and student analytics
-git add src/app/analytics/staff/ src/app/analytics/students/
-git commit -m "feat(reports): staff and student analytics"
+# 16. feat(reports): student analytics
+git add src/app/analytics/students/
+git commit -m "feat(reports): student analytics"
 
 # 17. feat(ai): AI service layer
 git add src/lib/ai.ts
