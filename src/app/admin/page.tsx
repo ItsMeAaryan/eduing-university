@@ -37,7 +37,7 @@ export default function AdminPage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (!userDoc.exists() || userDoc.data().role !== 'eduing_admin') {
         await auth.signOut()
-        router.push('/admin/login')
+        router.replace('/dashboard')
         return
       }
 
