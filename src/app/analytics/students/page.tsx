@@ -6,7 +6,7 @@
 import React, { useMemo } from 'react'
 import { useAnalytics } from '@/context/AnalyticsContext'
 import { exportToCSV } from '@/utils/export'
-import { Download, AlertCircle, Users, MapPin, Tag } from 'lucide-react'
+import { Download, AlertCircle, Users, MapPin } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 
@@ -51,18 +51,15 @@ export default function StudentAnalytics() {
 
   const data = useMemo(() => {
     const geo: Record<string, number> = {}
-    const tags: Record<string, number> = {}
     const status: Record<string, number> = {}
     apps.forEach(app => {
       const state = (app.studentProfile as any)?.state || app.city || 'Unknown'
       geo[state as string] = (geo[state as string] || 0) + 1
-      if (Array.isArray(app.tags)) (app.tags as string[]).forEach(t => { tags[t] = (tags[t] || 0) + 1 })
       const s = (app.status as string) || 'unknown'
       status[s] = (status[s] || 0) + 1
     })
     return {
       geoChart: Object.entries(geo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10),
-      tagChart: Object.entries(tags).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 8),
       statusChart: Object.entries(status).map(([name, value]) => ({ name: name.replace(/_/g, ' ').toUpperCase(), value })).sort((a, b) => b.value - a.value),
     }
   }, [apps])
@@ -92,7 +89,7 @@ export default function StudentAnalytics() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Student Analytics</h1>
-          <p className="page-subtitle">Demographics, lifecycle distribution, and tag tracking</p>
+          <p className="page-subtitle">Demographics and lifecycle distribution</p>
         </div>
         <button onClick={() => exportToCSV(data.geoChart, 'Student_Demographics')} className="btn-secondary" style={{ gap: '6px' }}>
           <Download size={13} /> Export
@@ -124,23 +121,7 @@ export default function StudentAnalytics() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Top CRM Tags" icon={Tag} span2>
-          {data.tagChart.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic' }}>
-              No tags assigned yet.
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
-              <BarChart data={data.tagChart} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal vertical={false} />
-                <XAxis type="number" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} width={120} />
-                <Tooltip contentStyle={tipStyle} cursor={{ fill: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)' }} />
-                <Bar dataKey="value" fill="#D97706" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
+
       </div>
     </div>
   )
