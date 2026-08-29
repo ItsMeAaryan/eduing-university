@@ -15,8 +15,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Push to Destination Repo
+      - name: Re-author and Push
         env:
           DEST_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
         run: |
+          git config user.name "eduing-in"
+          git config user.email "eduing-in@users.noreply.github.com"
+          git commit --amend --no-edit --reset-author
           git push --force https://eduing-in:${DEST_TOKEN}@github.com/eduing-in/eduing-university.git main:main
