@@ -1,0 +1,20 @@
+name: Sync University Repo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Destination Repo
+        run: |
+          git remote add target https://${{ secrets.TARGET_REPO_PAT }}@github.com/eduing-in/eduing-university.git
+          git push --force target main
