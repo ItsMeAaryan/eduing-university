@@ -9,12 +9,10 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Zap, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import Image from 'next/image'
-import { useTheme } from 'next-themes'
 
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { resolvedTheme } = useTheme()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -132,7 +130,7 @@ export default function LoginPage() {
           <div style={{ textAlign: 'center', marginBottom: '36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
               <Image
-                src="/bandwlogo.PNG"
+                src="/eduing-logo.png"
                 alt="EDUING Logo"
                 width={40}
                 height={40}
@@ -140,8 +138,6 @@ export default function LoginPage() {
                   width: '40px',
                   height: '40px',
                   objectFit: 'contain',
-                  filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
-                  transition: 'filter 200ms ease',
                 }}
               />
               <div style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-0.03em', display: 'flex', alignItems: 'baseline' }}>

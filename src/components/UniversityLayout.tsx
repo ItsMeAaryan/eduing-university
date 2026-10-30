@@ -281,7 +281,6 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
   const pathname = usePathname()
   const { user, userData, hasPermission } = useAuth()
   const router = useRouter()
-  const { resolvedTheme } = useTheme()
   const [uniData, setUniData] = useState<FirestoreRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -440,7 +439,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             {/* Logo mark — always visible */}
             <Image
-              src="/bandwlogo.PNG"
+              src="/eduing-logo.png"
               alt="EDUING Logo"
               width={30}
               height={30}
@@ -449,8 +448,6 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
                 height: '30px',
                 objectFit: 'contain',
                 flexShrink: 0,
-                filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
-                transition: 'filter 200ms ease',
               }}
             />
             {/* Wordmark — fades out when collapsed */}

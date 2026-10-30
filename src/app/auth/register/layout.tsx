@@ -15,15 +15,15 @@ export const metadata: Metadata = {
     description: 'Join EDUING.in — the unified admissions platform for Indian universities.',
     url: 'https://university.eduing.in/auth/register',
     siteName: 'EDUING',
-    images: ['/bandwlogo.PNG'],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'EDUING University Portal' }],
     locale: 'en_IN',
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Register Your University | EDUING',
     description: 'Join EDUING.in — the unified admissions platform for Indian universities.',
-    images: ['/bandwlogo.PNG'],
+    images: ['/og-image.png'],
   },
   alternates: {
     canonical: 'https://university.eduing.in/auth/register',

@@ -258,7 +258,6 @@ function AccountDropdown({ name, initial, isVerified, onClose, onLogout }: Accou
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const { resolvedTheme } = useTheme()
   const { userData, hasPermission } = useAuth()
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
@@ -294,7 +293,7 @@ export default function Sidebar() {
       }}>
         <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '9px' }}>
           <Image
-            src="/bandwlogo.PNG"
+            src="/eduing-logo.png"
             alt="EDUING Logo"
             width={26}
             height={26}
@@ -302,9 +301,6 @@ export default function Sidebar() {
               width: '26px',
               height: '26px',
               objectFit: 'contain',
-              filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none',
-              transition: 'filter 180ms ease',
-              opacity: resolvedTheme === 'dark' ? 0.85 : 1,
             }}
           />
           <div style={{
