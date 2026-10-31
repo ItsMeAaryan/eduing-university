@@ -89,8 +89,8 @@ function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCou
     <Panel index={0.5} style={{ marginBottom: '20px', padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={15} color="#6366F1" />
+          <div style={{ width: '28px', height: '28px', borderRadius: '12px', background: 'rgb(var(--accent-rgb) / 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={15} color="var(--accent)" />
           </div>
           <div>
             <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>University Profile Strength</h3>
@@ -109,7 +109,7 @@ function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCou
                 cx="45"
                 cy="45"
                 r="36"
-                stroke="#6366F1"
+                stroke="var(--accent)"
                 strokeWidth="7"
                 fill="none"
                 strokeDasharray={circumference}
@@ -134,7 +134,7 @@ function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCou
               style={{
                 background: 'var(--bg-card-hover)',
                 border: '1px solid var(--border)',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 padding: '9px 12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -143,7 +143,7 @@ function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCou
               }}
             >
               <div style={{ fontSize: '12.5px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366F1', flexShrink: 0 }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
                 <span>{rec.title}</span>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#1AAE39', background: 'rgba(26,174,57,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
                   {rec.bonus}
@@ -179,7 +179,7 @@ function Panel({
       style={{
         background: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
-        borderRadius: '12px',
+        borderRadius: '18px',
         overflow: 'hidden',
         boxShadow: 'var(--shadow-card)',
         ...style,
@@ -244,7 +244,7 @@ function StatCard({ label, value, icon: Icon, sub, accent, index, badge, trend, 
       style={{
         background: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
-        borderRadius: '12px',
+        borderRadius: '18px',
         padding: '18px 20px',
         boxShadow: 'var(--shadow-card)',
         transition: 'border-color 0.15s, box-shadow 0.15s',
@@ -272,7 +272,7 @@ function StatCard({ label, value, icon: Icon, sub, accent, index, badge, trend, 
           width: 80,
           height: 80,
           borderRadius: '50%',
-          background: `${accent}18`,
+          background: `color-mix(in srgb, ${accent} 9%, transparent)`,
           filter: 'blur(20px)',
           pointerEvents: 'none',
         }}
@@ -297,8 +297,8 @@ function StatCard({ label, value, icon: Icon, sub, accent, index, badge, trend, 
             style={{
               width: '30px',
               height: '30px',
-              borderRadius: '8px',
-              background: `${accent}15`,
+              borderRadius: '12px',
+              background: `color-mix(in srgb, ${accent} 8%, transparent)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -375,9 +375,9 @@ function FunnelStep({
         <div
           style={{
             height: '36px',
-            borderRadius: '6px',
-            background: `${color}20`,
-            border: `1px solid ${color}35`,
+            borderRadius: '10px',
+            background: `color-mix(in srgb, ${color} 13%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${color} 21%, transparent)`,
             position: 'relative',
             overflow: 'hidden',
           }}
@@ -390,7 +390,7 @@ function FunnelStep({
               position: 'absolute',
               inset: 0,
               width: `${barWidth}%`,
-              background: `linear-gradient(90deg, ${color}60, ${color}90)`,
+              background: `linear-gradient(90deg, color-mix(in srgb, ${color} 38%, transparent), color-mix(in srgb, ${color} 56%, transparent))`,
               borderRadius: '5px',
             }}
           />
@@ -451,7 +451,7 @@ function ProgramBar({ name, count, max }: { name: string; count: number; max: nu
             borderRadius: '999px',
             background: count === 0
               ? 'var(--text-faint)'
-              : 'linear-gradient(90deg, var(--accent), #6366F1)',
+              : 'linear-gradient(90deg, var(--accent), var(--accent))',
           }}
         />
       </div>
@@ -462,13 +462,13 @@ function ProgramBar({ name, count, max }: { name: string; count: number; max: nu
 // ─── Activity icon map ─────────────────────────────────────────────────────────
 function activityMeta(actionType: string): { icon: React.ElementType; color: string } {
   if (actionType.includes('application') || actionType.includes('submit'))
-    return { icon: FileText, color: '#6366F1' }
+    return { icon: FileText, color: 'var(--accent)' }
   if (actionType.includes('status') || actionType.includes('update'))
     return { icon: Activity, color: '#D97706' }
   if (actionType.includes('student') || actionType.includes('register'))
     return { icon: UserCheck, color: '#1AAE39' }
   if (actionType.includes('program'))
-    return { icon: BookOpen, color: '#0075DE' }
+    return { icon: BookOpen, color: 'var(--accent)' }
   return { icon: Zap, color: '#8C8C85' }
 }
 
@@ -591,8 +591,8 @@ export default function UniversityDashboard() {
 
   // Funnel
   const funnelSteps = [
-    { label: 'Applied', count: total, color: '#6366F1' },
-    { label: 'Under Review', count: underReview + selected + enrolled, color: '#0075DE' },
+    { label: 'Applied', count: total, color: 'var(--accent)' },
+    { label: 'Under Review', count: underReview + selected + enrolled, color: 'var(--accent)' },
     { label: 'Selected', count: selected + enrolled, color: '#1AAE39' },
     { label: 'Enrolled', count: enrolled, color: '#10B981' },
   ]
@@ -684,7 +684,7 @@ export default function UniversityDashboard() {
           label="Total Applications"
           value={total}
           icon={Users}
-          accent="#6366F1"
+          accent="var(--accent)"
           trend={trend}
           trendLabel={trend ? `${trendDiff} vs last month` : undefined}
           sub={!trend ? 'All time' : undefined}
@@ -734,7 +734,7 @@ export default function UniversityDashboard() {
           label="Active Programs"
           value={programs.length}
           icon={BookOpen}
-          accent="#0075DE"
+          accent="var(--accent)"
           sub="Listed courses"
         />
       </div>
@@ -747,7 +747,7 @@ export default function UniversityDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
           <Link href="/programs" style={{ textDecoration: 'none' }}>
             <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(0,117,222,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0075DE', flexShrink: 0 }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '12px', background: 'rgb(var(--accent-rgb) / 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}>
                 <BookOpen size={16} />
               </div>
               <div>
@@ -759,7 +759,7 @@ export default function UniversityDashboard() {
 
           <Link href="/staff" style={{ textDecoration: 'none' }}>
             <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED', flexShrink: 0 }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '12px', background: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-2)', flexShrink: 0 }}>
                 <Users size={16} />
               </div>
               <div>
@@ -771,7 +771,7 @@ export default function UniversityDashboard() {
 
           <Link href="/applications" style={{ textDecoration: 'none' }}>
             <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(26,174,57,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1AAE39', flexShrink: 0 }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '12px', background: 'rgba(26,174,57,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1AAE39', flexShrink: 0 }}>
                 <FileText size={16} />
               </div>
               <div>
@@ -783,7 +783,7 @@ export default function UniversityDashboard() {
 
           <Link href="/profile" style={{ textDecoration: 'none' }}>
             <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(234,88,12,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EA580C', flexShrink: 0 }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '12px', background: 'rgba(234,88,12,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EA580C', flexShrink: 0 }}>
                 <UserCheck size={16} />
               </div>
               <div>
@@ -852,8 +852,8 @@ export default function UniversityDashboard() {
                 {programs.length === 0 && (
                   <ActionItem
                     icon={BookOpen}
-                    iconColor="#0075DE"
-                    iconBg="rgba(0,117,222,0.10)"
+                    iconColor="var(--accent)"
+                    iconBg="rgb(var(--accent-rgb) / 0.10)"
                     title="Add your first program to start receiving applications"
                     cta="Add Program"
                     href="/programs"
@@ -904,8 +904,8 @@ export default function UniversityDashboard() {
                   <ActionItem
                     key={p.id}
                     icon={Calendar}
-                    iconColor="#6366F1"
-                    iconBg="rgba(99,102,241,0.10)"
+                    iconColor="var(--accent)"
+                    iconBg="rgb(var(--accent-rgb) / 0.10)"
                     title={`"${String(p.name ?? '').slice(0, 28)}" deadline in ${p.days === 0 ? 'today' : `${p.days}d`}`}
                     cta="View"
                     href="/programs"
@@ -960,7 +960,7 @@ export default function UniversityDashboard() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '12px', color: 'var(--accent)', textDecoration: 'none',
-                  fontWeight: '500', padding: '4px 8px', borderRadius: '6px', transition: 'background 0.1s',
+                  fontWeight: '500', padding: '4px 8px', borderRadius: '10px', transition: 'background 0.1s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -993,7 +993,7 @@ export default function UniversityDashboard() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '12px', color: 'var(--accent)', textDecoration: 'none',
-                  fontWeight: '500', padding: '4px 8px', borderRadius: '6px', transition: 'background 0.1s',
+                  fontWeight: '500', padding: '4px 8px', borderRadius: '10px', transition: 'background 0.1s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -1030,7 +1030,7 @@ export default function UniversityDashboard() {
                       alignItems: 'flex-start',
                       gap: '10px',
                       padding: '9px 8px',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       cursor: entityRoute ? 'pointer' : 'default',
                       transition: 'background 0.1s',
                       textDecoration: 'none',
@@ -1042,8 +1042,8 @@ export default function UniversityDashboard() {
                       style={{
                         width: '30px',
                         height: '30px',
-                        borderRadius: '8px',
-                        background: `${color}15`,
+                        borderRadius: '12px',
+                        background: `color-mix(in srgb, ${color} 8%, transparent)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1089,8 +1089,8 @@ export default function UniversityDashboard() {
           style={{
             marginTop: '16px',
             background: 'var(--bg-elevated)',
-            border: '1px solid rgba(99,102,241,0.25)',
-            borderRadius: '12px',
+            border: '1px solid rgb(var(--accent-rgb) / 0.25)',
+            borderRadius: '18px',
             overflow: 'hidden',
             boxShadow: 'var(--shadow-card)',
           }}
@@ -1104,7 +1104,7 @@ export default function UniversityDashboard() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '12px', color: 'var(--accent)', textDecoration: 'none',
-                  fontWeight: '500', padding: '4px 8px', borderRadius: '6px', transition: 'background 0.1s',
+                  fontWeight: '500', padding: '4px 8px', borderRadius: '10px', transition: 'background 0.1s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -1120,7 +1120,7 @@ export default function UniversityDashboard() {
                 style={{
                   flex: '1 1 200px',
                   padding: '12px 14px',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   background: p.days <= 2 ? 'rgba(220,38,38,0.06)' : 'rgba(217,119,6,0.06)',
                   border: `1px solid ${p.days <= 2 ? 'rgba(220,38,38,0.2)' : 'rgba(217,119,6,0.2)'}`,
                 }}
@@ -1179,7 +1179,7 @@ function ActionItem({
         alignItems: 'center',
         gap: '10px',
         padding: '10px 10px',
-        borderRadius: '8px',
+        borderRadius: '12px',
         background: urgent ? 'rgba(220,38,38,0.04)' : 'transparent',
         border: urgent ? '1px solid rgba(220,38,38,0.12)' : '1px solid transparent',
       }}
@@ -1188,7 +1188,7 @@ function ActionItem({
         style={{
           width: '32px',
           height: '32px',
-          borderRadius: '8px',
+          borderRadius: '12px',
           background: iconBg,
           display: 'flex',
           alignItems: 'center',
@@ -1226,7 +1226,7 @@ function ActionItem({
           gap: '2px',
           whiteSpace: 'nowrap',
           padding: '4px 8px',
-          borderRadius: '6px',
+          borderRadius: '10px',
           background: iconBg,
           transition: 'opacity 0.1s',
         }}

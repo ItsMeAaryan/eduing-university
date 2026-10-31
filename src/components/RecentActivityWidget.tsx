@@ -31,7 +31,7 @@ export default function RecentActivityWidget() {
 
   if (loading) {
     return (
-      <div className="bg-brand-surface border border-brand-border rounded-xl p-6 h-full flex flex-col justify-center items-center">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 h-full flex flex-col justify-center items-center">
         <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-text-muted text-sm">Loading activity...</p>
       </div>
@@ -39,7 +39,7 @@ export default function RecentActivityWidget() {
   }
 
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 flex flex-col h-full relative overflow-hidden group">
+    <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 flex flex-col h-full relative overflow-hidden group">
       {/* Decorative gradient */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-primary/20 transition-colors"></div>
 
@@ -74,7 +74,7 @@ export default function RecentActivityWidget() {
               className="flex gap-3"
             >
               <div className="relative mt-1">
-                <div className="w-2 h-2 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                <div className="w-2 h-2 rounded-full bg-brand-primary shadow-[0_0_8px_rgb(var(--accent-rgb)_/_0.6)]"></div>
                 {i < logs.length - 1 && (
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 w-px h-[calc(100%+16px)] bg-brand-border"></div>
                 )}

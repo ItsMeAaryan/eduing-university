@@ -22,12 +22,12 @@ const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
 const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
 const Legend = dynamic(() => import('recharts').then(m => m.Legend), { ssr: false })
 
-const PIE_COLORS = ['#0075DE', '#6366F1', '#D97706', '#EA580C', '#1AAE39', '#DC2626', '#8B5CF6', '#14B8A6']
+const PIE_COLORS = ['var(--accent)', 'var(--accent)', '#D97706', '#EA580C', '#1AAE39', '#DC2626', 'var(--accent-2)', '#14B8A6']
 
 function ChartCard({ title, icon: Icon, children, span2 }: { title: string; icon?: React.ElementType; children: React.ReactNode; span2?: boolean }) {
   return (
     <div style={{
-      background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px',
+      background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px',
       overflow: 'hidden', boxShadow: 'var(--shadow-card)',
       gridColumn: span2 ? 'span 2' : undefined,
     }}>
@@ -47,7 +47,7 @@ export default function StudentAnalytics() {
   const isLight = resolvedTheme === 'light'
   const axisStroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'
   const gridStroke = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
-  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }
+  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px' }
 
   const data = useMemo(() => {
     const geo: Record<string, number> = {}
@@ -73,7 +73,7 @@ export default function StudentAnalytics() {
         <div style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: '8px',
+          borderRadius: '12px',
           padding: '10px 14px',
           marginBottom: '16px',
           fontSize: '13px',

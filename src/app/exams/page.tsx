@@ -114,7 +114,7 @@ export default function ExamManagementPage() {
     <div className="space-y-8">
       <h1 className="text-xl font-bold text-white sr-only">Exam Management</h1>
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-brand-surface p-1 rounded-xl border border-brand-border">
+      <div className="flex items-center gap-1 bg-brand-surface p-1 rounded-2xl border border-brand-border">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -252,7 +252,7 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: FirestoreRe
           </p>
           <Link href="/programs">
             <button style={{
-              padding: '10px 24px', background: 'linear-gradient(135deg, #5B5FEF, #7C3AED)',
+              padding: '10px 24px', background: 'linear-gradient(135deg, #5B5FEF, var(--accent-2))',
               border: 'none', borderRadius: 'var(--radius-md)', color: 'white',
               fontSize: '14px', fontWeight: '600', cursor: 'pointer',
             }}>

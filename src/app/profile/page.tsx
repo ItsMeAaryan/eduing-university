@@ -440,7 +440,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsPreviewStudent(true)}
-            className="btn-secondary text-xs font-semibold px-4 py-2 flex items-center gap-2 rounded-xl border border-brand-border hover:border-brand-accent hover:text-brand-accent transition-all"
+            className="btn-secondary text-xs font-semibold px-4 py-2 flex items-center gap-2 rounded-2xl border border-brand-border hover:border-brand-accent hover:text-brand-accent transition-all"
           >
             <Eye size={15} />
             Preview as Student
@@ -449,7 +449,7 @@ export default function ProfilePage() {
           <button
             onClick={() => (isEditing ? handleGlobalSave() : setIsEditing(true))}
             disabled={saving}
-            className={`px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition-all ${
+            className={`px-5 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg transition-all ${
               isEditing
                 ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                 : 'bg-brand-accent text-white hover:bg-brand-accent/90'
@@ -495,7 +495,7 @@ export default function ProfilePage() {
               accept="image/*"
               onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'banner', 'banner')}
             />
-            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-900 px-5 py-2.5 rounded-xl font-bold text-xs shadow-xl hover:bg-white transition-all transform hover:scale-105">
+            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-900 px-5 py-2.5 rounded-2xl font-bold text-xs shadow-xl hover:bg-white transition-all transform hover:scale-105">
               <Camera size={16} /> Edit Cover Photo
             </div>
           </label>
@@ -708,7 +708,7 @@ export default function ProfilePage() {
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent border border-brand-accent/20">
+                <div className="w-10 h-10 rounded-2xl bg-brand-accent/10 flex items-center justify-center text-brand-accent border border-brand-accent/20">
                   <BookOpen size={20} />
                 </div>
                 <div>
@@ -721,14 +721,14 @@ export default function ProfilePage() {
 
               <Link
                 href="/programs"
-                className="btn-primary text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm"
+                className="btn-primary text-xs px-4 py-2 rounded-2xl flex items-center gap-1.5 shadow-sm"
               >
                 <span>Manage Programs</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
 
-            <div className="bg-brand-bg/50 border border-brand-border rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-brand-bg/50 border border-brand-border rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-extrabold text-brand-accent">{programCount}</span>
                 <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
@@ -767,7 +767,7 @@ export default function ProfilePage() {
                     key={fac}
                     type="button"
                     onClick={() => toggleFacility(fac)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl border text-left transition-all ${
                       isSelected
                         ? 'bg-brand-accent/15 border-brand-accent text-brand-accent font-semibold shadow-xs'
                         : 'bg-white/5 border-white/10 text-text-secondary hover:border-white/20'
@@ -806,7 +806,7 @@ export default function ProfilePage() {
                 </span>
 
                 {(formData.gallery || []).length < 10 && (
-                  <label className="bg-brand-accent text-white px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs">
+                  <label className="bg-brand-accent text-white px-3.5 py-1.5 rounded-2xl text-xs font-bold cursor-pointer hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs">
                     <input
                       type="file"
                       className="hidden"
@@ -1053,7 +1053,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setIsPreviewStudent(false)}
-                className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-colors"
               >
                 <X size={14} /> Exit Preview
               </button>
@@ -1177,7 +1177,7 @@ export default function ProfilePage() {
                   <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">Campus Facilities</h3>
                   <div className="flex flex-wrap gap-2">
                     {formData.facilities.map((fac: string) => (
-                      <span key={fac} className="px-3 py-1.5 rounded-xl bg-white/5 border border-brand-border text-xs text-text-secondary font-medium flex items-center gap-1.5">
+                      <span key={fac} className="px-3 py-1.5 rounded-2xl bg-white/5 border border-brand-border text-xs text-text-secondary font-medium flex items-center gap-1.5">
                         <Check size={12} className="text-brand-accent" />
                         {fac}
                       </span>

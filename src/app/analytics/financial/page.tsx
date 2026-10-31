@@ -23,10 +23,10 @@ const PIE_COLORS = ['#1AAE39', '#D97706']
 
 function StatCard({ title, value, icon: Icon, accent }: { title: string; value: string; icon: React.ElementType; accent: string }) {
   return (
-    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px 20px', boxShadow: 'var(--shadow-card)' }}>
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', padding: '18px 20px', boxShadow: 'var(--shadow-card)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <span style={{ fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{title}</span>
-        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: `${accent}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: `color-mix(in srgb, ${accent} 7%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={14} color={accent} />
         </div>
       </div>
@@ -42,7 +42,7 @@ export default function FinancialAnalytics() {
   const isLight = resolvedTheme === 'light'
   const axisStroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'
   const gridStroke = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
-  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }
+  const tipStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px' }
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
@@ -80,7 +80,7 @@ export default function FinancialAnalytics() {
         <div style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: '8px',
+          borderRadius: '12px',
           padding: '10px 14px',
           marginBottom: '16px',
           fontSize: '13px',
@@ -107,13 +107,13 @@ export default function FinancialAnalytics() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
         <StatCard title="Revenue Collected" value={formatCurrency(financialData.collected)} icon={Landmark} accent="#1AAE39" />
         <StatCard title="Pending Fees" value={formatCurrency(financialData.pending)} icon={Wallet} accent="#D97706" />
-        <StatCard title="Total Expected" value={formatCurrency(financialData.collected + financialData.pending)} icon={IndianRupee} accent="#0075DE" />
+        <StatCard title="Total Expected" value={formatCurrency(financialData.collected + financialData.pending)} icon={IndianRupee} accent="var(--accent)" />
       </div>
 
       {/* Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '16px' }}>
         {/* Trend */}
-        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>Monthly Revenue Trend</h3>
           </div>
@@ -137,7 +137,7 @@ export default function FinancialAnalytics() {
         </div>
 
         {/* Collection ratio */}
-        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>Collection Status</h3>
           </div>

@@ -78,13 +78,13 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
       </div>
 
       {/* Offer Letter Section */}
-      <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-4">
         <div className="flex items-center justify-between mb-4">
           <h5 className="text-sm font-bold text-white">Offer Letters</h5>
           <button
             onClick={handleGenerateOfferLetter}
             disabled={loading || app.status !== 'selected'}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-brand-primary-text rounded-lg text-xs font-bold hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-lg text-xs font-bold hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
             Generate New
@@ -110,7 +110,7 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
 
       {/* Admit Cards Section */}
       {admitCards.length > 0 && (
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-4">
           <h5 className="text-sm font-bold text-white mb-4">Admit Cards</h5>
           <div className="space-y-2">
             {admitCards.map((doc) => (
@@ -122,7 +122,7 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
 
       {/* Enrollment Certificates Section */}
       {enrollments.length > 0 && (
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-4">
           <h5 className="text-sm font-bold text-white mb-4">Enrollment Certificates</h5>
           <div className="space-y-2">
             {enrollments.map((doc) => (

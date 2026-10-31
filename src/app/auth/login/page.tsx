@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Zap, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import Image from 'next/image'
+import AuthShell from '@/components/AuthShell'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -69,7 +70,7 @@ export default function LoginPage() {
             width: '100%', maxWidth: '420px',
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
-            borderRadius: '20px',
+            borderRadius: '26px',
             padding: '40px',
             textAlign: 'center',
             boxShadow: 'var(--shadow-card)',
@@ -95,9 +96,9 @@ export default function LoginPage() {
             onClick={() => setPendingApproval(false)}
             style={{
               width: '100%', height: '48px',
-              background: 'var(--indigo)',
+              background: 'var(--accent)',
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: '18px',
               color: 'white',
               fontSize: '15px',
               fontWeight: '700',
@@ -113,16 +114,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <AuthShell>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ width: '100%', maxWidth: '420px' }}
+        style={{ width: '100%' }}
       >
         <div style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
-          borderRadius: '20px',
+          borderRadius: '26px',
           padding: '40px',
           boxShadow: 'var(--shadow-card)',
         }}>
@@ -175,7 +176,7 @@ export default function LoginPage() {
                   padding: '11px 14px',
                   background: 'var(--input-bg)',
                   border: '1px solid var(--input-border)',
-                  borderRadius: '10px',
+                  borderRadius: '14px',
                   color: 'var(--input-text)',
                   fontSize: '14px',
                   outline: 'none',
@@ -208,7 +209,7 @@ export default function LoginPage() {
                     padding: '11px 44px 11px 14px',
                     background: 'var(--input-bg)',
                     border: '1px solid var(--input-border)',
-                    borderRadius: '10px',
+                    borderRadius: '14px',
                     color: 'var(--input-text)',
                     fontSize: '14px',
                     outline: 'none',
@@ -240,9 +241,9 @@ export default function LoginPage() {
               disabled={loading}
               style={{
                 width: '100%', height: '48px', marginTop: '8px',
-                background: 'var(--indigo)',
+                background: 'var(--accent)',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '18px',
                 color: 'white',
                 fontSize: '15px',
                 fontWeight: '700',
@@ -275,6 +276,6 @@ export default function LoginPage() {
           </div>
         </div>
       </motion.div>
-    </div>
+    </AuthShell>
   )
 }

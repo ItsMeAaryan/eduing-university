@@ -86,7 +86,7 @@ function AccountDropdown({ name, initial, isVerified, onClose, onLogout }: Accou
     padding: '6px 10px',
     background: 'transparent',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '10px',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: '400',
@@ -122,7 +122,7 @@ function AccountDropdown({ name, initial, isVerified, onClose, onLogout }: Accou
           right: '8px',
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: '10px',
+          borderRadius: '14px',
           boxShadow: 'var(--shadow-dropdown)',
           zIndex: 99,
           overflow: 'hidden',
@@ -137,7 +137,7 @@ function AccountDropdown({ name, initial, isVerified, onClose, onLogout }: Accou
           gap: '10px',
         }}>
           <div style={{
-            width: '30px', height: '30px', borderRadius: '6px', flexShrink: 0,
+            width: '30px', height: '30px', borderRadius: '10px', flexShrink: 0,
             background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '12px', fontWeight: '700', color: 'white',
@@ -426,7 +426,7 @@ export default function Sidebar() {
             alignItems: 'center',
             gap: '9px',
             padding: '8px 10px',
-            borderRadius: '8px',
+            borderRadius: '12px',
             background: accountOpen ? 'var(--bg-card-hover)' : 'transparent',
             border: '1px solid transparent',
             cursor: 'pointer',
@@ -443,7 +443,7 @@ export default function Sidebar() {
         >
           {/* Avatar */}
           <div style={{
-            width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+            width: '28px', height: '28px', borderRadius: '10px', flexShrink: 0,
             background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '11px', fontWeight: '700', color: 'white',
