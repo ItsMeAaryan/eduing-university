@@ -118,7 +118,7 @@ function AccountDropdown({ uniData, name, initial, onClose, onLogout }: AccountM
   const menuItemStyle: React.CSSProperties = {
     width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
     padding: '9px 14px', background: 'transparent', border: 'none',
-    borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+    borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
     color: 'var(--text-secondary)', textAlign: 'left', transition: 'all 0.12s',
   }
 
@@ -137,13 +137,13 @@ function AccountDropdown({ uniData, name, initial, onClose, onLogout }: AccountM
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: 'absolute', bottom: 'calc(100% + 10px)', left: '10px', right: '10px',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px',
-          boxShadow: '0 -4px 6px -1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.20), 0 0 0 1px rgba(99,102,241,0.06)',
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '20px',
+          boxShadow: '0 -4px 6px -1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.20), 0 0 0 1px rgb(var(--accent-rgb) / 0.06)',
           zIndex: 99, overflow: 'hidden', backdropFilter: 'blur(12px)',
         }}
       >
         <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, var(--indigo), #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '14px', flexShrink: 0, background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden' }}>
             {uniData?.logoURL
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={uniData.logoURL as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -221,7 +221,7 @@ function AccountDropdown({ uniData, name, initial, onClose, onLogout }: AccountM
 function MenuItem({ icon, label, sub, onClick }: { icon: string; label: string; sub?: string; onClick: () => void }) {
   return (
     <button role="menuitem" onClick={onClick}
-      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.12s' }}
+      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: 'transparent', border: 'none', borderRadius: '12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.12s' }}
       onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
     >
@@ -256,7 +256,7 @@ function NavTooltip({ label, sidebarWidth, children }: { label: string; sidebarW
               pointerEvents: 'none',
               background: 'var(--bg-elevated)',
               border: '1px solid var(--border)',
-              borderRadius: '8px',
+              borderRadius: '12px',
               padding: '6px 10px',
               fontSize: '12px',
               fontWeight: '600',
@@ -376,6 +376,15 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
     window.location.href = 'https://www.eduing.in'
   }, [])
 
+  const allNav = NAV_SECTIONS.flatMap(sec => sec.items)
+  const pageTitle =
+    allNav.find(i => pathname === i.href)?.label ??
+    [...allNav].sort((a, b) => b.href.length - a.href.length).find(i => pathname.startsWith(i.href))?.label ??
+    (pathname.startsWith('/analytics') ? 'Analytics' : 'Dashboard')
+  const mobileNav = allNav
+    .filter(i => ['/dashboard', '/applications', '/students', '/programs', '/settings'].includes(i.href))
+    .filter(i => !i.requiredPermission || hasPermission(i.requiredPermission))
+
   const name = uniData?.name || uniData?.shortName || 'University'
   const initial = name.charAt(0).toUpperCase()
 
@@ -388,7 +397,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Inter', 'DM Sans', sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-jakarta), system-ui, sans-serif' }}>
       {showWarning && uniError && (
         <div style={{
           position: 'fixed',
@@ -399,7 +408,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
           border: '1px solid var(--border)',
           color: 'var(--text-secondary)',
           padding: '8px 14px',
-          borderRadius: '8px',
+          borderRadius: '12px',
           fontSize: '12px',
           boxShadow: 'var(--shadow-card)',
         }}>
@@ -409,17 +418,20 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
 
       {/* ════════════════════ SIDEBAR ════════════════════ */}
       <aside
+        className="uni-sidebar"
         style={{
           width: `${sidebarWidth}px`,
           flexShrink: 0,
-          background: 'var(--bg-elevated)',
-          borderRight: '1px solid var(--border)',
+          background: 'var(--bg-sidebar)',
+          border: '1px solid var(--border)',
+          borderRadius: '28px',
+          boxShadow: 'var(--shadow-card)',
           display: 'flex',
           flexDirection: 'column',
           position: 'fixed',
-          top: 0, left: 0, bottom: 0,
+          top: 12, left: 12, bottom: 12,
           zIndex: 50,
-          overflow: 'hidden',
+          overflow: 'visible',
           transition: 'width 300ms ease',
         }}
       >
@@ -428,7 +440,6 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
         <div
           style={{
             padding: collapsed ? '20px 0 16px' : '20px 20px 16px',
-            borderBottom: '1px solid var(--border)',
             flexShrink: 0,
             display: 'flex',
             flexDirection: 'column',
@@ -453,8 +464,9 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             {/* Wordmark — fades out when collapsed */}
             <span
               style={{
-                fontSize: '18px',
-                fontWeight: '900',
+                fontSize: '20px',
+                fontWeight: '700',
+                fontFamily: 'var(--font-bricolage), system-ui, sans-serif',
                 letterSpacing: '-0.03em',
                 display: 'flex',
                 alignItems: 'baseline',
@@ -466,8 +478,8 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
               }}
             >
               <span style={{ color: 'var(--text-primary)' }}>EDU</span>
-              <span style={{ color: 'var(--indigo-light)' }}>ING</span>
-              <span style={{ color: 'var(--indigo-light)', fontSize: '12px', fontWeight: '700', marginLeft: '1px' }}>.in</span>
+              <span style={{ color: 'var(--accent)' }}>ING</span>
+              <span style={{ color: 'var(--gold-bright)', fontSize: '12px', fontWeight: '700', marginLeft: '1px' }}>.in</span>
             </span>
           </Link>
 
@@ -492,7 +504,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
         </div>
 
         {/* ── Nav ── */}
-        <nav style={{ flex: 1, padding: '10px', overflowY: 'auto', overflowX: 'hidden' }}>
+        <nav aria-label="University navigation" style={{ flex: 1, padding: '6px 12px 10px', overflowY: 'auto', overflowX: 'hidden' }}>
           {NAV_SECTIONS.map((section, sIdx) => {
             const visibleItems = section.items.filter(
               item => !item.requiredPermission || hasPermission(item.requiredPermission)
@@ -534,16 +546,17 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
-                          padding: collapsed ? '9px 0' : '9px 12px',
+                          padding: collapsed ? '10px 0' : '10px 14px',
                           justifyContent: collapsed ? 'center' : 'flex-start',
-                          borderRadius: 'var(--radius-sm)',
-                          marginBottom: '2px',
+                          borderRadius: '999px',
+                          marginBottom: '3px',
                           cursor: 'pointer',
-                          background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
-                          border: active ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-                          color: active ? 'var(--indigo-light)' : 'var(--text-secondary)',
+                          background: active ? 'var(--sidebar-active-bg)' : 'transparent',
+                          border: '1px solid transparent',
+                          boxShadow: active ? 'var(--shadow-glow)' : 'none',
+                          color: active ? 'var(--sidebar-active-text)' : 'var(--text-secondary)',
                           fontSize: '13.5px',
-                          fontWeight: active ? '600' : '400',
+                          fontWeight: active ? '700' : '500',
                           transition: 'all 0.15s ease',
                         }}
                         onMouseEnter={e => {
@@ -593,8 +606,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
         <div
           ref={accountRef}
           style={{
-            padding: collapsed ? '10px 4px' : '10px',
-            borderTop: '1px solid var(--border)',
+            padding: collapsed ? '10px 4px' : '12px',
             position: 'relative',
             flexShrink: 0,
             transition: 'padding 300ms ease',
@@ -626,16 +638,17 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
               gap: collapsed ? '0' : '10px',
               padding: collapsed ? '10px 0' : '10px 12px',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              borderRadius: '12px',
-              background: accountOpen ? 'rgba(99,102,241,0.10)' : 'rgba(99,102,241,0.06)',
-              border: accountOpen ? '1px solid rgba(99,102,241,0.30)' : '1px solid rgba(99,102,241,0.12)',
+              borderRadius: '26px',
+              background: 'var(--night)',
+              border: '1px solid transparent',
+              boxShadow: accountOpen ? 'var(--shadow-glow)' : 'none',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'all 0.15s',
             }}
           >
             {/* Avatar */}
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, var(--indigo), #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '14px', flexShrink: 0, background: 'linear-gradient(135deg, var(--indigo), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden' }}>
               {uniData?.logoURL
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={uniData.logoURL as string} alt="University logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -643,7 +656,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             </div>
             {/* Name + status — hidden when collapsed */}
             <div style={{ flex: 1, overflow: 'hidden', opacity: collapsed ? 0 : 1, maxWidth: collapsed ? '0px' : '200px', transition: 'opacity 180ms ease, max-width 300ms ease' }}>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {name.length > 16 ? name.substring(0, 16) + '…' : name}
               </div>
               <div style={{ fontSize: '11px', color: uniData?.isVerified ? 'var(--green)' : 'var(--gold)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
@@ -652,7 +665,7 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
               </div>
             </div>
             {/* Chevron — hidden when collapsed */}
-            <ChevronUp size={14} style={{ color: 'var(--text-muted)', flexShrink: 0, transform: accountOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', opacity: collapsed ? 0 : 1, maxWidth: collapsed ? '0px' : '20px' }} />
+            <ChevronUp size={14} style={{ color: 'rgba(255,255,255,0.6)', flexShrink: 0, transform: accountOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', opacity: collapsed ? 0 : 1, maxWidth: collapsed ? '0px' : '20px' }} />
           </motion.button>
         </div>
 
@@ -683,9 +696,9 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             padding: 0,
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--indigo)'
+            e.currentTarget.style.background = 'var(--accent)'
             e.currentTarget.style.color = 'white'
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.35)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-glow)'
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'var(--bg-elevated)'
@@ -699,9 +712,10 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
 
       {/* ════════════════════ MAIN CONTENT ════════════════════ */}
       <div
+        className="uni-main"
         style={{
           flex: 1,
-          marginLeft: `${sidebarWidth}px`,
+          ['--sbw' as string]: `${sidebarWidth + 24}px`,
           display: 'flex',
           flexDirection: 'column',
           minHeight: '100vh',
@@ -710,42 +724,47 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
       >
         {/* Topbar */}
         <header style={{
-          height: '56px',
+          height: '72px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 28px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-elevated)',
-          backdropFilter: 'blur(12px)',
+          gap: '12px',
+          padding: '0 24px',
+          background: 'color-mix(in srgb, var(--bg) 82%, transparent)',
+          backdropFilter: 'blur(16px)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: '500' }}>
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.15, color: 'var(--text-primary)', fontFamily: 'var(--font-bricolage), system-ui, sans-serif' }}>
+                {pageTitle}
+              </div>
+              <div className="uni-hide-sm" style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }}>
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </div>
             </div>
 
             {/* Topbar University Name / Shimmer / Warning Pill */}
             {uniData ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', background: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                <span style={{ fontSize: '14px' }}>🏢</span>
+              <div className="uni-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', background: 'var(--bg-elevated)', padding: '6px 12px', borderRadius: '999px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: uniData?.isVerified ? 'var(--green)' : 'var(--gold-bright)' }} />
                 <span>{name}</span>
               </div>
             ) : showWarning && uniError ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '600', color: 'var(--red)', background: 'rgba(220,38,38,0.08)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(220,38,38,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '600', color: 'var(--red)', background: 'rgba(220,38,38,0.08)', padding: '4px 10px', borderRadius: '26px', border: '1px solid rgba(220,38,38,0.2)' }}>
                 <span>⚠️</span>
                 <span>{uniError}</span>
               </div>
             ) : (
-              <div style={{ width: '120px', height: '22px', borderRadius: '12px', background: 'var(--bg-card-hover)', opacity: 0.6, animation: 'pulse 1.5s infinite ease-in-out' }} />
+              <div style={{ width: '120px', height: '22px', borderRadius: '18px', background: 'var(--bg-card-hover)', opacity: 0.6, animation: 'pulse 1.5s infinite ease-in-out' }} />
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
             <NotificationBell />
-            <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--indigo), #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden', border: '2px solid var(--border)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: 'white', overflow: 'hidden', border: '2px solid var(--border)' }}>
               {uniData?.logoURL
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={uniData.logoURL as string} alt="University logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -754,20 +773,33 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
+        <main id="main-content" className="uni-content" style={{ flex: 1, overflowY: 'auto' }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             >
               {children}
             </motion.div>
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Mobile bottom bar (sidebar is hidden below 1024px) */}
+      <nav className="uni-mobile-bar" aria-label="University navigation (mobile)">
+        {mobileNav.map(item => {
+          const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          return (
+            <Link key={item.href} href={item.href} aria-label={item.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, fontSize: 10, fontWeight: 600, textDecoration: 'none', color: active ? 'var(--accent)' : 'var(--text-muted)' }}>
+              <item.icon size={19} />
+              {item.label.split(' ')[0]}
+            </Link>
+          )
+        })}
+      </nav>
 
       {/* Global AI Copilot */}
       <AICopilot />

@@ -127,7 +127,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
             {/* Student Profile */}
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--indigo), #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '24px', flexShrink: 0 }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--indigo), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '24px', flexShrink: 0 }}>
                   {app.studentName?.charAt(0) || 'S'}
                 </div>
                 <div>
@@ -137,14 +137,14 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ padding: '12px', background: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div style={{ padding: '12px', background: 'var(--bg)', borderRadius: '18px', border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', marginBottom: '6px' }}>
                     <Mail size={13} />
                     <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.1em' }}>Email</span>
                   </div>
                   <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.studentEmail}</p>
                 </div>
-                <div style={{ padding: '12px', background: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div style={{ padding: '12px', background: 'var(--bg)', borderRadius: '18px', border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', marginBottom: '6px' }}>
                     <Phone size={13} />
                     <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.1em' }}>Phone</span>
@@ -158,17 +158,17 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
             <section>
               <h4 className="section-label" style={{ marginBottom: '12px' }}>Academic Profile</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ padding: '16px', background: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div style={{ padding: '16px', background: 'var(--bg)', borderRadius: '18px', border: '1px solid var(--border)' }}>
                   <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', margin: '0 0 6px' }}>10th Marks</p>
                   <p style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>{app.academicData?.tenthPercentage || 'N/A'}%</p>
                 </div>
-                <div style={{ padding: '16px', background: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div style={{ padding: '16px', background: 'var(--bg)', borderRadius: '18px', border: '1px solid var(--border)' }}>
                   <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', margin: '0 0 6px' }}>12th Marks</p>
                   <p style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>{app.academicData?.twelfthPercentage || 'N/A'}%</p>
                 </div>
               </div>
               {app.entranceScore && (
-                <div style={{ padding: '16px', background: 'rgba(245,158,11,0.08)', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
+                <div style={{ padding: '16px', background: 'rgba(245,158,11,0.08)', borderRadius: '18px', border: '1px solid rgba(245,158,11,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
                   <div>
                     <p style={{ fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', fontWeight: '700', margin: '0 0 4px' }}>Entrance Score</p>
                     <p style={{ fontSize: '22px', fontWeight: '800', color: 'var(--gold)', margin: 0 }}>{app.entranceScore}</p>
@@ -186,9 +186,9 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {documents.map((doc) => (
-                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg)', borderRadius: '18px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <FileText size={18} style={{ color: 'var(--text-muted)' }} />
                       </div>
                       <div>
@@ -204,7 +204,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                       <PermissionGuard require="verify_documents">
                         <button 
                           onClick={() => setSelectedDocument(doc)}
-                          style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                          style={{ padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
                         >
                           Verify
                         </button>
@@ -213,7 +213,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                   </div>
                 ))}
                 {documents.length === 0 && (
-                  <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '12px' }}>
+                  <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '18px' }}>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No documents found</p>
                   </div>
                 )}
@@ -234,7 +234,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                   <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No audit logs found.</p>
                 ) : auditLogs.map((log) => (
                   <div key={log.id} style={{ position: 'relative' }}>
-                    <div style={{ position: 'absolute', left: '-25px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--indigo)', boxShadow: '0 0 8px rgba(99,102,241,0.5)' }} />
+                    <div style={{ position: 'absolute', left: '-25px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--indigo)', boxShadow: '0 0 8px rgb(var(--accent-rgb) / 0.5)' }} />
                     <p style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 3px' }}>
                       {log.actorName} <span style={{ fontWeight: 'normal', color: 'var(--text-muted)' }}>performed</span> <span className="capitalize">{log.actionType.replace(/_/g, ' ')}</span>
                     </p>
@@ -242,7 +242,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                       {new Date(log.timestamp).toLocaleString()}
                     </p>
                     {log.newValue && Object.keys(log.newValue).length > 0 && (
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px', padding: '8px', background: 'var(--bg)', borderRadius: '8px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px', padding: '8px', background: 'var(--bg)', borderRadius: '12px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
                         {JSON.stringify(log.newValue, null, 2)}
                       </div>
                     )}
@@ -273,7 +273,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <button 
                   onClick={() => handleStatusUpdate('under_review')}
-                style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--gold)', color: 'var(--gold)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
+                style={{ padding: '10px', borderRadius: '14px', border: '1px solid var(--gold)', color: 'var(--gold)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               >
@@ -281,13 +281,13 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
               </button>
               <button 
                 onClick={() => handleStatusUpdate('selected')}
-                style={{ padding: '10px', borderRadius: '10px', border: 'none', background: 'var(--green)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
+                style={{ padding: '10px', borderRadius: '14px', border: 'none', background: 'var(--green)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
               >
                 Select Student
               </button>
               <button 
                 onClick={() => handleStatusUpdate('waitlisted')}
-                style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--orange)', color: 'var(--orange)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
+                style={{ padding: '10px', borderRadius: '14px', border: '1px solid var(--orange)', color: 'var(--orange)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,88,12,0.08)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               >
@@ -295,7 +295,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
               </button>
               <button 
                 onClick={() => handleStatusUpdate('rejected')}
-                  style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--gold)', color: 'var(--gold)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
+                  style={{ padding: '10px', borderRadius: '14px', border: '1px solid var(--gold)', color: 'var(--gold)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.08)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                 >
@@ -303,13 +303,13 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                 </button>
                 <button 
                   onClick={() => handleStatusUpdate('selected')}
-                  style={{ padding: '10px', borderRadius: '10px', border: 'none', background: 'var(--green)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
+                  style={{ padding: '10px', borderRadius: '14px', border: 'none', background: 'var(--green)', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
                 >
                   Select Student
                 </button>
                 <button 
                   onClick={() => handleStatusUpdate('waitlisted')}
-                  style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--orange)', color: 'var(--orange)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
+                  style={{ padding: '10px', borderRadius: '14px', border: '1px solid var(--orange)', color: 'var(--orange)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,88,12,0.08)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                 >
@@ -317,7 +317,7 @@ export default function ApplicationPanel({ app, onClose }: ApplicationPanelProps
                 </button>
                 <button 
                   onClick={() => handleStatusUpdate('rejected')}
-                  style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--red)', color: 'var(--red)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
+                  style={{ padding: '10px', borderRadius: '14px', border: '1px solid var(--red)', color: 'var(--red)', background: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.08)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                 >

@@ -63,7 +63,7 @@ function SectionCard({ title, icon: Icon, children }: { title: string; icon?: Re
     <div style={{
       background: 'var(--bg-elevated)',
       border: '1px solid var(--border)',
-      borderRadius: '10px',
+      borderRadius: '14px',
       overflow: 'hidden',
       boxShadow: 'var(--shadow-card)',
     }}>
@@ -223,13 +223,13 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           <div style={{
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
-            borderRadius: '10px',
+            borderRadius: '14px',
             padding: '20px',
             boxShadow: 'var(--shadow-card)',
             textAlign: 'center',
           }}>
             <div style={{
-              width: '56px', height: '56px', borderRadius: '12px',
+              width: '56px', height: '56px', borderRadius: '18px',
               background: 'var(--accent-bg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '22px', fontWeight: '700', color: 'var(--accent)',
@@ -348,7 +348,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                     style={{
                       background: 'rgba(220,38,38,0.06)',
                       border: '1px solid rgba(220,38,38,0.2)',
-                      borderRadius: '10px',
+                      borderRadius: '14px',
                       padding: '14px 16px',
                     }}
                   >
@@ -372,7 +372,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
               <div style={{
                 background: 'var(--accent-bg)',
                 border: '1px solid var(--accent-border)',
-                borderRadius: '10px',
+                borderRadius: '14px',
                 padding: '16px 18px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -551,7 +551,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             padding: '14px',
                             background: 'var(--bg-card-hover)',
                             border: '1px solid var(--border)',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'border-color 0.1s',
                           }}
@@ -600,7 +600,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {internalNotes.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>
+                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '14px' }}>
                     No internal notes yet.
                   </div>
                 ) : internalNotes.map(note => (
@@ -608,14 +608,14 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                     background: 'var(--bg-elevated)',
                     border: '1px solid var(--border)',
                     borderLeft: `3px solid ${note.priority === 'high' ? 'var(--red)' : note.priority === 'low' ? 'var(--border)' : 'var(--accent)'}`,
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     padding: '14px 16px',
                     boxShadow: 'var(--shadow-card)',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
-                          width: '26px', height: '26px', borderRadius: '6px',
+                          width: '26px', height: '26px', borderRadius: '10px',
                           background: 'var(--accent-bg)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '11px', fontWeight: '700', color: 'var(--accent)',
@@ -647,7 +647,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           {activeTab === 'audit' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {auditLogs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '10px' }}>
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-faint)', fontSize: '13px', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '14px' }}>
                   No audit logs for this student.
                 </div>
               ) : auditLogs.map(log => (
@@ -655,7 +655,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                   display: 'flex', alignItems: 'center', gap: '12px',
                   background: 'var(--bg-elevated)',
                   border: '1px solid var(--border)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   padding: '12px 14px',
                   boxShadow: 'var(--shadow-card)',
                 }}>

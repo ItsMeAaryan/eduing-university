@@ -29,8 +29,8 @@ import { useToast } from '@/components/Toast'
 
 // Indian Reservation Categories
 const DEFAULT_CATEGORIES = [
-  { id: 'general', name: 'General (Open)', defaultPct: 40, color: '#0075DE' },
-  { id: 'obc', name: 'OBC (Other Backward Classes)', defaultPct: 27, color: '#7C3AED' },
+  { id: 'general', name: 'General (Open)', defaultPct: 40, color: 'var(--accent)' },
+  { id: 'obc', name: 'OBC (Other Backward Classes)', defaultPct: 27, color: 'var(--accent-2)' },
   { id: 'sc', name: 'SC (Scheduled Caste)', defaultPct: 15, color: '#DB2777' },
   { id: 'st', name: 'ST (Scheduled Tribe)', defaultPct: 7.5, color: '#EA580C' },
   { id: 'ews', name: 'EWS (Economically Weaker Section)', defaultPct: 10.5, color: '#1AAE39' },
@@ -312,7 +312,7 @@ export default function SeatAllocationPage() {
           </div>
           <Link
             href="/programs"
-            className="inline-flex items-center gap-2 bg-brand-accent text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg hover:bg-brand-accent/90 transition-all"
+            className="inline-flex items-center gap-2 bg-brand-accent text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg hover:bg-brand-accent/90 transition-all"
           >
             <Plus size={16} /> Go to Programs Page <ArrowRight size={14} />
           </Link>
@@ -342,7 +342,7 @@ export default function SeatAllocationPage() {
             id="select-program"
             value={selectedProgramId}
             onChange={(e) => setSelectedProgramId(e.target.value)}
-            className="input-dark text-xs p-2.5 rounded-xl border border-brand-border bg-brand-surface text-text-primary min-w-[220px]"
+            className="input-dark text-xs p-2.5 rounded-2xl border border-brand-border bg-brand-surface text-text-primary min-w-[220px]"
           >
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
@@ -387,7 +387,7 @@ export default function SeatAllocationPage() {
                     min={1}
                     value={totalSeats}
                     onChange={(e) => setTotalSeats(parseInt(e.target.value) || 1)}
-                    className="input-dark text-sm font-bold p-2 w-28 rounded-xl border border-brand-border bg-brand-bg text-text-primary"
+                    className="input-dark text-sm font-bold p-2 w-28 rounded-2xl border border-brand-border bg-brand-bg text-text-primary"
                   />
                 </div>
 
@@ -402,7 +402,7 @@ export default function SeatAllocationPage() {
                     max={20}
                     value={pwdQuotaPct}
                     onChange={(e) => setPwdQuotaPct(parseFloat(e.target.value) || 0)}
-                    className="input-dark text-sm font-bold p-2 w-28 rounded-xl border border-brand-border bg-brand-bg text-text-primary"
+                    className="input-dark text-sm font-bold p-2 w-28 rounded-2xl border border-brand-border bg-brand-bg text-text-primary"
                   />
                 </div>
               </div>
@@ -411,7 +411,7 @@ export default function SeatAllocationPage() {
                 type="button"
                 onClick={handleUpdateAllocation}
                 disabled={!isValid100Pct || saving}
-                className="bg-brand-accent text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md hover:bg-brand-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="bg-brand-accent text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-md hover:bg-brand-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 <span>Update Allocation</span>
@@ -541,7 +541,7 @@ export default function SeatAllocationPage() {
             placeholder="Search student name or email to allot seat..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-dark pl-9 py-2 text-xs rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+            className="input-dark pl-9 py-2 text-xs rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
           />
         </div>
 
@@ -549,7 +549,7 @@ export default function SeatAllocationPage() {
           {filteredApps.map((app) => (
             <div
               key={app.id}
-              className="p-4 rounded-xl border border-brand-border bg-brand-bg/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-4 rounded-2xl border border-brand-border bg-brand-bg/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div>
                 <div className="flex items-center gap-2">
@@ -564,14 +564,14 @@ export default function SeatAllocationPage() {
               </div>
 
               {app.status === 'selected' || app.status === 'allotted' ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-xl">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-2xl">
                   <CheckCircle2 size={14} /> Seat Allotted
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={() => handleAllotSeat(app)}
-                  className="bg-brand-accent text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs"
+                  className="bg-brand-accent text-white text-xs font-bold px-4 py-2 rounded-2xl hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs"
                 >
                   <Award size={14} /> Allot Seat
                 </button>
@@ -584,7 +584,7 @@ export default function SeatAllocationPage() {
           )}
 
           {!searchTerm && (
-            <div className="py-6 text-center text-text-muted text-xs border border-dashed border-brand-border rounded-xl">
+            <div className="py-6 text-center text-text-muted text-xs border border-dashed border-brand-border rounded-2xl">
               Type applicant name in search bar above to manually allot seats.
             </div>
           )}

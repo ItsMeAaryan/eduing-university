@@ -108,7 +108,7 @@ export default function Navbar() {
           <div style={{
             width: '28px',
             height: '28px',
-            borderRadius: '6px',
+            borderRadius: '10px',
             background: 'var(--accent)',
             display: 'flex',
             alignItems: 'center',

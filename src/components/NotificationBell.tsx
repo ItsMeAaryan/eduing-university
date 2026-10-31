@@ -102,7 +102,7 @@ export default function NotificationBell() {
                 maxHeight: '480px',
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border)',
-                borderRadius: '16px',
+                borderRadius: '22px',
                 boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
                 zIndex: 50,
                 overflow: 'hidden',
@@ -162,7 +162,7 @@ export default function NotificationBell() {
                       ? 'rgba(22,163,74,0.10)'
                       : n.type === 'rejected'
                       ? 'rgba(220,38,38,0.10)'
-                      : 'rgba(99,102,241,0.10)'
+                      : 'rgb(var(--accent-rgb) / 0.10)'
                     const iconColor = n.type === 'selected'
                       ? 'var(--green)'
                       : n.type === 'rejected'
@@ -181,12 +181,12 @@ export default function NotificationBell() {
                           cursor: 'pointer',
                           display: 'flex',
                           gap: '12px',
-                          background: !n.isRead ? 'rgba(99,102,241,0.04)' : 'transparent',
+                          background: !n.isRead ? 'rgb(var(--accent-rgb) / 0.04)' : 'transparent',
                           border: 'none',
                           transition: 'background 0.15s',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = !n.isRead ? 'rgba(99,102,241,0.04)' : 'transparent' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = !n.isRead ? 'rgb(var(--accent-rgb) / 0.04)' : 'transparent' }}
                       >
                         <div style={{
                           width: '32px', height: '32px',

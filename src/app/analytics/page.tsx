@@ -44,21 +44,21 @@ function AIInsightsPanel({ kpis }: { kpis: any }) {
   const getTypeIcon = (type: string) => {
     if (type === 'warning') return <AlertTriangle size={15} color="#D97706" />
     if (type === 'success') return <CheckCircle2 size={15} color="#1AAE39" />
-    return <Lightbulb size={15} color="#0075DE" />
+    return <Lightbulb size={15} color="var(--accent)" />
   }
 
   const getPriorityStyle = (priority: string) => {
     if (priority === 'high') return { bg: 'rgba(220,38,38,0.15)', color: '#DC2626', border: 'rgba(220,38,38,0.3)' }
     if (priority === 'medium') return { bg: 'rgba(217,119,6,0.15)', color: '#D97706', border: 'rgba(217,119,6,0.3)' }
-    return { bg: 'rgba(0,117,222,0.15)', color: '#0075DE', border: 'rgba(0,117,222,0.3)' }
+    return { bg: 'rgb(var(--accent-rgb) / 0.15)', color: 'var(--accent)', border: 'rgb(var(--accent-rgb) / 0.3)' }
   }
 
   return (
-    <div style={{ marginTop: '20px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+    <div style={{ marginTop: '20px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={15} color="#6366F1" />
+          <div style={{ width: '28px', height: '28px', borderRadius: '12px', background: 'rgb(var(--accent-rgb) / 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={15} color="var(--accent)" />
           </div>
           <div>
             <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>AI Admissions Insights</h3>
@@ -75,7 +75,7 @@ function AIInsightsPanel({ kpis }: { kpis: any }) {
             padding: '7px 14px',
             fontSize: '12px',
             fontWeight: '600',
-            borderRadius: '8px',
+            borderRadius: '12px',
             background: 'var(--accent)',
             color: '#fff',
             border: 'none',
@@ -103,7 +103,7 @@ function AIInsightsPanel({ kpis }: { kpis: any }) {
                   style={{
                     background: 'var(--bg-card-hover)',
                     border: '1px solid var(--border)',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
@@ -160,7 +160,7 @@ function KPICard({ title, value, icon: Icon, sub, accent }: {
     <div style={{
       background: 'var(--bg-elevated)',
       border: '1px solid var(--border)',
-      borderRadius: '10px',
+      borderRadius: '14px',
       padding: '18px 20px',
       boxShadow: 'var(--shadow-card)',
     }}>
@@ -168,7 +168,7 @@ function KPICard({ title, value, icon: Icon, sub, accent }: {
         <span style={{ fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
           {title}
         </span>
-        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: `${accent}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: `color-mix(in srgb, ${accent} 7%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={14} color={accent} />
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function ExecutiveDashboard() {
         <div style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: '8px',
+          borderRadius: '12px',
           padding: '10px 14px',
           marginBottom: '16px',
           fontSize: '13px',
@@ -275,7 +275,7 @@ export default function ExecutiveDashboard() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-        <KPICard title="Total Applications" value={kpis.totalReceived} icon={Users} sub="All time" accent="#0075DE" />
+        <KPICard title="Total Applications" value={kpis.totalReceived} icon={Users} sub="All time" accent="var(--accent)" />
         <KPICard title="Conversion Rate" value={`${kpis.enrollmentRate}%`} icon={TrendingUp} sub="Enrolled / offers" accent="#1AAE39" />
         <KPICard title="Revenue Collected" value={formatCurrency(kpis.revenueCollected)} icon={Wallet} sub={`${formatCurrency(kpis.pendingRevenue)} pending`} accent="#1AAE39" />
         <KPICard title="Pending Actions" value={kpis.underReview + kpis.docsPending} icon={FileCheck} sub="Needs staff review" accent="#D97706" />
@@ -285,7 +285,7 @@ export default function ExecutiveDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '16px' }}>
 
         {/* Activity trend */}
-        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
               Activity Trend — 30 days
@@ -303,7 +303,7 @@ export default function ExecutiveDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} dy={8} />
                 <YAxis stroke={axisStroke} fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px' }} />
                 <Area type="monotone" dataKey="actions" stroke="var(--accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorActions)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -311,7 +311,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Pipeline funnel */}
-        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
               Admissions Pipeline

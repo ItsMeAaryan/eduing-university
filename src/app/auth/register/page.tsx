@@ -120,19 +120,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-brand-bg dark:bg-brand-dark py-20">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[var(--bg)] py-20">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-4xl"
       >
-        <div className="bg-white dark:bg-[#16161E] rounded-3xl shadow-soft p-8 md:p-12 border border-zinc-100 dark:border-zinc-800">
+        <div className="bg-[var(--bg-card)] rounded-3xl shadow-soft p-8 md:p-12 border border-[var(--border)]">
           <div className="flex flex-col items-center mb-12 text-center">
             <div className="w-20 h-20 bg-brand-gold rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-amber-500/20">
               <Building2 className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-brand-dark dark:text-white font-outfit tracking-tight">University Registration</h1>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-3 text-lg font-medium">Join the EDUING platform to reach thousands of students</p>
+            <h1 className="text-4xl font-bold text-brand-dark font-outfit tracking-tight">University Registration</h1>
+            <p className="text-[var(--text-muted)] mt-3 text-lg font-medium">Join the EDUING platform to reach thousands of students</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-10">
@@ -143,20 +143,20 @@ export default function RegisterPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="reg-email" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Work Email</label>
+                  <label htmlFor="reg-email" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Work Email</label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-email" name="email" type="email" required value={formData.email} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="admin@university.edu" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-password" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Password</label>
+                  <label htmlFor="reg-password" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-password" name="password" type="password" required value={formData.password} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="••••••••" />
                   </div>
                 </div>
@@ -170,56 +170,56 @@ export default function RegisterPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="reg-adminName" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Admin Name</label>
+                  <label htmlFor="reg-adminName" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Admin Name</label>
                   <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-adminName" name="adminName" type="text" required value={formData.adminName} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="John Doe" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-universityName" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">University Name</label>
+                  <label htmlFor="reg-universityName" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">University Name</label>
                   <div className="relative group">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-universityName" name="universityName" type="text" required value={formData.universityName} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="Example State University" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-state" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">State</label>
+                  <label htmlFor="reg-state" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">State</label>
                   <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-state" name="state" type="text" required value={formData.state} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="Maharashtra" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-city" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">City</label>
+                  <label htmlFor="reg-city" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">City</label>
                   <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-city" name="city" type="text" required value={formData.city} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="Mumbai" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-phone" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Phone Number</label>
+                  <label htmlFor="reg-phone" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Phone Number</label>
                   <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-phone" name="phone" type="tel" required value={formData.phone} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="+91 98765 43210" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-website" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Website</label>
+                  <label htmlFor="reg-website" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Website</label>
                   <div className="relative group">
-                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-faint)]" />
                     <input id="reg-website" name="website" type="url" required value={formData.website} onChange={handleChange}
-                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                      className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-brand-gold outline-none "
                       placeholder="https://university.edu" />
                   </div>
                 </div>
@@ -233,55 +233,55 @@ export default function RegisterPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="reg-type" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Type</label>
+                  <label htmlFor="reg-type" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Type</label>
                   <select id="reg-type" name="type" value={formData.type} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white">
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none ">
                     <option value="Private">Private</option>
                     <option value="Public">Public</option>
                     <option value="Deemed">Deemed</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-established" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Established</label>
+                  <label htmlFor="reg-established" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Established</label>
                   <input id="reg-established" name="established" type="number" value={formData.established} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="2000" />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-accreditation" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Accreditation</label>
+                  <label htmlFor="reg-accreditation" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Accreditation</label>
                   <input id="reg-accreditation" name="accreditation" type="text" value={formData.accreditation} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="NAAC A+" />
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="reg-description" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Description</label>
+                <label htmlFor="reg-description" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Description</label>
                 <textarea id="reg-description" name="description" rows={3} value={formData.description} onChange={handleChange}
-                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                  className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                   placeholder="About your university..." />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="reg-totalStudents" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Total Students</label>
+                  <label htmlFor="reg-totalStudents" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Total Students</label>
                   <input id="reg-totalStudents" name="totalStudents" type="number" value={formData.totalStudents} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white" />
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none " />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-campusSize" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Campus Size</label>
+                  <label htmlFor="reg-campusSize" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Campus Size</label>
                   <input id="reg-campusSize" name="campusSize" type="text" value={formData.campusSize} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="100 Acres" />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-alumniCount" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Alumni Count</label>
+                  <label htmlFor="reg-alumniCount" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Alumni Count</label>
                   <input id="reg-alumniCount" name="alumniCount" type="number" value={formData.alumniCount} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white" />
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none " />
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="reg-facilities" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Facilities (Comma separated)</label>
+                <label htmlFor="reg-facilities" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Facilities (Comma separated)</label>
                 <input id="reg-facilities" name="facilities" type="text" value={formData.facilities} onChange={handleChange}
-                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                  className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                   placeholder="Library, WiFi, Labs, Sports..." />
               </div>
             </div>
@@ -293,28 +293,28 @@ export default function RegisterPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="reg-placementRate" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Placement Rate (%)</label>
+                  <label htmlFor="reg-placementRate" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Placement Rate (%)</label>
                   <input id="reg-placementRate" name="placementRate" type="text" value={formData.placementRate} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="95%" />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-averageSalary" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Avg Salary</label>
+                  <label htmlFor="reg-averageSalary" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Avg Salary</label>
                   <input id="reg-averageSalary" name="averageSalary" type="text" value={formData.averageSalary} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="6.5 LPA" />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="reg-highestSalary" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Highest Salary</label>
+                  <label htmlFor="reg-highestSalary" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Highest Salary</label>
                   <input id="reg-highestSalary" name="highestSalary" type="text" value={formData.highestSalary} onChange={handleChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                     placeholder="45 LPA" />
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="reg-topRecruiters" className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Top Recruiters (Comma separated)</label>
+                <label htmlFor="reg-topRecruiters" className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider ml-1">Top Recruiters (Comma separated)</label>
                 <input id="reg-topRecruiters" name="topRecruiters" type="text" value={formData.topRecruiters} onChange={handleChange}
-                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none dark:text-white"
+                  className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-brand-gold outline-none "
                   placeholder="Google, Microsoft, Amazon..." />
               </div>
             </div>
@@ -335,8 +335,8 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-12 text-center border-t border-zinc-100 dark:border-zinc-800 pt-10">
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+          <div className="mt-12 text-center border-t border-[var(--border)] pt-10">
+            <p className="text-[var(--text-muted)] font-medium">
               Already registered?{' '}
               <Link href="/auth/login" className="text-brand-gold font-bold hover:underline">
                 Login here

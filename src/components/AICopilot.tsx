@@ -196,7 +196,7 @@ export default function AICopilot() {
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-primary/20 flex items-center justify-center text-brand-primary">
+                  <div className="w-10 h-10 rounded-2xl bg-brand-primary/20 flex items-center justify-center text-brand-primary">
                     <Bot size={24} />
                   </div>
                   <div>
@@ -257,7 +257,7 @@ export default function AICopilot() {
                       <button
                         key={prompt}
                         onClick={() => handleSend(prompt)}
-                        className="text-left text-xs text-text-muted border border-white/10 rounded-xl px-3 py-2.5 hover:bg-white/5 hover:text-white transition-colors"
+                        className="text-left text-xs text-text-muted border border-white/10 rounded-2xl px-3 py-2.5 hover:bg-white/5 hover:text-white transition-colors"
                       >
                         {prompt}
                       </button>
@@ -277,13 +277,13 @@ export default function AICopilot() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
                     placeholder="Ask about your admissions pipeline..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
                   />
                   <button
                     onClick={() => handleSend()}
                     disabled={!input.trim() || isTyping}
                     aria-label="Send message to AI Copilot"
-                    className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-brand-primary/90"
+                    className="w-12 h-12 bg-brand-primary rounded-2xl flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-brand-primary/90"
                   >
                     <Send size={18} aria-hidden="true" />
                   </button>
