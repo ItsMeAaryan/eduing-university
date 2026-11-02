@@ -37,6 +37,10 @@ const STAGE: Record<string, { label: string; color: string; bg: string; border: 
   payment_verified:  { label: 'Payment Verified', color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
   enrolled:          { label: 'Enrolled',         color: '#10B981', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.22)'  },
   rejected:          { label: 'Rejected',         color: '#DC2626', bg: 'rgba(220,38,38,0.10)',   border: 'rgba(220,38,38,0.22)'   },
+  allotted:          { label: 'Seat Allotted',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.22)'   },
+  waitlisted:        { label: 'Waitlisted',       color: '#D97706', bg: 'rgba(217,119,6,0.10)',   border: 'rgba(217,119,6,0.20)'   },
+  withdrawn:         { label: 'Withdrawn',        color: '#8C8C85', bg: 'rgba(140,140,133,0.10)', border: 'rgba(140,140,133,0.22)'   },
+  offer_declined:    { label: 'Offer Declined',   color: '#8C8C85', bg: 'rgba(140,140,133,0.10)', border: 'rgba(140,140,133,0.22)'   },
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -329,6 +333,10 @@ export default function StudentsDirectoryPage() {
             <option value="fee_paid">Fee Paid</option>
             <option value="payment_verified">Payment Verified</option>
             <option value="enrolled">Enrolled</option>
+            <option value="waitlisted">Waitlisted</option>
+            <option value="rejected">Rejected</option>
+            <option value="withdrawn">Withdrawn</option>
+            <option value="offer_declined">Offer Declined</option>
           </select>
 
           {/* Ask AI toggle button */}

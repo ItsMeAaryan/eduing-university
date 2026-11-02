@@ -52,11 +52,13 @@ export default function FinancialAnalytics() {
     const months: Record<string, number> = {}
     apps.forEach(app => {
       if (app.paymentDetails) {
-        const amount = Number(app.paymentDetails.amount) || 0
+        // student portal writes amountPaid / paidOn; older records used amount / date
+        const amount = Number(app.paymentDetails.amount ?? app.paymentDetails.amountPaid) || 0
+        const paidDate = app.paymentDetails.date ?? app.paymentDetails.paidOn ?? app.paymentDetails.submittedAt
         if (app.paymentDetails.status === 'verified') {
           collected += amount
-          if (app.paymentDetails.date) {
-            const m = new Date(app.paymentDetails.date).toLocaleString('default', { month: 'short', year: '2-digit' })
+          if (paidDate) {
+            const m = new Date(paidDate).toLocaleString('default', { month: 'short', year: '2-digit' })
             months[m] = (months[m] || 0) + amount
           }
         } else {
