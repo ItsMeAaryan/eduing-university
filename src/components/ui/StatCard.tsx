@@ -15,7 +15,7 @@ interface StatCardProps {
 }
 
 const valueColors = {
-  indigo: 'text-[#818CF8]',
+  indigo: 'text-[var(--accent-2)]',
   gold: 'text-[#FCD34D]',
   emerald: 'text-[#4ADE80]',
   rose: 'text-[#FCA5A5]',
@@ -31,7 +31,7 @@ const glowColors = {
 }
 
 const iconBg = {
-  indigo: 'rgba(99,102,241,0.10)',
+  indigo: 'rgb(var(--accent-rgb) / 0.10)',
   gold: 'rgba(245,158,11,0.10)',
   emerald: 'rgba(16,185,129,0.10)',
   rose: 'rgba(239,68,68,0.10)',

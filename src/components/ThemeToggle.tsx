@@ -105,7 +105,7 @@ export default function ThemeToggle() {
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: '0 12px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.06)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.18), 0 0 0 1px rgb(var(--accent-rgb) / 0.06)',
                 zIndex: 50,
                 padding: '6px',
                 overflow: 'hidden',
@@ -138,8 +138,8 @@ export default function ThemeToggle() {
                       gap: '10px',
                       padding: '9px 10px',
                       borderRadius: 'var(--radius-sm)',
-                      background: isActive ? 'rgba(99,102,241,0.10)' : 'transparent',
-                      border: isActive ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
+                      background: isActive ? 'rgb(var(--accent-rgb) / 0.10)' : 'transparent',
+                      border: isActive ? '1px solid rgb(var(--accent-rgb) / 0.25)' : '1px solid transparent',
                       color: isActive ? 'var(--indigo-light)' : 'var(--text-secondary)',
                       fontSize: '13px',
                       fontWeight: isActive ? '600' : '400',
@@ -148,7 +148,7 @@ export default function ThemeToggle() {
                       transition: 'all 0.15s',
                     }}
                     onMouseEnter={e => {
-                      if (!isActive) e.currentTarget.style.background = 'rgba(99,102,241,0.06)'
+                      if (!isActive) e.currentTarget.style.background = 'rgb(var(--accent-rgb) / 0.06)'
                     }}
                     onMouseLeave={e => {
                       if (!isActive) e.currentTarget.style.background = 'transparent'

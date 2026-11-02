@@ -28,9 +28,9 @@ interface StudentRisk {
 // ─── Stage badge config ────────────────────────────────────────────────────────
 // Colors are applied via inline style so we have precise control per requirement
 const STAGE: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  submitted:         { label: 'Applicant',        color: '#0075DE', bg: 'rgba(0,117,222,0.10)',   border: 'rgba(0,117,222,0.22)'   },
+  submitted:         { label: 'Applicant',        color: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / 0.10)',   border: 'rgb(var(--accent-rgb) / 0.22)'   },
   under_review:      { label: 'In Review',        color: '#D97706', bg: 'rgba(217,119,6,0.10)',   border: 'rgba(217,119,6,0.22)'   },
-  docs_verified:     { label: 'Docs Verified',    color: '#0075DE', bg: 'rgba(0,117,222,0.10)',   border: 'rgba(0,117,222,0.20)'   },
+  docs_verified:     { label: 'Docs Verified',    color: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / 0.10)',   border: 'rgb(var(--accent-rgb) / 0.20)'   },
   selected:          { label: 'Selected',         color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.22)'   },
   seat_accepted:     { label: 'Seat Accepted',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
   fee_paid:          { label: 'Fee Paid',         color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',   border: 'rgba(26,174,57,0.20)'   },
@@ -170,7 +170,7 @@ export default function StudentsDirectoryPage() {
   const inputBase: React.CSSProperties = {
     height: inputH,
     border: '1px solid var(--border)',
-    borderRadius: '8px',
+    borderRadius: '12px',
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     fontSize: '13px',
@@ -283,7 +283,7 @@ export default function StudentsDirectoryPage() {
                 paddingLeft: '30px',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,117,222,0.12)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgb(var(--accent-rgb) / 0.12)' }}
               onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
@@ -397,7 +397,7 @@ export default function StudentsDirectoryPage() {
                   padding: '10px 14px',
                   background: 'var(--accent-bg)',
                   border: '1px solid var(--accent-border)',
-                  borderRadius: '10px',
+                  borderRadius: '14px',
                 }}
               >
                 <Bot size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '10px' }} />
@@ -457,7 +457,7 @@ export default function StudentsDirectoryPage() {
           style={{
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
-            borderRadius: '12px',
+            borderRadius: '18px',
             overflow: 'hidden',
             boxShadow: 'var(--shadow-card)',
           }}
@@ -771,7 +771,7 @@ export default function StudentsDirectoryPage() {
                             color: stage.color,
                             background: stage.bg,
                             border: `1px solid ${stage.border}`,
-                            borderRadius: '6px',
+                            borderRadius: '10px',
                             padding: '3px 9px',
                             whiteSpace: 'nowrap',
                           }}
@@ -849,7 +849,7 @@ export default function StudentsDirectoryPage() {
                   width: '100%', maxWidth: '400px',
                   background: 'var(--bg-elevated)',
                   border: '1px solid var(--border)',
-                  borderRadius: '12px',
+                  borderRadius: '18px',
                   boxShadow: 'var(--shadow-dropdown)',
                   zIndex: 51,
                   padding: '20px',

@@ -169,7 +169,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary transition-all"
+            className="p-2 rounded-2xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary transition-all"
             aria-label="Close panel"
           >
             <X size={18} />
@@ -189,7 +189,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. B.Tech Computer Science & Engineering"
-              className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             />
           </div>
 
@@ -203,7 +203,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 id="prog-level"
                 value={formData.level}
                 onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               >
                 {DEGREE_LEVELS.map((lvl) => (
                   <option key={lvl} value={lvl}>
@@ -221,7 +221,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 id="prog-mode"
                 value={formData.mode}
                 onChange={(e) => setFormData({ ...formData, mode: e.target.value })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               >
                 {MODES.map((m) => (
                   <option key={m} value={m}>
@@ -245,7 +245,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 value={formData.duration}
                 onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                 placeholder="e.g. 4 Years"
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
 
@@ -261,7 +261,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 value={formData.annualFeeLpa}
                 onChange={(e) => setFormData({ ...formData, annualFeeLpa: parseFloat(e.target.value) || 0 })}
                 placeholder="e.g. 1.5"
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 min={1}
                 value={formData.totalSeats}
                 onChange={(e) => setFormData({ ...formData, totalSeats: parseInt(e.target.value) || 0 })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
 
@@ -294,7 +294,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 max={100}
                 value={formData.minPercentage}
                 onChange={(e) => setFormData({ ...formData, minPercentage: parseInt(e.target.value) || 0 })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
           </div>
@@ -310,7 +310,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
               value={formData.eligibility}
               onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
               placeholder="e.g. Pass in 10+2 with minimum 60% aggregate in Physics, Chemistry & Mathematics..."
-              className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full resize-none"
+              className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full resize-none"
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                     type="button"
                     key={exam}
                     onClick={() => toggleEntranceExam(exam)}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
                       isSelected
                         ? 'bg-brand-accent text-white border-brand-accent shadow-xs'
                         : 'bg-white/5 border-white/10 text-text-secondary hover:border-white/20'
@@ -352,7 +352,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 type="date"
                 value={formData.openDate}
                 onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
 
@@ -365,7 +365,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
                 type="date"
                 value={formData.closeDate}
                 onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
-                className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+                className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
               />
             </div>
           </div>
@@ -379,7 +379,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
               id="prog-status"
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="input-dark text-sm p-3 rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark text-sm p-3 rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             >
               {STATUS_OPTIONS.map((st) => (
                 <option key={st} value={st}>
@@ -394,7 +394,7 @@ export default function ProgramPanel({ program, onClose }: ProgramPanelProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-brand-accent text-white rounded-xl font-bold hover:bg-brand-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+              className="w-full py-3.5 bg-brand-accent text-white rounded-2xl font-bold hover:bg-brand-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
             >
               {loading ? (
                 <Clock className="animate-spin" size={18} />

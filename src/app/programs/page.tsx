@@ -172,7 +172,7 @@ export default function ProgramsPage() {
             setEditingProgram(null)
             setIsPanelOpen(true)
           }}
-          className="bg-brand-accent text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-brand-accent/90 transition-all shrink-0"
+          className="bg-brand-accent text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-brand-accent/90 transition-all shrink-0"
         >
           <Plus size={16} /> Add Program
         </button>
@@ -189,7 +189,7 @@ export default function ProgramsPage() {
               placeholder="Search programs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-dark pl-9 py-2 text-xs rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark pl-9 py-2 text-xs rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function ProgramsPage() {
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
-              className="input-dark py-2 text-xs rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark py-2 text-xs rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             >
               <option value="All">All Degree Levels</option>
               {DEGREE_LEVELS.filter((l) => l !== 'All').map((l) => (
@@ -214,7 +214,7 @@ export default function ProgramsPage() {
             <select
               value={modeFilter}
               onChange={(e) => setModeFilter(e.target.value)}
-              className="input-dark py-2 text-xs rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark py-2 text-xs rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             >
               <option value="All">All Modes</option>
               {MODES.filter((m) => m !== 'All').map((m) => (
@@ -230,7 +230,7 @@ export default function ProgramsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="input-dark py-2 text-xs rounded-xl border border-brand-border bg-brand-bg text-text-primary w-full"
+              className="input-dark py-2 text-xs rounded-2xl border border-brand-border bg-brand-bg text-text-primary w-full"
             >
               <option value="All">All Statuses</option>
               {STATUSES.filter((s) => s !== 'All').map((s) => (
@@ -266,7 +266,7 @@ export default function ProgramsPage() {
               setEditingProgram(null)
               setIsPanelOpen(true)
             }}
-            className="bg-brand-accent text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md hover:bg-brand-accent/90 transition-all"
+            className="bg-brand-accent text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-md hover:bg-brand-accent/90 transition-all"
           >
             <Plus size={15} /> Add your first program
           </button>
@@ -363,7 +363,7 @@ export default function ProgramsPage() {
                       setEditingProgram(p)
                       setIsPanelOpen(true)
                     }}
-                    className="flex-1 btn-secondary text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5 border border-brand-border hover:border-brand-accent hover:text-brand-accent transition-all"
+                    className="flex-1 btn-secondary text-xs font-semibold py-2 rounded-2xl flex items-center justify-center gap-1.5 border border-brand-border hover:border-brand-accent hover:text-brand-accent transition-all"
                   >
                     <Edit3 size={14} />
                     <span>Edit</span>
@@ -372,7 +372,7 @@ export default function ProgramsPage() {
                   <button
                     type="button"
                     onClick={() => router.push(`/applications?program=${p.id}`)}
-                    className="flex-1 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-brand-accent/20"
+                    className="flex-1 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-semibold py-2 rounded-2xl flex items-center justify-center gap-1.5 transition-colors border border-brand-accent/20"
                   >
                     <span>Applications</span>
                     <ArrowRight size={13} />
@@ -381,7 +381,7 @@ export default function ProgramsPage() {
                   <button
                     type="button"
                     onClick={() => setDeleteConfirm(p.id)}
-                    className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                    className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-colors"
                     title="Delete program"
                   >
                     <Trash2 size={14} />
@@ -436,14 +436,14 @@ export default function ProgramsPage() {
                 <button
                   type="button"
                   onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 btn-secondary text-xs font-semibold py-2 rounded-xl border border-brand-border"
+                  className="flex-1 btn-secondary text-xs font-semibold py-2 rounded-2xl border border-brand-border"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-xl shadow-md transition-colors"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-2xl shadow-md transition-colors"
                 >
                   Delete
                 </button>

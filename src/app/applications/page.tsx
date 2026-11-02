@@ -27,9 +27,9 @@ interface ShortlistResult {
 
 // ─── Status config — color-coded matching Students page ────────────────────────
 const STATUS: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  submitted:        { label: 'Submitted',   color: '#0075DE', bg: 'rgba(0,117,222,0.10)',  border: 'rgba(0,117,222,0.22)'  },
+  submitted:        { label: 'Submitted',   color: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / 0.10)',  border: 'rgb(var(--accent-rgb) / 0.22)'  },
   under_review:     { label: 'In Review',   color: '#D97706', bg: 'rgba(217,119,6,0.10)',  border: 'rgba(217,119,6,0.22)'  },
-  docs_verified:    { label: 'Docs OK',     color: '#0075DE', bg: 'rgba(0,117,222,0.10)',  border: 'rgba(0,117,222,0.20)'  },
+  docs_verified:    { label: 'Docs OK',     color: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / 0.10)',  border: 'rgb(var(--accent-rgb) / 0.20)'  },
   selected:         { label: 'Selected',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.22)'  },
   seat_accepted:    { label: 'Seat Acc.',   color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.20)'  },
   fee_paid:         { label: 'Fee Paid',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.20)'  },
@@ -49,7 +49,7 @@ function StatusBadge({ status }: { status: string }) {
         display: 'inline-flex', alignItems: 'center', gap: '5px',
         fontSize: '11.5px', fontWeight: '600',
         color: s.color, background: s.bg, border: `1px solid ${s.border}`,
-        borderRadius: '6px', padding: '3px 9px', whiteSpace: 'nowrap',
+        borderRadius: '10px', padding: '3px 9px', whiteSpace: 'nowrap',
       }}
     >
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
@@ -115,7 +115,7 @@ function RowActions({
         onClick={() => setOpen(v => !v)}
         style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          color: 'var(--text-faint)', padding: '5px 7px', borderRadius: '6px',
+          color: 'var(--text-faint)', padding: '5px 7px', borderRadius: '10px',
           display: 'flex', alignItems: 'center', transition: 'background 0.1s, color 0.1s',
         }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
@@ -137,7 +137,7 @@ function RowActions({
             style={{
               position: 'absolute', right: 0, top: 'calc(100% + 4px)',
               width: '200px', background: 'var(--bg-elevated)',
-              border: '1px solid var(--border)', borderRadius: '10px',
+              border: '1px solid var(--border)', borderRadius: '14px',
               boxShadow: 'var(--shadow-dropdown)', zIndex: 30,
               overflow: 'hidden', padding: '4px',
             }}
@@ -362,7 +362,7 @@ export default function ApplicationsPage() {
   const inputBase: React.CSSProperties = {
     height: '38px',
     border: '1px solid var(--border)',
-    borderRadius: '8px',
+    borderRadius: '12px',
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     fontSize: '13px',
@@ -396,7 +396,7 @@ export default function ApplicationsPage() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ ...inputBase, width: '100%', paddingLeft: '30px', boxSizing: 'border-box' }}
-            onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,117,222,0.12)' }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgb(var(--accent-rgb) / 0.12)' }}
             onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
           />
         </div>
@@ -497,7 +497,7 @@ export default function ApplicationsPage() {
         style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: '12px',
+          borderRadius: '18px',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-card)',
         }}
@@ -665,7 +665,7 @@ export default function ApplicationsPage() {
                                 fontSize: '11px',
                                 fontWeight: '700',
                                 padding: '2px 7px',
-                                borderRadius: '6px',
+                                borderRadius: '10px',
                                 cursor: 'help',
                                 background:
                                   shortlistResults[app.id].flag === 'strong'
@@ -756,7 +756,7 @@ export default function ApplicationsPage() {
               zIndex: 40,
               background: 'var(--bg-elevated)',
               border: '1px solid var(--border)',
-              borderRadius: '12px',
+              borderRadius: '18px',
               boxShadow: 'var(--shadow-dropdown)',
               padding: '10px 16px',
               display: 'flex',
@@ -771,7 +771,7 @@ export default function ApplicationsPage() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 background: 'var(--accent-bg)', border: '1px solid var(--accent-border)',
-                borderRadius: '8px', padding: '5px 11px',
+                borderRadius: '12px', padding: '5px 11px',
               }}
             >
               <Users size={13} style={{ color: 'var(--accent)' }} />
@@ -802,8 +802,8 @@ export default function ApplicationsPage() {
                     transition: 'background 0.1s, border-color 0.1s',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background = `${opt.color}12`
-                    e.currentTarget.style.borderColor = `${opt.color}30`
+                    e.currentTarget.style.background = `color-mix(in srgb, ${opt.color} 7%, transparent)`
+                    e.currentTarget.style.borderColor = `color-mix(in srgb, ${opt.color} 19%, transparent)`
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.background = 'none'
@@ -877,7 +877,7 @@ export default function ApplicationsPage() {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 color: 'var(--text-faint)', display: 'flex', padding: '5px',
-                borderRadius: '6px', transition: 'background 0.1s, color 0.1s',
+                borderRadius: '10px', transition: 'background 0.1s, color 0.1s',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-faint)' }}

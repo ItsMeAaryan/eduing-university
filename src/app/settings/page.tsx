@@ -62,7 +62,7 @@ const ALL_DOCUMENTS = [
   'Entrance Exam Scorecard'
 ]
 
-const COLOR_PRESETS = ['#0075DE', '#1AAE39', '#7C3AED', '#DB2777', '#EA580C', '#0284C7', '#4F46E5']
+const COLOR_PRESETS = ['var(--accent)', '#1AAE39', 'var(--accent-2)', '#DB2777', '#EA580C', '#0284C7', 'var(--accent)']
 
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -74,9 +74,9 @@ function Section({ icon: Icon, iconColor, title, subtitle, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '18px', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `${iconColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${iconColor}20` }}>
+        <div style={{ width: '34px', height: '34px', borderRadius: '12px', background: `color-mix(in srgb, ${iconColor} 8%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid color-mix(in srgb, ${iconColor} 13%, transparent)` }}>
           <Icon size={16} color={iconColor} />
         </div>
         <div>
@@ -155,7 +155,7 @@ export default function SettingsPage() {
 
     // Portal Branding
     logoURL: '',
-    portalAccentColor: '#0075DE',
+    portalAccentColor: 'var(--accent)',
     customStudentBanner: 'Admissions open for Academic Year 2026-27! Apply before August 31st.',
 
     // Communication Settings
@@ -396,7 +396,7 @@ export default function SettingsPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 12px',
-                      borderRadius: '6px',
+                      borderRadius: '10px',
                       background: isChecked ? 'var(--accent-bg)' : 'var(--bg)',
                       border: isChecked ? '1px solid var(--accent-border)' : '1px solid var(--border)',
                       fontSize: '12px',
@@ -430,9 +430,9 @@ export default function SettingsPage() {
         </Section>
 
         {/* 2. Portal Branding Section */}
-        <Section icon={Sparkles} iconColor="#7C3AED" title="Portal Branding" subtitle="Customize logo, colors, and student listing announcements">
+        <Section icon={Sparkles} iconColor="var(--accent-2)" title="Portal Branding" subtitle="Customize logo, colors, and student listing announcements">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '14px', background: 'var(--bg-card-hover)', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'var(--bg-card-hover)', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
               {settings.logoURL ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={settings.logoURL} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -462,7 +462,7 @@ export default function SettingsPage() {
             <div className="text-eyebrow" style={{ marginBottom: '8px' }}>Portal Accent Color</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: settings.portalAccentColor, border: '1px solid var(--border-hover)' }} />
+                <div style={{ width: '28px', height: '28px', borderRadius: '10px', background: settings.portalAccentColor, border: '1px solid var(--border-hover)' }} />
                 <input
                   type="text"
                   className="input-field"
@@ -584,7 +584,7 @@ export default function SettingsPage() {
             <div className="text-eyebrow" style={{ marginBottom: '10px' }}>Active Device Sessions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {activeSessions.map((sess) => (
-                <div key={sess.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                <div key={sess.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '12px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {sess.device.includes('iPhone') ? <Smartphone size={16} color="var(--text-muted)" /> : <Laptop size={16} color="var(--text-muted)" />}
                     <div>
@@ -655,7 +655,7 @@ export default function SettingsPage() {
                     style={{
                       position: 'relative',
                       padding: '14px',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       background: isActive ? 'var(--accent-bg)' : 'var(--bg)',
                       border: isActive ? '1px solid var(--accent-border)' : '1px solid var(--border)',
                       cursor: 'pointer',
@@ -671,7 +671,7 @@ export default function SettingsPage() {
                         <Check size={10} color="white" />
                       </div>
                     )}
-                    <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: isActive ? 'var(--accent-bg)' : 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--accent)' : 'var(--text-muted)', marginBottom: '10px' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '10px', background: isActive ? 'var(--accent-bg)' : 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--accent)' : 'var(--text-muted)', marginBottom: '10px' }}>
                       <Icon size={14} />
                     </div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: isActive ? 'var(--accent)' : 'var(--text-primary)', marginBottom: '2px' }}>{label}</div>
@@ -757,7 +757,7 @@ export default function SettingsPage() {
         <div style={{
           background: 'rgba(220,38,38,0.04)',
           border: '1px solid rgba(220,38,38,0.15)',
-          borderRadius: '12px',
+          borderRadius: '18px',
           overflow: 'hidden',
         }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(220,38,38,0.10)', display: 'flex', alignItems: 'center', gap: '10px' }}>

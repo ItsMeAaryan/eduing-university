@@ -98,7 +98,7 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
   if (currentIndex < 0) return null
 
   return (
-    <div className="space-y-6 bg-brand-surface border border-brand-border rounded-xl p-4">
+    <div className="space-y-6 bg-brand-surface border border-brand-border rounded-2xl p-4">
       <h4 className="section-label m-0">Admission Progress</h4>
       
       {/* Visual Timeline */}

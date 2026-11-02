@@ -191,7 +191,7 @@ export default function DocumentVerificationPanel({ document, appId, studentId, 
                     <button 
                       disabled={loading || document.status === 'verified'}
                       onClick={() => handleStatusUpdate('verified')}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-brand-success text-white hover:bg-brand-success/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold bg-brand-success text-white hover:bg-brand-success/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircle size={18} />
                       Verify Document
@@ -201,7 +201,7 @@ export default function DocumentVerificationPanel({ document, appId, studentId, 
                       <button 
                         disabled={loading || document.status === 'requires_resubmission'}
                         onClick={() => handleStatusUpdate('requires_resubmission')}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold bg-brand-warning/10 text-brand-warning border border-brand-warning/20 hover:bg-brand-warning/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold bg-brand-warning/10 text-brand-warning border border-brand-warning/20 hover:bg-brand-warning/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                       >
                         <AlertTriangle size={16} />
                         Request Resubmission
@@ -209,7 +209,7 @@ export default function DocumentVerificationPanel({ document, appId, studentId, 
                       <button 
                         disabled={loading || document.status === 'rejected'}
                         onClick={() => handleStatusUpdate('rejected')}
-                        className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold bg-brand-error/10 text-brand-error border border-brand-error/20 hover:bg-brand-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                        className="flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold bg-brand-error/10 text-brand-error border border-brand-error/20 hover:bg-brand-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                       >
                         <XCircle size={16} />
                         Reject Document

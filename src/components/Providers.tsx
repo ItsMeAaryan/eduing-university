@@ -17,7 +17,7 @@ import { AuthProvider } from '@/context/AuthContext'
  *
  * storageKey: persists across refresh, browser restart, and login/logout.
  * attribute="class": drives CSS var switching via :root.dark in globals.css.
- * defaultTheme="system": new users follow their OS preference.
+ * defaultTheme="light": new users start in the light theme (toggle in sidebar).
  * enableSystem: wires up matchMedia listener for real-time OS changes.
  * disableTransitionOnChange: prevents colour flash during theme switch —
  *   we apply our own 200ms CSS transitions instead.
@@ -27,7 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <ErrorBoundary>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
+        defaultTheme="light"
         enableSystem
         storageKey="eduing-theme"
         disableTransitionOnChange={false}

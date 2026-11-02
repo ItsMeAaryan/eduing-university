@@ -60,9 +60,9 @@ const ACCENT: Record<ToastType, string> = {
 const ACCENT_OPACITY: Record<ToastType, string> = {
   success: 'rgba(16, 185, 129, 0.15)',
   error:   'rgba(239, 68, 68, 0.15)',
-  info:    'rgba(99, 102, 241, 0.15)',
+  info:    'rgb(var(--accent-rgb) / 0.15)',
   warning: 'rgba(245, 158, 11, 0.15)',
-  loading: 'rgba(99, 102, 241, 0.15)',
+  loading: 'rgb(var(--accent-rgb) / 0.15)',
 }
 
 const MAX_VISIBLE = 3
@@ -198,7 +198,7 @@ function LoadingIcon() {
         width: 20,
         height: 20,
         borderRadius: '50%',
-        border: '2px solid rgba(99,102,241,0.25)',
+        border: '2px solid rgb(var(--accent-rgb) / 0.25)',
         borderTopColor: 'var(--indigo-light)',
         flexShrink: 0,
       }}
@@ -342,8 +342,8 @@ function ToastItemComponent({
         background: 'var(--bg-elevated)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: `1px solid ${accent}28`,
-        borderRadius: '16px',
+        border: `1px solid color-mix(in srgb, ${accent} 16%, transparent)`,
+        borderRadius: '22px',
         padding: '14px 16px',
         minWidth: '300px',
         maxWidth: '400px',
@@ -353,7 +353,7 @@ function ToastItemComponent({
         boxShadow: `
           0 4px 6px -1px rgba(0,0,0,0.1),
           0 10px 40px -4px rgba(0,0,0,0.2),
-          0 0 0 1px rgba(99,102,241,0.06),
+          0 0 0 1px rgb(var(--accent-rgb) / 0.06),
           inset 0 1px 0 rgba(255,255,255,0.04)
         `,
         outline: 'none',
@@ -364,7 +364,7 @@ function ToastItemComponent({
         position: 'absolute',
         top: 0, left: 0, right: 0,
         height: '1px',
-        background: `linear-gradient(90deg, transparent, ${accent}50, transparent)`,
+        background: `linear-gradient(90deg, transparent, color-mix(in srgb, ${accent} 31%, transparent), transparent)`,
         pointerEvents: 'none',
       }} />
 
@@ -375,7 +375,7 @@ function ToastItemComponent({
           flexShrink: 0,
           width: '32px',
           height: '32px',
-          borderRadius: '10px',
+          borderRadius: '14px',
           background: accentBg,
           display: 'flex',
           alignItems: 'center',
@@ -417,7 +417,7 @@ function ToastItemComponent({
               flexShrink: 0,
               width: '22px',
               height: '22px',
-              borderRadius: '6px',
+              borderRadius: '10px',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
