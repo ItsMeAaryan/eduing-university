@@ -26,7 +26,8 @@ import {
   Check,
   Users,
   UserSquare,
-  FileSearch
+  FileSearch,
+  Target
 } from 'lucide-react'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { signOut } from 'firebase/auth'
@@ -66,6 +67,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/students',     icon: UserSquare,      label: 'Students',          requiredPermission: 'view_applications'    },
       { href: '/programs',     icon: GraduationCap,   label: 'Programs',          requiredPermission: 'manage_programs'      },
       { href: '/seats',        icon: Armchair,        label: 'Seats',             requiredPermission: 'generate_offers'      },
+      { href: '/offers',       icon: Target,          label: 'Offer Planner',     requiredPermission: 'generate_offers'      },
       { href: '/exams',        icon: Calendar,        label: 'Exams',             requiredPermission: 'generate_admit_cards' },
       { href: '/staff',        icon: Users,           label: 'Staff',             requiredPermission: 'manage_staff'         },
     ],
