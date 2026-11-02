@@ -26,9 +26,9 @@ export const AI_SERVICE = {
   async generateApplicantSummary(student: any): Promise<string> {
     await simulateLatency(1200)
 
-    const name = student.studentProfile?.firstName || 'The applicant'
+    const name = student.studentName || student.studentProfile?.fullName || 'The applicant'
     const program = student.programName || 'their selected program'
-    const state = student.studentProfile?.state || 'an unspecified region'
+    const state = student.studentProfile?.state || student.studentProfile?.domicileState || 'an unspecified state'
     
     let summary = `${name} is applying for ${program} from ${state}. `
     
@@ -65,15 +65,17 @@ export const AI_SERVICE = {
     }
 
     // Mock logic based on application data
-    if (student.studentProfile?.percentage) {
-      const pct = Number(student.studentProfile.percentage)
+    // Class 12 percentage the student declared (shared with the application)
+    const declared = student.studentProfile?.twelfthScore ?? student.studentProfile?.percentage
+    if (declared) {
+      const pct = Number(declared)
       if (pct >= 60) {
-        result.reasonsMet.push(`Academic percentage (${pct}%) meets general requirements.`)
+        result.reasonsMet.push(`Class 12 percentage (${pct}%) meets the general 60% threshold.`)
       } else {
-        result.reasonsMissing.push(`Academic percentage (${pct}%) is below recommended threshold.`)
+        result.reasonsMissing.push(`Class 12 percentage (${pct}%) is below the general 60% threshold.`)
       }
     } else {
-      result.reasonsMissing.push(`No academic percentage recorded in profile.`)
+      result.reasonsMissing.push(`The student hasn\u2019t shared a Class 12 percentage yet.`)
     }
 
     if (student.status === 'docs_verified' || student.status === 'selected' || student.status === 'enrolled') {
@@ -145,28 +147,24 @@ export const AI_SERVICE = {
   },
 
   /**
-   * Simulates an AI Copilot response to staff questions.
+   * Answers a staff question with the real AI model (via /api/ai), grounded in
+   * the university's live admissions summary passed as `systemContext`.
    */
-  async askCopilot(question: string, context?: any): Promise<string> {
-    await simulateLatency(2000)
-    
-    const q = question.toLowerCase()
-
-    if (q.includes('summarize')) {
-      if (context?.student) {
-        return await this.generateApplicantSummary(context.student)
-      }
-      return "I need a specific student profile to summarize."
-    }
-
-    if (q.includes('how many applications')) {
-      return "Based on the latest data, there are 25 total applications. 5 are currently under review."
-    }
-
-    if (q.includes('draft') && q.includes('email')) {
-      return `Subject: Action Required: Missing Documents\n\nDear Applicant,\n\nWe are currently reviewing your application. However, we noticed that some required documents are missing. Please log into the portal to upload them.\n\nRegards,\nAdmissions Team`
-    }
-
-    return "I am the Enterprise AI Copilot. I can summarize applicants, check eligibility, detect fraud, and draft communications based on the real-time University data. How can I assist you today?"
+  async askCopilot(question: string, opts?: { systemContext?: string; history?: { role: 'user' | 'assistant'; content: string }[] }): Promise<string> {
+    const { auth } = await import('@/lib/firebase/config')
+    const token = await auth.currentUser?.getIdToken().catch(() => '')
+    const system =
+      'You are the EDUING Admissions Copilot for an Indian university\'s admissions office. ' +
+      'Answer only questions about this university\'s admissions: applications, document checks, offers, seats, fees, enrollment and communication with applicants. ' +
+      'Use the live data below; if the data does not contain the answer, say so plainly instead of guessing. Be concise and use Indian conventions (₹, lakh).' +
+      (opts?.systemContext ? `\n\nLive data:\n${opts.systemContext}` : '')
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ messages: [{ role: 'system', content: system }, ...(opts?.history ?? []), { role: 'user', content: question }] }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.message || 'The AI Copilot is unavailable right now.')
+    return (data.text as string) || 'I couldn\u2019t come up with an answer. Try rephrasing the question.'
   }
 }

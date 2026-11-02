@@ -17,6 +17,7 @@ interface AdmissionsSummary {
   pendingDocVerification: number
   seatsFilled: number
   totalSeats: number
+  programs: { name: string; totalSeats: number; availableSeats: number; applicants: number; deadline?: string }[]
 }
 
 // ─── Starter prompts ──────────────────────────────────────────────────────────
@@ -50,6 +51,9 @@ async function fetchAdmissionsSummary(
 
   let seatsFilled = 0
   let totalSeats = 0
+  const appsPerProgram: Record<string, number> = {}
+  appsSnap.docs.forEach(d => { const pid = d.data().programId as string | undefined; if (pid) appsPerProgram[pid] = (appsPerProgram[pid] || 0) + 1 })
+  const programs: AdmissionsSummary['programs'] = []
   programsSnap.docs.forEach(d => {
     const data = d.data()
     const total = Number(data.totalSeats ?? data.seats ?? 0)
@@ -57,6 +61,8 @@ async function fetchAdmissionsSummary(
     const filled = Number(data.enrolledCount ?? total - available)
     totalSeats += total
     seatsFilled += filled
+    const dl = data.applicationDeadline?.toDate?.() as Date | undefined
+    programs.push({ name: String(data.name || 'Program'), totalSeats: total, availableSeats: available, applicants: appsPerProgram[d.id] || 0, deadline: dl ? dl.toISOString().slice(0, 10) : undefined })
   })
 
   return {
@@ -66,6 +72,7 @@ async function fetchAdmissionsSummary(
     pendingDocVerification,
     seatsFilled,
     totalSeats,
+    programs,
   }
 }
 
@@ -81,21 +88,19 @@ function buildSystemContext(summary: AdmissionsSummary): string {
     `Total applications: ${summary.total}\n` +
     `Applications by status:\n${statusLines}\n` +
     `Pending document verification: ${summary.pendingDocVerification}\n` +
-    `Seats filled / total: ${summary.seatsFilled} / ${summary.totalSeats}`
+    `Seats filled / total: ${summary.seatsFilled} / ${summary.totalSeats}\n` +
+    `Programs (name — seats available / total — applications — deadline):\n` +
+    summary.programs.map(p => `  • ${p.name} — ${p.availableSeats} / ${p.totalSeats} — ${p.applicants} — ${p.deadline ?? 'not set'}`).join('\n')
 
-  return (
-    `You are EDUING's University Admissions Copilot. You only answer questions related to ` +
-    `university admissions management, student recruitment, application processing, and enrollment. ` +
-    `You have access to this university's live admissions data:\n\n${universitySummary}\n\n` +
-    `Use this data to give specific, actionable answers. ` +
-    `Never answer questions unrelated to admissions and university operations.`
-  )
+  return universitySummary
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AICopilot() {
-  const { userData } = useAuth()
+  const { user, userData } = useAuth()
+  // A university admin's account id is the university id; staff carry universityId on their profile.
+  const universityId = (userData?.universityId as string | undefined) || user?.uid
 
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<{ role: 'ai' | 'user'; text: string }[]>([
@@ -116,17 +121,17 @@ export default function AICopilot() {
 
   // Fetch live admissions data the first time the panel opens
   const fetchContext = useCallback(async () => {
-    if (summary || !userData?.universityId) return
+    if (summary || !universityId) return
     try {
       const s = await fetchAdmissionsSummary(
-        userData.universityId,
-        userData.universityName || 'Your University',
+        universityId,
+        (userData?.universityName as string | undefined) || 'Your University',
       )
       setSummary(s)
     } catch {
       // Non-fatal: copilot will work without context, just less specific
     }
-  }, [summary, userData])
+  }, [summary, universityId, userData])
 
   useEffect(() => {
     if (isOpen) fetchContext()
@@ -142,20 +147,16 @@ export default function AICopilot() {
     setMessages(prev => [...prev, { role: 'user', text: raw }])
     setIsTyping(true)
 
-    // Wrap in sanitisation tag before sending to the model
-    const sanitised = `<university_query>${raw}</university_query>`
-
-    // Prepend live system context so every call carries admissions data
-    const contextPrefix = summary ? buildSystemContext(summary) + '\n\n' : ''
-    const fullPrompt = contextPrefix + sanitised
+    // Earlier turns give the model the conversation; live data goes in the system message.
+    const history = messages.slice(1).slice(-8).map(m => ({ role: m.role === 'ai' ? 'assistant' as const : 'user' as const, content: m.text }))
 
     try {
-      const response = await AI_SERVICE.askCopilot(fullPrompt)
+      const response = await AI_SERVICE.askCopilot(raw, { systemContext: summary ? buildSystemContext(summary) : undefined, history })
       setMessages(prev => [...prev, { role: 'ai', text: response }])
-    } catch {
+    } catch (err) {
       setMessages(prev => [
         ...prev,
-        { role: 'ai', text: 'Sorry, I encountered an error connecting to the AI engine.' },
+        { role: 'ai', text: err instanceof Error ? err.message : 'Sorry, I couldn\u2019t reach the AI engine.' },
       ])
     } finally {
       setIsTyping(false)
@@ -194,7 +195,7 @@ export default function AICopilot() {
               className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-brand-surface border-l border-brand-border shadow-2xl z-50 flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/20">
+              <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--bg-subtle)]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-brand-primary/20 flex items-center justify-center text-brand-primary">
                     <Bot size={24} />
@@ -231,7 +232,7 @@ export default function AICopilot() {
                       className={`p-3 rounded-2xl max-w-[80%] text-sm leading-relaxed ${
                         msg.role === 'user'
                           ? 'bg-indigo-500 text-white rounded-tr-none'
-                          : 'bg-white/5 text-text-secondary rounded-tl-none border border-white/5'
+                          : 'bg-white/5 text-text-secondary rounded-tl-none border border-[var(--border)]'
                       }`}
                     >
                       {msg.text}
@@ -244,7 +245,7 @@ export default function AICopilot() {
                     <div className="w-8 h-8 rounded-full bg-brand-background text-brand-primary border border-brand-primary/30 flex shrink-0 items-center justify-center">
                       <Bot size={16} />
                     </div>
-                    <div className="p-3 rounded-2xl bg-white/5 text-text-secondary rounded-tl-none border border-white/5 flex items-center gap-2">
+                    <div className="p-3 rounded-2xl bg-white/5 text-text-secondary rounded-tl-none border border-[var(--border)] flex items-center gap-2">
                       <Loader2 size={16} className="animate-spin text-brand-primary" /> Thinking...
                     </div>
                   </div>
@@ -257,7 +258,7 @@ export default function AICopilot() {
                       <button
                         key={prompt}
                         onClick={() => handleSend(prompt)}
-                        className="text-left text-xs text-text-muted border border-white/10 rounded-2xl px-3 py-2.5 hover:bg-white/5 hover:text-white transition-colors"
+                        className="text-left text-xs text-text-muted border border-[var(--border)] rounded-2xl px-3 py-2.5 hover:bg-white/5 hover:text-white transition-colors"
                       >
                         {prompt}
                       </button>
@@ -277,7 +278,7 @@ export default function AICopilot() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
                     placeholder="Ask about your admissions pipeline..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                    className="flex-1 bg-white/5 border border-[var(--border)] rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
                   />
                   <button
                     onClick={() => handleSend()}

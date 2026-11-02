@@ -19,10 +19,14 @@ const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: fa
 const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
 const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
 const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
-const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
 const Legend = dynamic(() => import('recharts').then(m => m.Legend), { ssr: false })
 
-const PIE_COLORS = ['var(--accent)', 'var(--accent)', '#D97706', '#EA580C', '#1AAE39', '#DC2626', 'var(--accent-2)', '#14B8A6']
+// One colour per stage, so the same status always looks the same
+const STATUS_COLORS: Record<string, string> = {
+  submitted: '#745CF5', under_review: '#D97706', docs_verified: '#4B2FC9', waitlisted: '#EA580C',
+  selected: '#16A373', allotted: '#16A373', seat_accepted: '#14B8A6', fee_paid: '#0EA5E9',
+  payment_verified: '#0284C7', enrolled: '#047857', rejected: '#DC2626', offer_declined: '#8C8C85', withdrawn: '#A8A29E',
+}
 
 function ChartCard({ title, icon: Icon, children, span2 }: { title: string; icon?: React.ElementType; children: React.ReactNode; span2?: boolean }) {
   return (
@@ -53,14 +57,18 @@ export default function StudentAnalytics() {
     const geo: Record<string, number> = {}
     const status: Record<string, number> = {}
     apps.forEach(app => {
-      const state = (app.studentProfile as any)?.state || app.city || 'Unknown'
+      const p = (app.studentProfile ?? {}) as Record<string, string>
+      const state = p.state || p.domicileState || p.city || 'Not shared yet'
       geo[state as string] = (geo[state as string] || 0) + 1
       const s = (app.status as string) || 'unknown'
       status[s] = (status[s] || 0) + 1
     })
     return {
       geoChart: Object.entries(geo).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10),
-      statusChart: Object.entries(status).map(([name, value]) => ({ name: name.replace(/_/g, ' ').toUpperCase(), value })).sort((a, b) => b.value - a.value),
+      // colours live on the data: <Cell> loaded through next/dynamic is ignored by recharts (slices came out grey)
+      statusChart: Object.entries(status)
+        .map(([key, value]) => ({ name: key.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase()), value, fill: STATUS_COLORS[key] ?? '#8C8C85' }))
+        .sort((a, b) => b.value - a.value),
     }
   }, [apps])
 
@@ -112,9 +120,7 @@ export default function StudentAnalytics() {
         <ChartCard title="Lifecycle Status" icon={Users}>
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
             <PieChart>
-              <Pie data={data.statusChart} cx="50%" cy="44%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value">
-                {data.statusChart.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="none" />)}
-              </Pie>
+              <Pie data={data.statusChart} cx="50%" cy="44%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value" stroke="none" />
               <Tooltip contentStyle={tipStyle} />
               <Legend verticalAlign="bottom" height={32} iconSize={10} wrapperStyle={{ fontSize: '11px' }} />
             </PieChart>

@@ -91,10 +91,10 @@ export default function StudentsDirectoryPage() {
     if (!user) return
     if (!isLoadMore) { setLoading(true); setStudents([]); setLastDoc(null) }
     try {
-      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, { status: statusFilter, searchTerm })
+      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, { status: statusFilter, searchTerm, programId: programFilter, programName: programs.find(pr => pr.id === programFilter)?.name as string | undefined })
       setStudents(prev => isLoadMore ? [...prev, ...res.apps] : res.apps)
       setLastDoc(res.lastDoc)
-      setHasMore(res.apps.length === 15)
+      setHasMore(res.hasMore)
     } catch {
       toast.error('Failed to load students')
     } finally {
@@ -116,7 +116,7 @@ export default function StudentsDirectoryPage() {
   useEffect(() => {
     const t = setTimeout(() => loadStudents(), 400)
     return () => clearTimeout(t)
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, statusFilter, programFilter])
 
   const handleAISearch = async () => {
     if (!aiQuery.trim()) return
@@ -134,9 +134,7 @@ export default function StudentsDirectoryPage() {
     }
   }
 
-  const filteredStudents = programFilter === 'all'
-    ? students
-    : students.filter(s => s.programId === programFilter)
+  const filteredStudents = students // program filter is applied when loading
 
   const allSelected = filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length
   const filtersActive = searchTerm !== '' || statusFilter !== 'all' || programFilter !== 'all'
