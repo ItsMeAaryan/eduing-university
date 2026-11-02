@@ -16,7 +16,6 @@ const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: fa
 const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false })
 const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false })
 const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false })
-const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false })
 const Legend = dynamic(() => import('recharts').then(m => m.Legend), { ssr: false })
 
 const PIE_COLORS = ['#1AAE39', '#D97706']
@@ -68,7 +67,8 @@ export default function FinancialAnalytics() {
     })
     return {
       collected, pending,
-      pieData: [{ name: 'Collected', value: collected }, { name: 'Pending', value: pending }],
+      // colours live on the data: <Cell> loaded through next/dynamic is ignored by recharts (slices came out grey)
+      pieData: [{ name: 'Collected', value: collected, fill: PIE_COLORS[0] }, { name: 'Pending', value: pending, fill: PIE_COLORS[1] }],
       trendData: Object.entries(months).map(([month, revenue]) => ({ month, revenue })).sort((a, b) => a.month.localeCompare(b.month)),
     }
   }, [apps])
@@ -147,7 +147,6 @@ export default function FinancialAnalytics() {
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
               <PieChart>
                 <Pie data={financialData.pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value">
-                  {financialData.pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="none" />)}
                 </Pie>
                 <Tooltip formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Amount']} contentStyle={tipStyle} />
                 <Legend verticalAlign="bottom" height={32} iconSize={10} wrapperStyle={{ fontSize: '12px' }} />

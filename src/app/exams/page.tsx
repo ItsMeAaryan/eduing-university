@@ -145,8 +145,13 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: FirestoreRe
   const [isFormOpen, setIsFormOpen] = useState<string | null>(null)
 
   const handlePublish = async (programId: string, formData: Record<string, unknown>) => {
+    const uid = auth.currentUser?.uid
+    const program = programs.find((p: FirestoreRecord) => p.id === programId)
+    if (!uid || !program) {
+      toast.error(!uid ? 'Your session expired. Sign in again.' : 'Program not found')
+      return
+    }
     try {
-      const uid = auth.currentUser?.uid
       await addDoc(collection(db, 'exam_schedules'), {
         ...formData,
         programId,
@@ -154,32 +159,31 @@ function ExamScheduleView({ programs, schedules, apps }: { programs: FirestoreRe
         isPublished: true,
         createdAt: serverTimestamp()
       })
-      
-      // Notify applicants
-      const programApps = apps.filter((a: FirestoreRecord) => a.programId === programId)
-      const program = programs.find((p: FirestoreRecord) => p.id === programId)
-      if (!program) {
-        toast.error('Program not found')
-        return
-      }
-      
-      for (const app of programApps) {
-        await addDoc(collection(db, 'notifications'), {
-          userId: app.studentId,
-          title: 'Exam Scheduled',
-          message: `Your entrance exam for ${program.name} is scheduled for ${formData.date}.`,
-          type: 'exam',
-          isRead: false,
-          createdAt: serverTimestamp()
-        })
-      }
-      
-      toast.success('Exam schedule published!')
-      setIsFormOpen(null)
     } catch (error) {
       console.error(error)
-      toast.error('Failed to publish schedule')
+      const code = (error as { code?: string })?.code
+      toast.error(code === 'permission-denied'
+        ? 'Couldn\u2019t publish: permission denied. The latest Firestore security rules need to be deployed.'
+        : 'Couldn\u2019t publish the schedule. Check your connection and try again.')
+      return
     }
+
+    // Tell each applicant of this program. A failed notification doesn't undo the schedule.
+    const programApps = apps.filter((a: FirestoreRecord) => a.programId === programId)
+    const sent = await Promise.allSettled(programApps
+      .map((app: FirestoreRecord) => (app.studentId || app.userId) as string | undefined)
+      .filter((id): id is string => !!id)
+      .map(studentUid => addDoc(collection(db, 'notifications'), {
+        userId: studentUid,
+        title: 'Exam scheduled',
+        message: `Your entrance test for ${program.name} is on ${formData.date}${formData.time ? ` at ${formData.time}` : ''}. Check your application for details.`,
+        type: 'exam',
+        isRead: false,
+        createdAt: serverTimestamp()
+      })))
+    const failed = sent.filter(r => r.status === 'rejected').length
+    toast.success(failed ? `Schedule published. ${failed} applicant notification(s) couldn\u2019t be sent.` : 'Exam schedule published!')
+    setIsFormOpen(null)
   }
 
   return (
@@ -558,8 +562,10 @@ function ResultsView({ programs, apps }: { programs: FirestoreRecord[], apps: Fi
             updatedAt: serverTimestamp()
           })
           
+          const studentUid = (app.studentId || app.userId) as string | undefined
+          if (!studentUid) return
           await addDoc(collection(db, 'notifications'), {
-            userId: app.studentId,
+            userId: studentUid,
             title: 'Results Published',
             message: `Results for your entrance exam have been published. Check your dashboard.`,
             type: 'results',

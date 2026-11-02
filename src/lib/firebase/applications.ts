@@ -84,42 +84,59 @@ export const updateApplicationStatus = async (
   })
 }
 
+const createdMs = (app: FirestoreRecord) => {
+  const v = (app.createdAt ?? app.appliedAt) as { seconds?: number } | string | undefined
+  if (v && typeof v === 'object' && typeof v.seconds === 'number') return v.seconds * 1000
+  if (typeof v === 'string') return new Date(v).getTime() || 0
+  return 0
+}
+
+/**
+ * One page of this university's applications.
+ * - No filter: ordered by newest first and paginated (uses the universityId+createdAt index).
+ * - Status filter: equality-only query (needs no composite index) sorted here, returned in one page.
+ *   Before, the status filter needed an extra index and failed with "Failed to load applications".
+ * - Program and search filters are applied here, on the loaded applications.
+ */
 export const getApplicationsPage = async (
-  universityId: string, 
-  pageSize: number = 20, 
+  universityId: string,
+  pageSize: number = 20,
   lastDoc: DocumentSnapshot | null = null,
-  filters?: { status?: string, searchTerm?: string }
+  filters?: { status?: string, searchTerm?: string, programId?: string, programName?: string }
 ) => {
-  let constraints: any[] = [
-    where('universityId', '==', universityId),
-    orderBy('createdAt', 'desc'),
-    limit(pageSize)
-  ]
-  
-  if (filters?.status && filters.status !== 'all') {
-    constraints.push(where('status', '==', filters.status))
+  const statusFiltered = !!filters?.status && filters.status !== 'all'
+  const constraints = statusFiltered
+    ? [where('universityId', '==', universityId), where('status', '==', filters!.status)]
+    : [where('universityId', '==', universityId), orderBy('createdAt', 'desc'), limit(pageSize), ...(lastDoc ? [startAfter(lastDoc)] : [])]
+
+  const snapshot = await getDocs(query(collection(db, 'applications'), ...constraints))
+  let apps = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreRecord))
+  if (statusFiltered) apps.sort((a, b) => createdMs(b) - createdMs(a))
+
+  if (filters?.programId && filters.programId !== 'all') {
+    const name = (filters.programName || '').toLowerCase()
+    apps = apps.filter(app =>
+      app.programId === filters.programId ||
+      (!!name && String(app.programName || app.program || '').toLowerCase() === name))
   }
-  
-  if (lastDoc) {
-    constraints.push(startAfter(lastDoc))
-  }
-  
-  const q = query(collection(db, 'applications'), ...constraints)
-  const snapshot = await getDocs(q)
-  
-  let apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreRecord))
-  
+
   if (filters?.searchTerm) {
     const term = filters.searchTerm.toLowerCase()
-    apps = apps.filter(app => 
-      (app.studentName && app.studentName.toLowerCase().includes(term)) ||
-      (app.studentEmail && app.studentEmail.toLowerCase().includes(term)) ||
-      (app.programName && app.programName.toLowerCase().includes(term)) ||
-      (app.id && app.id.toLowerCase().includes(term))
+    apps = apps.filter(app =>
+      String(app.studentName || '').toLowerCase().includes(term) ||
+      String(app.studentEmail || '').toLowerCase().includes(term) ||
+      String(app.programName || app.program || '').toLowerCase().includes(term) ||
+      String(app.id || '').toLowerCase().includes(term)
     )
   }
-  
-  return { apps, lastDoc: snapshot.docs[snapshot.docs.length - 1] || null }
+
+  return {
+    apps,
+    // a status-filtered result is complete, so there is nothing more to load
+    lastDoc: statusFiltered ? null : (snapshot.docs[snapshot.docs.length - 1] || null),
+    complete: statusFiltered,
+    hasMore: !statusFiltered && snapshot.docs.length === pageSize,
+  }
 }
 
 export const updateApplicationTags = async (universityId: string, appId: string, tags: string[], actor: ActorContext) => {

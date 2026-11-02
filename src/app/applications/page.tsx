@@ -229,10 +229,10 @@ export default function ApplicationsPage() {
     if (!user) return
     if (!isLoadMore) { setLoading(true); setApps([]); setLastDoc(null) }
     try {
-      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, { status: statusFilter, searchTerm })
+      const res = await getApplicationsPage(user.uid, 15, isLoadMore ? lastDoc : null, { status: statusFilter, searchTerm, programId: programFilter, programName: programs.find(pr => pr.id === programFilter)?.name as string | undefined })
       setApps(prev => isLoadMore ? [...prev, ...res.apps] : res.apps)
       setLastDoc(res.lastDoc)
-      setHasMore(res.apps.length === 15)
+      setHasMore(res.hasMore)
     } catch {
       toast.error('Failed to load applications')
     } finally {

@@ -135,7 +135,7 @@ export default function StaffManagementPage() {
               placeholder="Search staff..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-black/20 border border-white/5 rounded-2xl py-2 pl-9 pr-4 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-primary/50 transition-colors"
+              className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-2xl py-2 pl-9 pr-4 text-sm text-white placeholder-text-muted focus:outline-none focus:border-brand-primary/50 transition-colors"
             />
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function StaffManagementPage() {
                     />
                   ))}
                   {filteredStaff.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-text-muted text-sm border border-dashed border-white/10 rounded-2xl">
+                    <div className="col-span-full py-12 text-center text-text-muted text-sm border border-dashed border-[var(--border)] rounded-2xl">
                       No staff members found.
                     </div>
                   )}
@@ -170,7 +170,7 @@ export default function StaffManagementPage() {
                 <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-black/20 text-[11px] uppercase tracking-wider text-text-muted">
+                      <tr className="bg-[var(--bg-subtle)] text-[11px] uppercase tracking-wider text-text-muted">
                         <th className="p-4 font-bold">Email</th>
                         <th className="p-4 font-bold">Role</th>
                         <th className="p-4 font-bold">Status</th>
@@ -179,7 +179,7 @@ export default function StaffManagementPage() {
                     </thead>
                     <tbody>
                       {invites.map(invite => (
-                        <tr key={invite.id} className="border-t border-white/5 hover:bg-white/5 transition-colors">
+                        <tr key={invite.id} className="border-t border-[var(--border)] hover:bg-white/5 transition-colors">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary">
@@ -261,7 +261,7 @@ function StaffCard({ member, universityId, onEdit }: { member: StaffMember, univ
       </div>
 
       <div className="mb-4">
-        <span className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-brand-primary-text capitalize">
+        <span className="px-2.5 py-1 bg-white/5 border border-[var(--border)] rounded-lg text-xs font-bold text-brand-primary-text capitalize">
           {member.role.replace(/_/g, ' ')}
         </span>
         {member.status === 'suspended' && (
@@ -269,25 +269,25 @@ function StaffCard({ member, universityId, onEdit }: { member: StaffMember, univ
         )}
       </div>
 
-      <div className="bg-black/20 p-3 rounded-2xl border border-white/5 mb-4">
+      <div className="bg-[var(--bg-subtle)] p-3 rounded-2xl border border-[var(--border)] mb-4">
         <div className="flex items-center gap-2 text-xs font-bold text-text-muted mb-2 uppercase tracking-wider">
           <Shield size={14} /> Permissions ({member.permissions.length})
         </div>
         <div className="flex flex-wrap gap-1">
           {member.permissions.slice(0, 3).map(p => (
-            <span key={p} className="text-[10px] bg-white/5 text-text-secondary px-2 py-0.5 rounded border border-white/5">
+            <span key={p} className="text-[10px] bg-white/5 text-text-secondary px-2 py-0.5 rounded border border-[var(--border)]">
               {p.replace(/_/g, ' ')}
             </span>
           ))}
           {member.permissions.length > 3 && (
-            <span className="text-[10px] bg-white/5 text-text-secondary px-2 py-0.5 rounded border border-white/5">
+            <span className="text-[10px] bg-white/5 text-text-secondary px-2 py-0.5 rounded border border-[var(--border)]">
               +{member.permissions.length - 3} more
             </span>
           )}
         </div>
       </div>
 
-      <div className="flex justify-between items-center text-xs text-text-muted pt-4 border-t border-white/5">
+      <div className="flex justify-between items-center text-xs text-text-muted pt-4 border-t border-[var(--border)]">
         <span>Joined {new Date(member.joinedAt).toLocaleDateString()}</span>
         <button 
           onClick={handleToggleStatus}
@@ -315,12 +315,19 @@ function InviteModal({ onClose, universityId }: { onClose: () => void, universit
     setPermissions(ROLE_PERMISSIONS[r] || [])
   }
 
+  const [emailError, setEmailError] = useState('')
+
   const handleInvite = async () => {
-    if (!email) return
+    const clean = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      setEmailError('Enter the staff member\u2019s email address, e.g. name@university.edu')
+      return
+    }
+    setEmailError('')
     setLoading(true)
     try {
       const actor = { uid: user?.uid || 'system', name: user?.displayName || user?.email || 'Admin', role: 'admin' }
-      await inviteStaff(universityId, { email, role, department, permissions }, actor)
+      await inviteStaff(universityId, { email: clean, role, department, permissions }, actor)
       toast.success('Invitation sent successfully')
       onClose()
     } catch(e) {
@@ -342,7 +349,8 @@ function InviteModal({ onClose, universityId }: { onClose: () => void, universit
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="invite-email" className="block text-xs font-bold text-text-muted uppercase mb-1">Email Address</label>
-              <input id="invite-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-dark w-full text-sm" placeholder="staff@university.edu" />
+              <input id="invite-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError('') }} aria-invalid={!!emailError} aria-describedby={emailError ? 'invite-email-error' : undefined} className="input-dark w-full text-sm" placeholder="staff@university.edu" />
+              {emailError && <p id="invite-email-error" className="mt-1 text-xs font-semibold" style={{ color: 'var(--red)' }}>{emailError}</p>}
             </div>
             <div>
               <label htmlFor="invite-dept" className="block text-xs font-bold text-text-muted uppercase mb-1">Department</label>
@@ -359,12 +367,12 @@ function InviteModal({ onClose, universityId }: { onClose: () => void, universit
             </select>
           </div>
 
-          <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)] p-4">
             <span className="block text-xs font-bold text-text-muted uppercase mb-3 flex items-center gap-2"><ShieldAlert size={14} /> Fine-tune Permissions</span>
             <div className="grid grid-cols-2 gap-3">
               {AVAILABLE_PERMISSIONS.map(p => (
                 <label key={p.id} className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-white group">
-                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors border ${permissions.includes(p.id) ? 'bg-brand-primary border-brand-primary text-white' : 'border-white/20 group-hover:border-white/40'}`}>
+                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors border ${permissions.includes(p.id) ? 'bg-brand-primary border-brand-primary text-white' : 'border-[var(--border-hover)] group-hover:border-[var(--accent)]'}`}>
                     {permissions.includes(p.id) && <Check size={12} />}
                   </div>
                   <input type="checkbox" className="hidden" checked={permissions.includes(p.id)} onChange={(e) => {
@@ -378,9 +386,10 @@ function InviteModal({ onClose, universityId }: { onClose: () => void, universit
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+        <p className="mb-3 text-xs text-text-muted">The invitation is saved to your staff list. EDUING doesn&apos;t email it yet, and staff sign-in is still being built, so tell the person directly for now.</p>
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
           <button onClick={onClose} className="px-5 py-2 text-sm font-bold text-text-muted hover:text-white transition-colors">Cancel</button>
-          <button onClick={handleInvite} disabled={loading || !email} className="px-6 py-2 bg-brand-primary text-white text-sm font-bold rounded-lg hover:bg-brand-primary/90 disabled:opacity-50">
+          <button onClick={handleInvite} disabled={loading} className="px-6 py-2 bg-brand-primary text-white text-sm font-bold rounded-lg hover:bg-brand-primary/90 disabled:opacity-50">
             {loading ? 'Sending...' : 'Send Invitation'}
           </button>
         </div>
@@ -430,7 +439,7 @@ function EditStaffModal({ member, onClose, universityId }: { member: StaffMember
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-200 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-brand-surface border border-brand-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         
-        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
+        <div className="p-6 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-subtle)]">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-primary to-indigo-600 flex items-center justify-center text-lg font-bold text-white">
               {member.name.charAt(0)}
@@ -457,12 +466,12 @@ function EditStaffModal({ member, onClose, universityId }: { member: StaffMember
             </select>
           </div>
 
-          <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)] p-4">
             <span className="block text-xs font-bold text-text-muted uppercase mb-3 flex items-center gap-2"><ShieldAlert size={14} /> Custom Permissions</span>
             <div className="grid grid-cols-2 gap-3">
               {AVAILABLE_PERMISSIONS.map(p => (
                 <label key={p.id} className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-white group">
-                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors border ${permissions.includes(p.id) ? 'bg-brand-primary border-brand-primary text-white' : 'border-white/20 group-hover:border-white/40'}`}>
+                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors border ${permissions.includes(p.id) ? 'bg-brand-primary border-brand-primary text-white' : 'border-[var(--border-hover)] group-hover:border-[var(--accent)]'}`}>
                     {permissions.includes(p.id) && <Check size={12} />}
                   </div>
                   <input type="checkbox" className="hidden" checked={permissions.includes(p.id)} onChange={(e) => {
@@ -476,7 +485,7 @@ function EditStaffModal({ member, onClose, universityId }: { member: StaffMember
           </div>
         </div>
 
-        <div className="p-6 border-t border-white/10 bg-black/20 flex justify-between items-center">
+        <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-subtle)] flex justify-between items-center">
           <button onClick={handleRemove} className="flex items-center gap-2 text-brand-error text-sm font-bold hover:bg-brand-error/10 px-4 py-2 rounded-lg transition-colors">
             <UserMinus size={16} /> Remove Staff
           </button>
