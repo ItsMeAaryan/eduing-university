@@ -102,7 +102,7 @@ service cloud.firestore {
         let from = resource.data.get('status', 'submitted');
         let to = request.resource.data.get('status', from);
         let keys = changed();
-        return keys.hasOnly(['status', 'statusHistory', 'updatedAt', 'offerResponse', 'withdrawal', 'paymentDetails', 'notes', 'progress', 'steps'])
+        return keys.hasOnly(['status', 'statusHistory', 'updatedAt', 'offerResponse', 'withdrawal', 'paymentDetails', 'notes', 'progress', 'steps', 'studentProfile'])
           && (!keys.hasAny(['paymentDetails']) || (to == 'fee_paid' && request.resource.data.paymentDetails.status == 'submitted'))
           && (
             to == from

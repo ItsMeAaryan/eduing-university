@@ -21,8 +21,7 @@ import { collection, addDoc, serverTimestamp, query, where, onSnapshot, doc, upd
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/components/Toast'
 import Link from 'next/link'
-import { generatePdfFromElement } from '@/components/pdf/PdfGenerator'
-import { AdmitCardTemplate } from '@/components/pdf/AdmitCardTemplate'
+import { downloadIssuedDocument } from '@/components/pdf/IssuedDocument'
 import { saveGeneratedDocument, subscribeToGeneratedDocuments, type GeneratedDocument } from '@/lib/firebase/generated_documents'
 
 export default function ExamManagementPage() {
@@ -393,7 +392,7 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
       const generatedBy = user?.displayName || user?.email || 'University Admin'
       const version = (generatedDocs[app.id]?.length || 0) + 1
       
-      const pdfBlob = await generatePdfFromElement(`admit-card-template-${app.id}`)
+      const program = programs.find((p: FirestoreRecord) => p.id === selectedProgram)
       
       const actor = {
         uid: user?.uid || 'system',
@@ -406,11 +405,24 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
         studentId: app.studentId,
         universityId: app.universityId || user?.uid || '',
         type: 'admit_card',
-        pdfBlob,
+        // The admit card's contents are saved; the PDF is rendered on download.
+        data: {
+          universityName: userData?.universityName || 'University',
+          studentName: app.studentName || 'Student',
+          applicationId: app.id,
+          rollNumber: `EXAM${new Date().getFullYear()}${String(i + 1).padStart(3, '0')}`,
+          programName: program?.name || 'Program',
+          examName: `${program?.name || ''} Entrance Exam`.trim(),
+          examDate: schedule.date || 'TBD',
+          examTime: schedule.time || 'TBD',
+          reportingTime: '1 hour before the exam',
+          venue: schedule.centers?.[i % (schedule.centers?.length || 1)] || schedule.center || 'TBD',
+          instructions: schedule.instructions || 'Follow all instructions provided.',
+        },
         actor,
         version
       })
-      toast.success(`Admit card generated for ${app.studentName}`)
+      toast.success(`Admit card issued to ${app.studentName}`)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error'
       toast.error(`Failed: ${msg}`)
@@ -453,7 +465,7 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
               className="h-10 px-4 rounded-lg bg-white/5 border border-brand-border text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10 transition-colors"
             >
               <Printer size={16} />
-              Generate Missing
+              Issue missing
             </button>
           </div>
         </div>
@@ -484,16 +496,15 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                   <td className="px-6 py-4 text-right">
                     {generatedDocs[app.id]?.length > 0 ? (
                       <div className="flex items-center justify-end gap-2">
-                        <span className="text-[10px] font-bold text-brand-success bg-brand-success/10 px-2 py-1 rounded">Generated (v{generatedDocs[app.id][0].version})</span>
-                        <a 
-                          href={generatedDocs[app.id][0].url} 
-                          download
-                          target="_blank"
-                          className="p-2 rounded-lg hover:bg-white/5 text-brand-primary-text transition-colors" 
+                        <span className="text-[10px] font-bold text-brand-success bg-brand-success/10 px-2 py-1 rounded">Issued (v{generatedDocs[app.id][0].version})</span>
+                        <button
+                          onClick={() => downloadIssuedDocument(generatedDocs[app.id][0]).catch(() => toast.error('Download failed'))}
+                          className="p-2 rounded-lg hover:bg-white/5 text-brand-primary-text transition-colors"
                           title="Download admit card"
+                          aria-label="Download admit card"
                         >
                           <Download size={16} />
-                        </a>
+                        </button>
                         <button 
                           onClick={() => handleGenerate(app, i)}
                           disabled={generating[app.id]}
@@ -509,7 +520,7 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
                         disabled={generating[app.id]}
                         className="px-3 py-1.5 rounded-lg bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary-text text-xs font-bold transition-colors disabled:opacity-50"
                       >
-                        {generating[app.id] ? 'Generating...' : 'Generate'}
+                        {generating[app.id] ? 'Issuing…' : 'Issue'}
                       </button>
                     )}
                   </td>
@@ -522,29 +533,6 @@ function AdmitCardsView({ programs, schedules, apps }: { programs: FirestoreReco
           </table>
         </div>
 
-        {/* Hidden Templates for html2canvas */}
-        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -1 }}>
-          {schedule && programApps.map((app: FirestoreRecord, i: number) => {
-            const program = programs.find((p: FirestoreRecord) => p.id === selectedProgram)
-            return (
-              <div key={app.id} id={`admit-card-template-${app.id}`}>
-                <AdmitCardTemplate
-                  universityName={userData?.universityName || 'University'}
-                  studentName={app.studentName || 'Student'}
-                  applicationId={app.id}
-                  rollNumber={`EXAM2026${String(i + 1).padStart(3, '0')}`}
-                  programName={program?.name || 'Program'}
-                  examName={`${program?.name || ''} Entrance Exam`}
-                  examDate={schedule.date || 'TBD'}
-                  examTime={schedule.time || 'TBD'}
-                  reportingTime="1 Hour before exam"
-                  venue={schedule.centers?.[i % (schedule.centers?.length || 1)] || 'TBD'}
-                  instructions={schedule.instructions || 'Follow all instructions provided.'}
-                />
-              </div>
-            )
-          })}
-        </div>
       </div>
     </div>
   )

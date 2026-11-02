@@ -1,4 +1,4 @@
-import { db, storage } from './config'
+import { db } from './config'
 import type { FirestoreRecord } from './types'
 import {
   collection,
@@ -8,15 +8,17 @@ import {
   serverTimestamp,
   runTransaction
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { logToTransaction } from './audit'
 import type { ActorContext } from './types'
 
 export type GeneratedDocumentType = 'offer_letter' | 'admit_card' | 'enrollment_certificate'
 
+// Documents are no longer stored as files. Issuing saves the letter's data;
+// the student website, the app and this portal render the PDF on demand.
 export interface GeneratedDocument extends FirestoreRecord {
   type: GeneratedDocumentType
-  url: string
+  data?: Record<string, string>
+  url?: string // documents issued before this change
   generatedAt: unknown // Timestamp
   generatedBy: string
   version: number
@@ -51,14 +53,14 @@ export const subscribeToGeneratedDocuments = (
 }
 
 /**
- * Uploads a PDF Blob to Firebase Storage, saves the record in Firestore, and notifies the student.
+ * Issues a document: saves its contents in Firestore (no file upload) and notifies the student.
  */
 export const saveGeneratedDocument = async ({
   appId,
   studentId,
   universityId,
   type,
-  pdfBlob,
+  data,
   actor,
   version = 1
 }: {
@@ -66,18 +68,10 @@ export const saveGeneratedDocument = async ({
   studentId: string
   universityId: string
   type: GeneratedDocumentType
-  pdfBlob: Blob
+  data: Record<string, string>
   actor: ActorContext
   version?: number
 }) => {
-  // 1. Upload to Storage
-  const timestamp = Date.now()
-  const storagePath = `universities/${universityId}/applications/${appId}/${type}_v${version}_${timestamp}.pdf`
-  const storageRef = ref(storage, storagePath)
-  
-  await uploadBytes(storageRef, pdfBlob)
-  const url = await getDownloadURL(storageRef)
-
   // 2. Save to Firestore
   await runTransaction(db, async (transaction) => {
     // Predictable document ID to prevent duplicates (Idempotency)
@@ -91,7 +85,7 @@ export const saveGeneratedDocument = async ({
     
     transaction.set(newDocRef, {
       type,
-      url,
+      data,
       generatedAt: serverTimestamp(),
       generatedBy: actor.name,
       version
@@ -104,7 +98,7 @@ export const saveGeneratedDocument = async ({
     
     if (type === 'offer_letter') {
       title = 'Offer Letter Available'
-      message = 'Congratulations! Your offer letter has been generated and is now available in your document vault.'
+      message = 'Congratulations! Your offer letter has been generated and is ready. Open your application to accept the seat.'
     } else if (type === 'admit_card') {
       title = 'Admit Card Available'
       message = 'Your admit card for the upcoming entrance exam has been generated.'
@@ -127,5 +121,4 @@ export const saveGeneratedDocument = async ({
     })
   })
   
-  return url
 }

@@ -6,6 +6,10 @@ export const generatePdfFromElement = async (elementId: string): Promise<Blob> =
   if (!element) {
     throw new Error(`Element with id ${elementId} not found`)
   }
+  return generatePdfFromNode(element)
+}
+
+export const generatePdfFromNode = async (element: HTMLElement): Promise<Blob> => {
 
   // Temporarily make the element visible if it's hidden
   const originalDisplay = element.style.display

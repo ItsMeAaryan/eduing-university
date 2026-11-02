@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { auth, storage } from '@/lib/firebase/config'
+import { auth } from '@/lib/firebase/config'
+import ImageLinkDialog from '@/components/ImageLinkDialog'
 import { getUniversity, updateUniversityProfile } from '@/lib/firebase/university'
 import { sendPasswordResetEmail } from 'firebase/auth'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { 
   User, 
   Bell, 
@@ -129,6 +129,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoDialog, setLogoDialog] = useState(false)
 
   // Full Settings State
   const [settings, setSettings] = useState({
@@ -251,23 +252,19 @@ export default function SettingsPage() {
     persistSettingChange({ requiredDocuments: updated })
   }
 
-  // Handle Logo Upload
-  const handleLogoUpload = async (file: File) => {
+  // Logo is a link to an image already online (no file storage)
+  const handleLogoLink = async (url: string) => {
     const uid = auth.currentUser?.uid
     if (!uid) return
 
     setUploadingLogo(true)
     try {
-      const storageRef = ref(storage, `universities/${uid}/logo/${Date.now()}_${file.name}`)
-      const snapshot = await uploadBytes(storageRef, file)
-      const url = await getDownloadURL(snapshot.ref)
-      
       await updateUniversityProfile(uid, { logoURL: url, settings: { ...settings, logoURL: url } })
       setSettings((prev) => ({ ...prev, logoURL: url }))
       toast.success('Logo updated successfully')
     } catch (err) {
       console.error(err)
-      toast.error('Failed to upload logo')
+      toast.error('Couldn\u2019t save the logo link')
     } finally {
       setUploadingLogo(false)
     }
@@ -444,16 +441,11 @@ export default function SettingsPage() {
             <div style={{ flex: 1 }}>
               <div className="text-eyebrow" style={{ marginBottom: '4px' }}>University Logo</div>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Shown on student portal and offer certificates</p>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }} className="btn-secondary">
-                <input
-                  type="file"
-                  style={{ display: 'none' }}
-                  accept="image/*"
-                  onChange={(e) => e.target.files?.[0] && handleLogoUpload(e.target.files[0])}
-                />
+              <button type="button" onClick={() => setLogoDialog(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }} className="btn-secondary">
                 {uploadingLogo ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-                <span>{settings.logoURL ? 'Change Logo' : 'Upload Logo'}</span>
-              </label>
+                <span>{settings.logoURL ? 'Change logo link' : 'Add logo link'}</span>
+              </button>
+              <ImageLinkDialog key={logoDialog ? 'open' : 'closed'} open={logoDialog} title="University logo" initial={settings.logoURL || ''} onClose={() => setLogoDialog(false)} onSave={handleLogoLink} />
             </div>
           </div>
 
