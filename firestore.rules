@@ -1,151 +1,203 @@
 rules_version = '2';
+
+// EDUING — one rules file for the whole Firebase project (eduing-platform).
+// The same file lives in eduing-student and eduing-university; deploy from either.
+//
+// Roles (users/{uid}.role): student · uni_admin (uid == universityId) · uni_staff (+ universityId) · eduing_admin
+// Admission status flow:
+//   submitted → under_review → docs_verified → selected | allotted → seat_accepted → fee_paid
+//   → payment_verified → enrolled          side exits: rejected · waitlisted · offer_declined · withdrawn
+// Universities move an application along the flow; a student may only
+//   accept / decline an offer, submit the fee payment, or withdraw before a decision.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection - authenticated users read/write their own document
+    // ── helpers ────────────────────────────────────────────────────────────
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function userDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function myRole() { return exists(userDoc()) ? get(userDoc()).data.get('role', '') : ''; }
+    function isAdmin() { return signedIn() && myRole() in ['eduing_admin', 'super_admin']; }
+
+    // Staff are active members of universities/{uniId}/staff.
+    function isActiveStaff(uniId) {
+      let staffPath = /databases/$(database)/documents/universities/$(uniId)/staff/$(request.auth.uid);
+      return exists(userDoc())
+        && get(userDoc()).data.get('role', '') == 'uni_staff'
+        && get(userDoc()).data.get('universityId', '') == uniId
+        && exists(staffPath)
+        && get(staffPath).data.get('status', 'active') != 'suspended';
+    }
+    // The university account itself, one of its staff, or an EDUING admin.
+    function isUni(uniId) { return signedIn() && (uid() == uniId || isActiveStaff(uniId) || isAdmin()); }
+
+    function ownsApp(data) { return signedIn() && (data.studentId == uid() || data.userId == uid()); }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ── users ──────────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if signedIn() && (uid() == userId || isAdmin());
+      // Self-signup may only create a student, or a university admin that waits for approval.
+      allow create: if signedIn() && uid() == userId && (
+        request.resource.data.get('role', 'student') == 'student'
+        || (request.resource.data.role == 'uni_admin' && request.resource.data.get('approvalStatus', '') == 'pending')
+      );
+      // Nobody promotes themselves: role, approval and university link are admin-only.
+      allow update: if (signedIn() && uid() == userId && !changed().hasAny(['role', 'approvalStatus', 'universityId']))
+        || isAdmin()
+        // a university admin removing one of its staff turns them back into a student
+        || (signedIn() && resource.data.get('role', '') == 'uni_staff' && uid() == resource.data.get('universityId', '')
+            && request.resource.data.role == 'student');
+      allow delete: if signedIn() && (uid() == userId || isAdmin());
+
+      // documents, tasks, saved items, app-side applications mirror …
+      match /{subcollection}/{rest=**} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
     }
 
-    // Student Profiles collection
+    // Legacy profile mirror still written by the mobile app.
     match /student_profiles/{profileId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == profileId || 
-        request.auth.uid == resource.data.userId || 
-        request.auth.uid == request.resource.data.userId
-      );
+      allow read, write: if signedIn() && uid() == profileId;
     }
 
-    match /profile/{profileId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == profileId || 
-        request.auth.uid == resource.data.userId || 
-        request.auth.uid == request.resource.data.userId
-      );
-    }
-
-    // Universities collection - read allowed for authenticated users, write for university owner
+    // ── universities ───────────────────────────────────────────────────────
     match /universities/{universityId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (
-        request.auth.uid == universityId || 
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == request.resource.data.universityId
-      );
+      allow read: if signedIn();
+      allow create: if signedIn() && uid() == universityId
+        && request.resource.data.get('approvalStatus', 'pending') == 'pending'
+        && request.resource.data.get('isVerified', false) == false
+        && request.resource.data.get('isFeatured', false) == false;
+      allow update: if isAdmin()
+        || (signedIn() && uid() == universityId && !changed().hasAny(['approvalStatus', 'isVerified', 'isFeatured', 'rejectionReason']));
+      allow delete: if isAdmin();
 
-      // Staff subcollection
       match /staff/{staffId} {
-        allow read, write: if request.auth != null && (
-          request.auth.uid == universityId ||
-          request.auth.uid == staffId
-        );
+        allow read: if isUni(universityId) || (signedIn() && uid() == staffId);
+        allow write: if signedIn() && (uid() == universityId || isAdmin());
       }
-
-      // Invitations subcollection
       match /invitations/{inviteId} {
-        allow read, write: if request.auth != null && request.auth.uid == universityId;
+        allow read, write: if signedIn() && (uid() == universityId || isAdmin());
       }
-
-      // Audit logs subcollection
       match /audit_logs/{logId} {
-        allow read, write: if request.auth != null && request.auth.uid == universityId;
+        allow read: if signedIn() && (uid() == universityId || isAdmin());
+        allow create: if isUni(universityId);
       }
     }
 
-    // Applications collection - read/write for owner university or candidate student
-    match /applications/{appId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.userId
-      );
-      allow create: if request.auth != null && (
-        request.auth.uid == request.resource.data.studentId ||
-        request.auth.uid == request.resource.data.userId ||
-        request.auth.uid == request.resource.data.universityId
-      );
-      allow update, delete: if request.auth != null && (
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.userId
-      );
-    }
-
-    // Programs collection - public read catalog, university write
     match /programs/{programId} {
       allow read: if true;
-      allow write: if request.auth != null && (
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == request.resource.data.universityId ||
-        request.auth.uid == resource.data.uniId ||
-        request.auth.uid == request.resource.data.uniId
-      );
+      allow create: if isUni(request.resource.data.universityId);
+      allow update: if isUni(resource.data.universityId) && request.resource.data.universityId == resource.data.universityId;
+      allow delete: if isUni(resource.data.universityId);
     }
 
-    // Notifications collection - user or university scoped
-    match /notifications/{notificationId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.universityId
-      );
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.universityId
-      );
+    // ── applications ───────────────────────────────────────────────────────
+    match /applications/{appId} {
+      function appData() { return get(/databases/$(database)/documents/applications/$(appId)).data; }
+
+      // What a student may change on their own application.
+      function studentUpdateOk() {
+        let from = resource.data.get('status', 'submitted');
+        let to = request.resource.data.get('status', from);
+        let keys = changed();
+        return keys.hasOnly(['status', 'statusHistory', 'updatedAt', 'offerResponse', 'withdrawal', 'paymentDetails', 'notes', 'progress', 'steps'])
+          && (!keys.hasAny(['paymentDetails']) || (to == 'fee_paid' && request.resource.data.paymentDetails.status == 'submitted'))
+          && (
+            to == from
+            || (from in ['selected', 'allotted'] && to in ['seat_accepted', 'offer_declined'])
+            || (from == 'seat_accepted' && to == 'fee_paid')
+            || (from in ['submitted', 'under_review', 'docs_verified', 'waitlisted', 'in_progress', 'draft', 'pending'] && to == 'withdrawn')
+          );
+      }
+
+      allow read: if ownsApp(resource.data) || isUni(resource.data.universityId);
+      allow create: if signedIn()
+        && request.resource.data.get('studentId', uid()) == uid()
+        && request.resource.data.get('userId', uid()) == uid()
+        && request.resource.data.get('status', 'submitted') in ['submitted', 'in_progress', 'draft']
+        && request.resource.data.universityId is string && request.resource.data.universityId != '';
+      allow update: if (isUni(resource.data.universityId) && request.resource.data.universityId == resource.data.universityId)
+        || (ownsApp(resource.data) && studentUpdateOk());
+      allow delete: if isAdmin() || (ownsApp(resource.data) && resource.data.get('status', '') in ['draft', 'in_progress']);
+
+      // Offer letters, admit cards, enrollment certificates — issued by the university.
+      match /generated_documents/{docId} {
+        allow read: if ownsApp(appData()) || isUni(appData().universityId);
+        allow write: if isUni(appData().universityId);
+      }
+      // The student's documents as shared with this university. Students can (re)share,
+      // which always resets the review status; only the university marks them verified.
+      match /documents/{docId} {
+        allow read: if ownsApp(appData()) || isUni(appData().universityId);
+        allow create, update: if isUni(appData().universityId)
+          || (ownsApp(appData()) && request.resource.data.status == 'pending');
+        allow delete: if isUni(appData().universityId);
+      }
+      // Private reviewer notes — never visible to the student.
+      match /internal_notes/{noteId} {
+        allow read, write: if isUni(appData().universityId);
+      }
     }
 
-    // Documents collection - user/student/university scoped
-    match /documents/{docId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == request.resource.data.userId ||
-        request.auth.uid == request.resource.data.studentId ||
-        request.auth.uid == request.resource.data.universityId
-      );
+    // ── admission results ──────────────────────────────────────────────────
+    match /exam_schedules/{scheduleId} {
+      // Students query with where('isPublished', '==', true).
+      allow read: if (signedIn() && resource.data.isPublished == true) || isUni(resource.data.universityId);
+      allow create: if isUni(request.resource.data.universityId);
+      allow update, delete: if isUni(resource.data.universityId);
     }
 
-    // Payments collection - user/student/university scoped
+    match /seat_allotments/{allotmentId} {
+      allow read: if (signedIn() && resource.data.studentId == uid()) || isUni(resource.data.universityId);
+      allow create: if isUni(request.resource.data.universityId);
+      allow update, delete: if isUni(resource.data.universityId);
+    }
+
+    // Legacy exams collection
+    match /exams/{examId} {
+      allow read: if signedIn();
+      allow create: if isUni(request.resource.data.universityId);
+      allow update, delete: if isUni(resource.data.universityId);
+    }
+
+    // ── payments ───────────────────────────────────────────────────────────
     match /payments/{paymentId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        request.auth.uid == resource.data.studentId ||
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == request.resource.data.userId ||
-        request.auth.uid == request.resource.data.studentId ||
-        request.auth.uid == request.resource.data.universityId
-      );
+      allow read: if signedIn() && (resource.data.userId == uid() || resource.data.studentId == uid() || isUni(resource.data.universityId));
+      allow create: if signedIn() && (request.resource.data.get('userId', '') == uid() || request.resource.data.get('studentId', '') == uid()
+        || isUni(request.resource.data.get('universityId', '')));
+      allow update: if signedIn() && isUni(resource.data.universityId);
     }
 
-    // Scholarships collection - public read, admin write
+    // ── notifications ──────────────────────────────────────────────────────
+    // Anyone signed in can notify someone (student → university, university → student).
+    // Only the recipient reads, marks read or deletes.
+    match /notifications/{notifId} {
+      allow read, update, delete: if signedIn() && (resource.data.userId == uid() || resource.data.get('studentId', '') == uid());
+      allow create: if signedIn() && request.resource.data.userId is string;
+    }
+
+    // ── misc ───────────────────────────────────────────────────────────────
     match /scholarships/{scholarshipId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Seat Allotments collection - university/student scoped
-    match /seat_allotments/{allotmentId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == resource.data.studentId
-      );
-      allow write: if request.auth != null && (
-        request.auth.uid == request.resource.data.universityId ||
-        request.auth.uid == resource.data.universityId
-      );
+    match /planner_tasks/{taskId} {
+      allow read, update, delete: if signedIn() && resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid();
     }
 
-    // Exams / Admit cards collection
-    match /exams/{examId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (
-        request.auth.uid == resource.data.universityId ||
-        request.auth.uid == request.resource.data.universityId
-      );
+    match /sop_drafts/{draftId} {
+      allow read, update, delete: if signedIn() && resource.data.uid == uid();
+      allow create: if signedIn() && request.resource.data.uid == uid();
+    }
+
+    // Legacy top-level documents collection
+    match /documents/{docId} {
+      allow read, update, delete: if signedIn() && resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid();
     }
   }
 }

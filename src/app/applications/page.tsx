@@ -31,6 +31,7 @@ const STATUS: Record<string, { label: string; color: string; bg: string; border:
   under_review:     { label: 'In Review',   color: '#D97706', bg: 'rgba(217,119,6,0.10)',  border: 'rgba(217,119,6,0.22)'  },
   docs_verified:    { label: 'Docs OK',     color: 'var(--accent)', bg: 'rgb(var(--accent-rgb) / 0.10)',  border: 'rgb(var(--accent-rgb) / 0.20)'  },
   selected:         { label: 'Selected',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.22)'  },
+  allotted:         { label: 'Allotted',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.22)'  },
   seat_accepted:    { label: 'Seat Acc.',   color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.20)'  },
   fee_paid:         { label: 'Fee Paid',    color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.20)'  },
   payment_verified: { label: 'Paid ✓',      color: '#1AAE39', bg: 'rgba(26,174,57,0.10)',  border: 'rgba(26,174,57,0.20)'  },
@@ -38,6 +39,7 @@ const STATUS: Record<string, { label: string; color: string; bg: string; border:
   waitlisted:       { label: 'Waitlisted',  color: '#D97706', bg: 'rgba(217,119,6,0.10)',  border: 'rgba(217,119,6,0.20)'  },
   rejected:         { label: 'Rejected',    color: '#DC2626', bg: 'rgba(220,38,38,0.10)',  border: 'rgba(220,38,38,0.22)'  },
   withdrawn:        { label: 'Withdrawn',   color: '#8C8C85', bg: 'rgba(140,140,133,0.10)',border: 'rgba(140,140,133,0.22)' },
+  offer_declined:   { label: 'Declined',    color: '#8C8C85', bg: 'rgba(140,140,133,0.10)',border: 'rgba(140,140,133,0.22)' },
 }
 
 // ─── Status badge ──────────────────────────────────────────────────────────────
@@ -413,6 +415,7 @@ export default function ApplicationsPage() {
           <option value="under_review">In Review</option>
           <option value="docs_verified">Docs Verified</option>
           <option value="selected">Selected</option>
+          <option value="allotted">Seat Allotted</option>
           <option value="seat_accepted">Seat Accepted</option>
           <option value="fee_paid">Fee Paid</option>
           <option value="payment_verified">Payment Verified</option>
@@ -420,6 +423,7 @@ export default function ApplicationsPage() {
           <option value="waitlisted">Waitlisted</option>
           <option value="rejected">Rejected</option>
           <option value="withdrawn">Withdrawn</option>
+          <option value="offer_declined">Offer Declined</option>
         </select>
 
         {/* Program filter */}

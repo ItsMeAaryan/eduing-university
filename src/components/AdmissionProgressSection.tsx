@@ -17,7 +17,8 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
   const [notes, setNotes] = useState('')
   
   const statusOrder = ['selected', 'seat_accepted', 'fee_paid', 'payment_verified', 'enrolled']
-  const currentIndex = statusOrder.indexOf(app.status) >= 0 ? statusOrder.indexOf(app.status) : -1
+  const stage = app.status === 'allotted' ? 'selected' : app.status
+  const currentIndex = statusOrder.indexOf(stage)
 
   const handleVerify = async () => {
     setLoading(true)
@@ -127,6 +128,16 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
         })}
       </div>
 
+      {/* Student's response, when they turned the offer down or withdrew */}
+      {(app.status === 'offer_declined' || app.status === 'withdrawn') && (
+        <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm">
+          <p className="font-bold text-white">{app.status === 'offer_declined' ? 'The student declined this offer — the seat can be re-allotted.' : 'The student withdrew this application.'}</p>
+          {(app.offerResponse?.reason || app.withdrawal?.reason) && (
+            <p className="mt-1 text-text-muted">Reason: {app.offerResponse?.reason || app.withdrawal?.reason}</p>
+          )}
+        </div>
+      )}
+
       {/* Payment Verification Card */}
       {app.status === 'fee_paid' && app.paymentDetails && (
         <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-4">
@@ -147,6 +158,18 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
               <p className="text-text-muted text-[11px] uppercase font-bold mb-1">Submitted At</p>
               <p className="text-white">{new Date(app.paymentDetails.submittedAt).toLocaleString()}</p>
             </div>
+            {app.paymentDetails.transactionRef && (
+              <div>
+                <p className="text-text-muted text-[11px] uppercase font-bold mb-1">Transaction / UTR ref</p>
+                <p className="font-mono text-white">{app.paymentDetails.transactionRef}</p>
+              </div>
+            )}
+            {(app.paymentDetails.mode || app.paymentDetails.paidOn) && (
+              <div>
+                <p className="text-text-muted text-[11px] uppercase font-bold mb-1">Method · Paid on</p>
+                <p className="text-white">{[app.paymentDetails.mode, app.paymentDetails.paidOn].filter(Boolean).join(' · ')}</p>
+              </div>
+            )}
           </div>
 
           <div>

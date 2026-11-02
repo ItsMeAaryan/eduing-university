@@ -38,6 +38,10 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   payment_verified: { label: 'Payment Verified', cls: 'badge badge-success' },
   enrolled: { label: 'Enrolled', cls: 'badge badge-success' },
   rejected: { label: 'Rejected', cls: 'badge badge-error' },
+  allotted: { label: 'Seat Allotted', cls: 'badge badge-success' },
+  waitlisted: { label: 'Waitlisted', cls: 'badge badge-warning' },
+  withdrawn: { label: 'Withdrawn', cls: 'badge' },
+  offer_declined: { label: 'Offer Declined', cls: 'badge' },
 }
 
 const TABS = ['overview', 'academic', 'financial', 'documents', 'notes', 'audit'] as const
