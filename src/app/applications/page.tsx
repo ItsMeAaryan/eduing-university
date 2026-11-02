@@ -325,20 +325,8 @@ export default function ApplicationsPage() {
       setShortlistResults(map)
       toast.success(`AI evaluated ${res.applications.length} applications`)
     } else {
-      // Graceful fallback heuristics
-      const map: Record<string, ShortlistResult> = {}
-      apps.forEach((a, i) => {
-        const flag: 'strong' | 'average' | 'weak' = i % 3 === 0 ? 'strong' : i % 3 === 1 ? 'average' : 'weak'
-        const score = flag === 'strong' ? 9 : flag === 'average' ? 6 : 4
-        map[a.id] = {
-          applicationId: a.id,
-          recommendationScore: score,
-          flag,
-          reason: flag === 'strong' ? 'High academic background and verified docs' : flag === 'average' ? 'Meets standard program requirements' : 'Pending document verification and low score'
-        }
-      })
-      setShortlistResults(map)
-      toast.success(`AI evaluated ${apps.length} applications`)
+      // No invented scores — the shortlist only shows what the AI actually returned.
+      toast.error('AI shortlist is unavailable right now. Check that GROQ_API_KEY is set, then try again.')
     }
     setShortlisting(false)
   }

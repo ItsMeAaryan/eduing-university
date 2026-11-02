@@ -30,12 +30,9 @@ function AIInsightsPanel({ kpis }: { kpis: any }) {
     if (res && Array.isArray(res.insights)) {
       setInsights(res.insights)
     } else {
+      // No made-up numbers: say plainly that the AI service did not answer.
       setInsights([
-        { insight: 'Conversion rate from offer to enrollment can be boosted by 15% with automated reminder emails.', type: 'opportunity', priority: 'high' },
-        { insight: 'High count of applications currently under review — allocate extra document verification staff.', type: 'warning', priority: 'high' },
-        { insight: 'Revenue collection is tracking on target for this cycle with solid fee payment velocity.', type: 'success', priority: 'medium' },
-        { insight: 'Consider launching targeted campaigns for low-performing programs before final intake deadline.', type: 'opportunity', priority: 'medium' },
-        { insight: 'Student drop-off between seat acceptance and fee payment remains stable at under 8%.', type: 'success', priority: 'low' },
+        { insight: 'AI insights are unavailable right now — the AI service did not respond. Check that GROQ_API_KEY is set for this deployment, then try again.', type: 'warning', priority: 'low' },
       ])
     }
     setLoading(false)

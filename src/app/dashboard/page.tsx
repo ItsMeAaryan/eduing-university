@@ -35,7 +35,7 @@ const fadeIn = (i: number) => ({
   transition: { duration: 0.32, delay: i * 0.055, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 })
 
-// ─── University Profile Strength AI Component ─────────────────────────────
+// ─── University Profile Strength (completeness checklist) ─────────────────────────────
 function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCount: number; uniData: any }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<{ score: number; recommendations: { title: string; bonus: string; href: string }[] } | null>(null)
@@ -94,7 +94,7 @@ function UniversityProfileStrengthCard({ programsCount, uniData }: { programsCou
           </div>
           <div>
             <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>University Profile Strength</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>AI-powered admissions appeal and completeness evaluation</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>How complete your profile looks to applicants</p>
           </div>
         </div>
       </div>
