@@ -778,7 +778,11 @@ export default function UniversityLayout({ children }: { children: React.ReactNo
             <motion.div
               key={pathname}
               initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              // Clear filter/transform once the page has faded in: a leftover
+              // filter (even blur(0px)) or transform makes this div the frame for
+              // every position:fixed pop-up inside the page, so modals were cropped
+              // to the content area and slid under the top bar.
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none', transform: 'none' } }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             >
