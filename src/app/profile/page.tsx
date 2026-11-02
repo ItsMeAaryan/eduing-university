@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { auth, storage } from '@/lib/firebase/config'
+import { auth } from '@/lib/firebase/config'
+import ImageLinkDialog from '@/components/ImageLinkDialog'
 import { useAuth } from '@/context/AuthContext'
 import type { FirestoreRecord, FirestoreWriteData } from '@/lib/firebase/types'
 import { getUniversity, updateUniversityProfile } from '@/lib/firebase/university'
@@ -40,7 +41,6 @@ import {
   HelpCircle,
   Share2
 } from 'lucide-react'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useToast } from '@/components/Toast'
 
 // Custom SVG Icons for Social Platforms
@@ -86,6 +86,7 @@ export default function ProfilePage() {
   const { toast } = useToast()
   
   const [isEditing, setIsEditing] = useState(false)
+  const [imageDialog, setImageDialog] = useState<null | 'logo' | 'banner' | 'gallery'>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isPreviewStudent, setIsPreviewStudent] = useState(false)
@@ -155,32 +156,25 @@ export default function ProfilePage() {
     setIsEditing(false)
   }
 
-  // Handle Cover / Logo / Gallery File Uploads
-  const handleFileUpload = async (file: File, path: string, type: 'logo' | 'banner' | 'gallery') => {
+  // Logo / cover / gallery images are links to images already online (no file storage).
+  const handleImageLink = async (url: string, type: 'logo' | 'banner' | 'gallery') => {
     if (!universityId) return
-
-    toast.info(`Uploading ${type}...`)
     try {
-      const storageRef = ref(storage, `universities/${universityId}/${path}/${Date.now()}_${file.name}`)
-      const snapshot = await uploadBytes(storageRef, file)
-      const url = await getDownloadURL(snapshot.ref)
-
       if (type === 'logo') {
         await persistChanges({ logoURL: url })
       } else if (type === 'banner') {
         await persistChanges({ bannerURL: url })
-      } else if (type === 'gallery') {
+      } else {
         const currentGallery = formData.gallery || []
         if (currentGallery.length >= 10) {
           toast.error('Maximum limit of 10 photos reached in gallery')
           return
         }
-        const updatedGallery = [...currentGallery, url].slice(0, 10)
-        await persistChanges({ gallery: updatedGallery })
+        await persistChanges({ gallery: [...currentGallery, url].slice(0, 10) })
       }
     } catch (error) {
       console.error(error)
-      toast.error('File upload failed')
+      toast.error('Couldn\u2019t save the image link')
     }
   }
 
@@ -425,6 +419,14 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 px-2 sm:px-4">
+      <ImageLinkDialog
+        key={imageDialog ?? 'closed'}
+        open={imageDialog !== null}
+        title={imageDialog === 'logo' ? 'University logo' : imageDialog === 'banner' ? 'Cover photo' : 'Add a campus photo'}
+        initial={imageDialog === 'logo' ? (formData.logoURL as string) || '' : imageDialog === 'banner' ? (formData.bannerURL as string) || '' : ''}
+        onClose={() => setImageDialog(null)}
+        onSave={(url) => handleImageLink(url, imageDialog ?? 'gallery')}
+      />
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-brand-surface/60 border border-brand-border p-4 rounded-2xl">
         <div>
@@ -488,17 +490,11 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
 
           {/* Edit Cover Overlay - Hover Only */}
-          <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center cursor-pointer">
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'banner', 'banner')}
-            />
+          <button type="button" onClick={() => setImageDialog('banner')} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-300 flex items-center justify-center cursor-pointer">
             <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md text-gray-900 px-5 py-2.5 rounded-2xl font-bold text-xs shadow-xl hover:bg-white transition-all transform hover:scale-105">
               <Camera size={16} /> Edit Cover Photo
             </div>
-          </label>
+          </button>
 
           {/* Header Badges over Cover */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -531,18 +527,12 @@ export default function ProfilePage() {
               </div>
             )}
 
-            <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center cursor-pointer">
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo', 'logo')}
-              />
+            <button type="button" onClick={() => setImageDialog('logo')} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-200 flex items-center justify-center cursor-pointer">
               <div className="flex flex-col items-center gap-1 text-white text-[10px] font-bold">
                 <Camera size={20} />
                 <span>Change Logo</span>
               </div>
-            </label>
+            </button>
           </div>
         </div>
       </div>
@@ -806,19 +796,9 @@ export default function ProfilePage() {
                 </span>
 
                 {(formData.gallery || []).length < 10 && (
-                  <label className="bg-brand-accent text-white px-3.5 py-1.5 rounded-2xl text-xs font-bold cursor-pointer hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs">
-                    <input
-                      type="file"
-                      className="hidden"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || [])
-                        files.forEach((f) => handleFileUpload(f, 'gallery', 'gallery'))
-                      }}
-                    />
-                    <Plus size={14} /> Add Photos
-                  </label>
+                  <button type="button" onClick={() => setImageDialog('gallery')} className="bg-brand-accent text-white px-3.5 py-1.5 rounded-2xl text-xs font-bold cursor-pointer hover:bg-brand-accent/90 transition-all flex items-center gap-1.5 shadow-xs">
+                    <Plus size={14} /> Add photo link
+                  </button>
                 )}
               </div>
             </div>

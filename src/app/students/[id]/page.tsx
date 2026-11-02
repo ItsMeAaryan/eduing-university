@@ -62,6 +62,45 @@ function InfoRow({ icon: Icon, value }: { icon: React.ElementType; value?: strin
 
 // ─── Section card ──────────────────────────────────────────────────────────────
 
+// Details the student declared when applying (studentProfile snapshot on the application).
+const DETAIL_GROUPS: { title: string; fields: [string, string][] }[] = [
+  { title: 'Class 10', fields: [['tenthBoard', 'Board'], ['tenthYear', 'Year'], ['tenthScore', 'Percentage']] },
+  { title: 'Class 12', fields: [['school', 'School'], ['twelfthBoard', 'Board'], ['stream', 'Stream'], ['twelfthYear', 'Year'], ['twelfthScore', 'Percentage']] },
+  { title: 'Entrance exams', fields: [['jeeScore', 'JEE Main'], ['neetScore', 'NEET'], ['cuetScore', 'CUET'], ['bitsatScore', 'BITSAT'], ['nataScore', 'NATA'], ['clatScore', 'CLAT'], ['catPercentile', 'CAT'], ['gateScore', 'GATE']] },
+  { title: 'Category', fields: [['category', 'Category'], ['pwd', 'PwD'], ['domicileState', 'Domicile']] },
+  { title: 'Personal', fields: [['dob', 'Date of birth'], ['gender', 'Gender'], ['nationality', 'Nationality'], ['address', 'Address'], ['city', 'City'], ['state', 'State'], ['pincode', 'PIN']] },
+  { title: 'Parent / guardian', fields: [['guardianName', 'Name'], ['guardianRelation', 'Relation'], ['guardianPhone', 'Phone'], ['annualIncome', 'Family income']] },
+]
+
+function ApplicantDetails({ profile }: { profile?: Record<string, unknown> }) {
+  const has = (k: string) => profile && profile[k] !== undefined && profile[k] !== null && String(profile[k]).trim() !== ''
+  const groups = DETAIL_GROUPS.map(g => ({ ...g, fields: g.fields.filter(([k]) => has(k)) })).filter(g => g.fields.length)
+  if (!profile || groups.length === 0) {
+    return <p style={{ fontSize: '13px', color: 'var(--text-faint)', fontStyle: 'italic', margin: 0 }}>The student hasn&apos;t shared academic details with this application yet.</p>
+  }
+  const updated = profile.sharedAt ? new Date(String(profile.sharedAt)).toLocaleString('en-IN', { dateStyle: 'medium' }) : null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {groups.map(g => (
+        <div key={g.title}>
+          <div className="text-eyebrow" style={{ marginBottom: '8px' }}>{g.title}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '8px' }}>
+            {g.fields.map(([k, label]) => (
+              <div key={k} style={{ padding: '10px 12px', background: 'var(--bg-card-hover)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>{label}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{String(profile[k])}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <p style={{ fontSize: '11px', color: 'var(--text-faint)', margin: 0 }}>
+        Declared by the student{updated ? ` · last shared ${updated}` : ''}. Not yet verified — DigiLocker verification is coming soon.
+      </p>
+    </div>
+  )
+}
+
 function SectionCard({ title, icon: Icon, children }: { title: string; icon?: React.ElementType; children: React.ReactNode }) {
   return (
     <div style={{
@@ -525,7 +564,15 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           )}
 
           {/* ── Academic / Financial ── */}
-          {(activeTab === 'academic' || activeTab === 'financial') && (
+          {activeTab === 'academic' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <SectionCard title="Academic & personal details" icon={FileText}>
+                <ApplicantDetails profile={student.studentProfile as Record<string, unknown> | undefined} />
+              </SectionCard>
+              <AdmissionProgressSection app={student} />
+            </div>
+          )}
+          {activeTab === 'financial' && (
             <AdmissionProgressSection app={student} />
           )}
 
@@ -536,9 +583,12 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                 <GeneratedDocumentsSection app={student} universityName={userData?.universityName as string || 'University'} />
               </SectionCard>
 
-              <SectionCard title="Uploaded Documents" icon={FileText}>
+              <SectionCard title="Student documents" icon={FileText}>
                 {documents.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: 'var(--text-faint)', fontStyle: 'italic' }}>No documents uploaded yet.</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+                    Students don&apos;t upload files on EDUING. Marks and exam scores are in the <strong>Academic</strong> tab as declared by the student.
+                    Verification through DigiLocker is coming soon — until then, check original documents at the time of admission.
+                  </p>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
                     {documents.map(d => {

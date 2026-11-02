@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { CheckCircle, AlertCircle, FileText, Download, Loader2, IndianRupee } from 'lucide-react'
 import type { FirestoreRecord } from '@/lib/firebase/types'
 import { verifyPayment, rejectPayment, completeEnrollment } from '@/lib/firebase/admissions'
-import { generatePdfFromElement } from './pdf/PdfGenerator'
 import { saveGeneratedDocument, subscribeToGeneratedDocuments } from '@/lib/firebase/generated_documents'
 import { useToast } from '@/components/Toast'
 import { auth } from '@/lib/firebase/config'
@@ -74,14 +73,21 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
 
       await completeEnrollment(app.universityId, app.id, app.studentId, details, actor)
       
-      // Also generate the enrollment certificate automatically
-      const pdfBlob = await generatePdfFromElement('enrollment-certificate-template')
+      // Also issue the enrollment certificate (its data is saved; the PDF is rendered on download)
       await saveGeneratedDocument({
         appId: app.id,
         studentId: app.studentId,
         universityId: app.universityId,
         type: 'enrollment_certificate',
-        pdfBlob,
+        data: {
+          universityName: app.universityName || 'University',
+          studentName: app.studentName || 'Student',
+          programName: app.programName || app.program || 'Program',
+          enrollmentNumber: details.enrollmentNumber,
+          academicSession: details.academicSession,
+          department: details.department,
+          date: details.enrollmentDate,
+        },
         actor,
         version: 1
       })
@@ -172,19 +178,18 @@ export default function AdmissionProgressSection({ app }: AdmissionProgressSecti
             )}
           </div>
 
-          <div>
-            <p className="text-text-muted text-[11px] uppercase font-bold mb-2">Payment Proof</p>
-            <a 
-              href={app.paymentDetails.receiptUrl} 
-              target="_blank" 
-              rel="noreferrer"
-              className="flex items-center gap-2 p-3 bg-black/20 rounded-lg hover:bg-black/40 transition-colors border border-white/5 w-fit"
-            >
+          {app.paymentDetails.payerName && (
+            <p className="text-sm text-white">Paid by: <span className="font-semibold">{app.paymentDetails.payerName}</span></p>
+          )}
+          {app.paymentDetails.receiptUrl ? (
+            <a href={app.paymentDetails.receiptUrl} target="_blank" rel="noreferrer" className="flex w-fit items-center gap-2 rounded-lg border border-white/5 bg-black/20 p-3 transition-colors hover:bg-black/40">
               <FileText size={16} className="text-brand-primary-text" />
-              <span className="text-sm text-white font-medium">View Receipt / Transaction</span>
-              <Download size={14} className="text-text-muted ml-2" />
+              <span className="text-sm font-medium text-white">View receipt (older submission)</span>
+              <Download size={14} className="ml-2 text-text-muted" />
             </a>
-          </div>
+          ) : (
+            <p className="text-xs text-text-muted">Match the reference number and amount with your bank or UPI statement before verifying.</p>
+          )}
 
           <textarea 
             value={notes}

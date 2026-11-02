@@ -1,12 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FileText, Download, Loader2, Plus, ExternalLink } from 'lucide-react'
+import { FileText, Download, Loader2, Plus } from 'lucide-react'
 import { subscribeToGeneratedDocuments, saveGeneratedDocument } from '@/lib/firebase/generated_documents'
 import type { GeneratedDocument } from '@/lib/firebase/generated_documents'
-import { generatePdfFromElement } from './pdf/PdfGenerator'
-import { OfferLetterTemplate } from './pdf/OfferLetterTemplate'
-import { EnrollmentCertificateTemplate } from './pdf/EnrollmentCertificateTemplate'
+import { downloadIssuedDocument } from './pdf/IssuedDocument'
 import { useToast } from '@/components/Toast'
 import { auth } from '@/lib/firebase/config'
 import type { FirestoreRecord } from '@/lib/firebase/types'
@@ -28,7 +26,7 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
   }, [app.id])
 
   const handleGenerateOfferLetter = async () => {
-    if (app.status !== 'selected') {
+    if (app.status !== 'selected' && app.status !== 'allotted') {
       toast.error('Application must be "Selected" to generate an offer letter.')
       return
     }
@@ -38,16 +36,24 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
       const user = auth.currentUser
       const generatedBy = user?.displayName || user?.email || 'University Admin'
 
-      // Generate the PDF Blob
-      const pdfBlob = await generatePdfFromElement('offer-letter-template')
-      
-      // Upload and Save
+      const today = new Date()
+      // The letter's contents are saved; the PDF is rendered whenever someone downloads it.
       await saveGeneratedDocument({
         appId: app.id,
         studentId: app.studentId,
         universityId: app.universityId,
         type: 'offer_letter',
-        pdfBlob,
+        data: {
+          universityName,
+          studentName: app.studentName || 'Student',
+          applicationId: app.id,
+          programName: app.programName || app.program || 'Program',
+          department: 'Admissions Department',
+          academicYear: String(today.getFullYear()),
+          feeSummary: 'Refer to the university portal for detailed fee structure.',
+          date: today.toISOString(),
+          lastAcceptanceDate: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        },
         actor: {
           uid: auth.currentUser?.uid || 'system',
           name: generatedBy,
@@ -57,7 +63,7 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
         version: documents.filter(d => d.type === 'offer_letter').length + 1
       })
       
-      toast.success('Offer Letter generated successfully')
+      toast.success('Offer letter issued — the student can see it now')
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error'
       console.error('PDF Generation Error:', error)
@@ -83,15 +89,15 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
           <h5 className="text-sm font-bold text-white">Offer Letters</h5>
           <button
             onClick={handleGenerateOfferLetter}
-            disabled={loading || app.status !== 'selected'}
+            disabled={loading || (app.status !== 'selected' && app.status !== 'allotted')}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-lg text-xs font-bold hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-            Generate New
+            Issue new
           </button>
         </div>
 
-        {app.status !== 'selected' && (
+        {app.status !== 'selected' && app.status !== 'allotted' && (
           <p className="text-[11px] text-brand-warning mb-3">
             * Application must be marked as &quot;Selected&quot; before generating an offer letter.
           </p>
@@ -132,28 +138,6 @@ export default function GeneratedDocumentsSection({ app, universityName }: Gener
         </div>
       )}
 
-      {/* Hidden Templates for html2canvas */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -1 }}>
-        <OfferLetterTemplate 
-          universityName={universityName}
-          studentName={app.studentName || 'Student'}
-          applicationId={app.id}
-          programName={app.programName || 'Program'}
-          date={new Date().toISOString()}
-          // Using a fixed +14 days purely for the template generation props
-          lastAcceptanceDate={new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000).toISOString()}
-        />
-
-        <EnrollmentCertificateTemplate
-          universityName={universityName}
-          studentName={app.studentName || 'Student'}
-          programName={app.programName || 'Program'}
-          enrollmentNumber={app.enrollmentDetails?.enrollmentNumber || 'TBD'}
-          academicSession={app.enrollmentDetails?.academicSession || new Date().getFullYear().toString()}
-          department={app.enrollmentDetails?.department || 'Department of Admissions'}
-          date={new Date().toISOString()}
-        />
-      </div>
     </div>
   )
 }
@@ -173,23 +157,26 @@ function DocumentCard({ doc, title }: { doc: GeneratedDocument, title: string })
           </p>
         </div>
       </div>
-      <div className="flex gap-2">
-        <button 
-          onClick={() => window.open(doc.url, '_blank')}
-          title="View PDF"
-          className="p-2 text-text-muted hover:text-brand-primary-text hover:bg-brand-primary/10 rounded transition-colors"
-        >
-          <ExternalLink size={14} />
-        </button>
-        <a 
-          href={doc.url}
-          download
-          title="Download PDF"
-          className="p-2 text-text-muted hover:text-brand-primary-text hover:bg-brand-primary/10 rounded transition-colors"
-        >
-          <Download size={14} />
-        </a>
-      </div>
+      <DownloadButton doc={doc} />
     </div>
+  )
+}
+
+function DownloadButton({ doc }: { doc: GeneratedDocument }) {
+  const [busy, setBusy] = useState(false)
+  const { toast } = useToast()
+  return (
+    <button
+      onClick={async () => {
+        setBusy(true)
+        try { await downloadIssuedDocument(doc) } catch (e) { toast.error(e instanceof Error ? e.message : 'Download failed') } finally { setBusy(false) }
+      }}
+      title="Download PDF"
+      aria-label="Download PDF"
+      disabled={busy}
+      className="p-2 text-text-muted hover:text-brand-primary-text hover:bg-brand-primary/10 rounded transition-colors"
+    >
+      {busy ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+    </button>
   )
 }
